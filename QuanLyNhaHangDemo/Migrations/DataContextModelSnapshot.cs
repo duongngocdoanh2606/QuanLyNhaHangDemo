@@ -265,6 +265,9 @@ namespace QuanLyNhaHangDemo.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("KitchenId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -280,7 +283,59 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("KitchenId");
+
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.CouponModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DiscountType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxDiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MinOrderAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Name")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UsageLimit")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Coupon");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.InventoryTransactionModel", b =>
@@ -324,6 +379,29 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.ToTable("InventoryTransactions");
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.KitchenModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Kitchen");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.MaterialModel", b =>
                 {
                     b.Property<int>("Id")
@@ -345,10 +423,15 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Unit")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
 
                     b.ToTable("Materials");
                 });
@@ -360,6 +443,9 @@ namespace QuanLyNhaHangDemo.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("OrderCode")
                         .HasColumnType("nvarchar(max)");
@@ -394,11 +480,26 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<int?>("CouponId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("OrderCode")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ServiceAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ServiceRate")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("ShippingCost")
                         .HasColumnType("decimal(18,2)");
@@ -406,13 +507,24 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int?>("TableId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("VATAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("VATRate")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("TableId");
 
@@ -456,9 +568,6 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("BrandId")
-                        .HasColumnType("int");
-
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
@@ -486,8 +595,6 @@ namespace QuanLyNhaHangDemo.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
 
                     b.HasIndex("CategoryId");
 
@@ -674,6 +781,39 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.ToTable("Statisticals");
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.SupplierModel", b =>
+                {
+                    b.Property<int>("SupplierId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SupplierId"), 1L, 1);
+
+                    b.Property<int>("BrandId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SupplierAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SupplierEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("SupplierId");
+
+                    b.HasIndex("BrandId");
+
+                    b.ToTable("Suppliers");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.TableModel", b =>
                 {
                     b.Property<int>("Id")
@@ -682,8 +822,8 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("CurrentOrderCode")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -693,7 +833,7 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("tableModels");
+                    b.ToTable("Table");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.UserModel", b =>
@@ -718,7 +858,7 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("userModels");
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -772,6 +912,17 @@ namespace QuanLyNhaHangDemo.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.CategoryModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.KitchenModel", "Kitchen")
+                        .WithMany("Categories")
+                        .HasForeignKey("KitchenId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Kitchen");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.InventoryTransactionModel", b =>
                 {
                     b.HasOne("QuanLyNhaHangDemo.Models.MaterialModel", "Material")
@@ -789,6 +940,17 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.MaterialModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.SupplierModel", "Supplier")
+                        .WithMany("Materials")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetails", b =>
                 {
                     b.HasOne("QuanLyNhaHangDemo.Models.ProductModel", "Product")
@@ -802,9 +964,15 @@ namespace QuanLyNhaHangDemo.Migrations
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderModel", b =>
                 {
+                    b.HasOne("QuanLyNhaHangDemo.Models.CouponModel", "Coupon")
+                        .WithMany()
+                        .HasForeignKey("CouponId");
+
                     b.HasOne("QuanLyNhaHangDemo.Models.TableModel", "Table")
                         .WithMany()
                         .HasForeignKey("TableId");
+
+                    b.Navigation("Coupon");
 
                     b.Navigation("Table");
                 });
@@ -830,19 +998,11 @@ namespace QuanLyNhaHangDemo.Migrations
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductModel", b =>
                 {
-                    b.HasOne("QuanLyNhaHangDemo.Models.BrandModel", "Brand")
-                        .WithMany()
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("QuanLyNhaHangDemo.Models.CategoryModel", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Brand");
 
                     b.Navigation("Category");
                 });
@@ -869,6 +1029,27 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Navigation("Table");
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.SupplierModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.BrandModel", "Brand")
+                        .WithMany("suppliers")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Brand");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.BrandModel", b =>
+                {
+                    b.Navigation("suppliers");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.KitchenModel", b =>
+                {
+                    b.Navigation("Categories");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.MaterialModel", b =>
                 {
                     b.Navigation("InventoryTransactions");
@@ -877,6 +1058,11 @@ namespace QuanLyNhaHangDemo.Migrations
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductModel", b =>
                 {
                     b.Navigation("Ratings");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.SupplierModel", b =>
+                {
+                    b.Navigation("Materials");
                 });
 #pragma warning restore 612, 618
         }

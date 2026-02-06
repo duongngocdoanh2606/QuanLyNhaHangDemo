@@ -25,7 +25,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            return View(await _dataContext.Products.OrderByDescending(p => p.Id).Include(p => p.Category).Include(p => p.Brand).ToListAsync());
+            return View(await _dataContext.Products.OrderByDescending(p => p.Id).Include(p => p.Category).ToListAsync());
         }
         [HttpGet]
         public IActionResult Create()
@@ -56,7 +56,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 .Where(b => b.Status == 1)
                 .ToList();
             ViewBag.Categories = new SelectList(_dataContext.Categories, "Id", "Name", product.CategoryId);
-            ViewBag.Brands = new SelectList(_dataContext.Brands, "Id", "Name", product.BrandId);
+
 
             if (ModelState.IsValid)
             {
@@ -115,7 +115,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 .Where(b => b.Status == 1)
                 .ToList();
             ViewBag.Categories = new SelectList(_dataContext.Categories, "Id", "Name", product.CategoryId);
-            ViewBag.Brands = new SelectList(_dataContext.Brands, "Id", "Name", product.BrandId);
+
             return View(product);
         }
         [HttpPost]
@@ -125,7 +125,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             var activeCategories = _dataContext.Categories.Where(c => c.Status == 1).ToList();
             var activeBrands = _dataContext.Brands.Where(b => b.Status == 1).ToList();
             ViewBag.Categories = new SelectList(_dataContext.Categories, "Id", "Name", product.CategoryId);
-            ViewBag.Brands = new SelectList(_dataContext.Brands, "Id", "Name", product.BrandId);
             var existed_product = _dataContext.Products.Find(product.Id);
             if (ModelState.IsValid)
             {
@@ -158,7 +157,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 existed_product.Description = product.Description;
                 existed_product.Price = product.Price;
                 existed_product.CategoryId = product.CategoryId;
-                existed_product.BrandId = product.BrandId;
 
                 _dataContext.Update(existed_product);
                 await _dataContext.SaveChangesAsync();

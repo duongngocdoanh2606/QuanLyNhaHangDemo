@@ -24,8 +24,7 @@ namespace QuanLyNhaHangDemo.Controllers
 
             IQueryable<ProductModel> productsByCategory = _dataContext.Products
                 .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Where(p => p.CategoryId == category.Id && p.Brand.Status == 1);
+                .Where(p => p.CategoryId == category.Id);
             if (startprice.HasValue && endprice.HasValue && startprice <= endprice)
             {
                 productsByCategory = productsByCategory

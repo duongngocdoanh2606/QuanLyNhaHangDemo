@@ -23,7 +23,7 @@ namespace QuanLyNhaHangDemo.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(int tableId)
         {
-            var table = await _context.tableModels.FindAsync(tableId);
+            var table = await _context.Table.FindAsync(tableId);
             if (table == null) return NotFound();
 
             ViewBag.Table = table;
@@ -42,7 +42,7 @@ namespace QuanLyNhaHangDemo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ReservationModel model)
         {
-            var table = await _context.tableModels.FindAsync(model.TableId);
+            var table = await _context.Table.FindAsync(model.TableId);
             if (table == null) return NotFound();
 
             if (!ModelState.IsValid)

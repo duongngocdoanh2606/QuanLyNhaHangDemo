@@ -1,0 +1,69 @@
+﻿@model IEnumerable<OrderDetails>
+
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Món</th>
+            <th>Thời gian đặt</th>
+            <th>SL</th>
+            <th>Trạng thái</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Product.Name</td>
+                <td>@item.CreateDate</td>
+                <td>@item.Quantity</td>
+                <td>
+                    @{
+                        var statusText = item.Status switch
+                        {
+                            StatusProduct.Pending => "Đang Chuẩn Bị Nguyên Liệu",
+                            StatusProduct.Cooking => "Đang làm",
+                            StatusProduct.Done => "Hoàn thành",
+                            StatusProduct.Cancelled => "Đã hủy",
+                            _ => "Không xác định"
+                        };
+                    }
+                    @statusText
+                </td>
+                <td>
+                    <form asp-area="Admin"
+                          asp-controller="Kitchen"
+                          asp-action="UpdateStatus"
+                          method="post" class="form-inline">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="orderDetailId" value="@item.Id" />
+
+                        @* Giữ lại action hiện tại để redirect đúng khu *@
+                        <input type="hidden" name="returnAction"
+                               value="@ViewContext.RouteData.Values["action"]" />
+
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="0" selected="@(item.Status == StatusProduct.Pending)">
+                                Đang Chuẩn Bị Nguyên Liệu
+                            </option>
+                            <option value="1" selected="@(item.Status == StatusProduct.Cooking)">
+                                Đang làm
+                            </option>
+                            <option value="2" selected="@(item.Status == StatusProduct.Done)">
+                                Hoàn thành
+                            </option>
+
+                        </select>
+
+                        <button type="submit" class="btn btn-sm btn-primary mt-1">
+                            Lưu
+                        </button>
+                    </form>
+
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+

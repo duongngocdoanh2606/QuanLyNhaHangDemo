@@ -41,7 +41,17 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 }
                 _dataContext.Shippings.Add(shippingModel);
                 await _dataContext.SaveChangesAsync();
-                return Ok(new { success = true, message = "Luu thanh cong" });
+                return Ok(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        id = shippingModel.Id,
+                        city = shippingModel.City,
+                        district = shippingModel.District,
+                        price = shippingModel.Price.ToString("N0")
+                    }
+                });
             }
             catch (Exception ex)
             {

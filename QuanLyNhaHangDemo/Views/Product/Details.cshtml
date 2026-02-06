@@ -60,7 +60,6 @@
                         }
                     </p>
                     <p><b>Danh mục:</b> @Model.ProductDetails.Category?.Name</p>
-                    <p><b>Thương hiệu:</b> @Model.ProductDetails.Brand?.Name</p>
                     <p><b>Tồn kho hiện tại:</b> @Model.ProductDetails.Quantity</p>
 
                     <a href=""><img src="images/product-details/share.png" class="share img-responsive" alt="" /></a>
@@ -117,7 +116,6 @@
                                                 <h2>@relatedProduct.Price.ToString("#,##0 VNĐ")</h2>
                                                 <p>@relatedProduct.Name</p>
                                                 <p>Danh mục: @relatedProduct.Category.Name</p>
-                                                <p>Thương hiệu: @relatedProduct.Brand.Name</p>
                                             </a>
                                         </div>
                                     </div>

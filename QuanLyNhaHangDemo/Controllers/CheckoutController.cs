@@ -61,12 +61,12 @@ namespace QuanLyNhaHangDemo.Controllers
                 orderItem = await _dataContext.Orders
                     .FirstOrDefaultAsync(o =>
                         o.TableId == tableId.Value &&
-                        o.Status != 2 &&   // không phải Hoàn thành
-                        o.Status != 5);    // không phải Hủy (nếu bạn dùng 5 là Hủy)
+                        o.Status != 2 &&  
+                        o.Status != 5);    
 
                 if (orderItem == null)
                 {
-                    // chưa có order mở → tạo mới
+                
                     var ordercode = Guid.NewGuid().ToString();
 
                     orderItem = new OrderModel
@@ -74,9 +74,9 @@ namespace QuanLyNhaHangDemo.Controllers
                         OrderCode = ordercode,
                         UserName = userNameForOrder,
                         CreatedDate = DateTime.Now,
-                        Status = 0,            // Đơn mới / đang xử lý
+                        Status = 0,
                         TableId = tableId,
-                        ShippingCost = 0            // tại quán không ship
+                        ShippingCost = 0            
                     };
 
                     _dataContext.Orders.Add(orderItem);
@@ -86,7 +86,6 @@ namespace QuanLyNhaHangDemo.Controllers
             }
             else
             {
-                // 4. CUSTOMER (online) → luôn tạo đơn mới
                 var ordercode = Guid.NewGuid().ToString();
                 decimal shippingPrice = 0;
 
@@ -103,6 +102,7 @@ namespace QuanLyNhaHangDemo.Controllers
                     UserName = userNameForOrder,
                     CreatedDate = DateTime.Now,
                     Status = 0,
+
                     ShippingCost = shippingPrice,
                     TableId = null
                 };
@@ -152,15 +152,13 @@ namespace QuanLyNhaHangDemo.Controllers
 
             await _dataContext.SaveChangesAsync();
 
-            // 7. Nếu là order tại bàn và MỚI tạo → cập nhật trạng thái bàn
             if (!isCustomer && tableId.HasValue && isNewOrder)
             {
-                var table = await _dataContext.tableModels.FindAsync(tableId.Value);
+                var table = await _dataContext.Table.FindAsync(tableId.Value);
                 if (table != null)
                 {
                     table.Status = TableStatus.Serving;
-                    table.CurrentOrderCode = orderCode;
-                    _dataContext.tableModels.Update(table);
+                    _dataContext.Table.Update(table);
                     await _dataContext.SaveChangesAsync();
                 }
             }
@@ -168,12 +166,11 @@ namespace QuanLyNhaHangDemo.Controllers
             // 8. Xóa cart khỏi session
             HttpContext.Session.Remove("Cart");
 
-            // 9. Gửi email
             if (isCustomer && isNewOrder)
             {
                 // Link xem hóa đơn online cho khách
                 var invoiceUrl = Url.Action(
-                    action: "ViewOrder",       // action xem chi tiết đơn/hoá đơn cho customer
+                    action: "ViewOrder",       
                     controller: "Order",
                     values: new { ordercode = orderCode },
                     protocol: Request.Scheme
@@ -204,14 +201,13 @@ namespace QuanLyNhaHangDemo.Controllers
 
             TempData["success"] = "Đặt món thành công";
 
-            // 10. Chuyển trang
             if (isCustomer)
             {
-                return RedirectToAction("History", "Account");   // khách xem lịch sử
+                return RedirectToAction("History", "Account");   
             }
             else
             {
-                return RedirectToAction("Index", "Table");       // waiter/admin quay lại sơ đồ bàn
+                return RedirectToAction("Index", "Table");    
             }
         }
     }

@@ -21,13 +21,17 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         
         public async Task<IActionResult> Index()
         {
-            return View(await _dataContext.Categories.OrderByDescending(p => p.Id).ToListAsync());
+            return View(await _dataContext.Categories.OrderByDescending(p => p.Id).Include(p=>p.Kitchen).ToListAsync());
         }
 
 
         [HttpGet]
         public IActionResult Create()
         {
+            var kitchen = _dataContext.Kitchen
+                .OrderBy(k => k.Name)
+                .ToList();
+            ViewBag.Kitchens = new SelectList(kitchen, "Id", "Name");
             return View();
         }
         
@@ -35,6 +39,14 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategoryModel category)
         {
+            ViewBag.Kitchens = await _dataContext.Kitchen
+                .OrderBy(k => k.Name)
+                .Select(k => new SelectListItem
+                {
+                    Value = k.Id.ToString(),
+                    Text = k.Name
+                })
+                .ToListAsync();
             if (ModelState.IsValid)
             {
 
@@ -70,6 +82,10 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int Id)
         {
+            var kitchen = _dataContext.Kitchen
+                .OrderBy(k => k.Name)
+                .ToList();
+            ViewBag.Kitchens = new SelectList(kitchen, "Id", "Name");
             CategoryModel category = await _dataContext.Categories.FindAsync(Id);
             return View(category);
         }

@@ -18,6 +18,7 @@
             <th>Shipping Cost</th>
             <th>User Name</th>
             <th>Order Date</th>
+            <th>Timer</th>
             <th>Order Status</th>
             <th>Delete</th>
             <th>Action</th>
@@ -33,6 +34,11 @@
                 <td>@item.ShippingCost.ToString("#,##0 VND")</td>
                 <td>@item.UserName</td>
                 <td>@item.CreatedDate</td>
+                <td>
+                    <span class="timer"
+                          data-start="@item.CreatedDate.ToString("O")">
+                    </span>
+                </td>
                 <td>
                     @if (item.Status == 0)
                     {
@@ -80,3 +86,23 @@
         }
     </tbody>
 </table>
+@section Scripts {
+    <script>
+        setInterval(() => {
+            document.querySelectorAll('.timer').forEach(el => {
+                const start = new Date(el.dataset.start);
+                const now = new Date();
+                const diff = Math.floor((now - start) / 1000);
+
+                const m = Math.floor(diff / 60);
+                const s = diff % 60;
+
+                el.innerText = `⏱️ ${m}p ${s}s`;
+
+                if (m >= 20) el.style.color = "red";
+                else if (m >= 10) el.style.color = "orange";
+            });
+        }, 1000);
+    </script>
+
+}

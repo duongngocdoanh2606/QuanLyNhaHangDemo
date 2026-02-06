@@ -14,5 +14,6 @@ namespace QuanLyNhaHangDemo.Models
         public string Slug { get; set; }
 
         public int Status { get; set; }
+        public ICollection<SupplierModel> suppliers { get; set; }
     }
 }

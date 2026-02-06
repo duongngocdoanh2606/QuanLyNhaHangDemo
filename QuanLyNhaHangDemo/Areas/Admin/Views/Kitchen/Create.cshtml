@@ -1,0 +1,25 @@
+﻿@model KitchenModel
+
+<h3>➕ Thêm khu bếp</h3>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label>Tên bếp</label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Thứ tự ưu tiên (SortOrder)</label>
+        <input asp-for="SortOrder" type="number" class="form-control" />
+    </div>
+
+    <div class="form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label class="form-check-label">Hoạt động</label>
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-success">Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

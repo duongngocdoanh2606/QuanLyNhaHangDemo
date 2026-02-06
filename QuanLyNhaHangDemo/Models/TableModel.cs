@@ -11,8 +11,9 @@
     {
         public int Id { get; set; }
         public string TableName { get; set; }
+       
         public TableStatus Status { get; set; } = TableStatus.Empty;
+        public int Capacity { get; set; }
 
-        public string? CurrentOrderCode { get; set; } // order đang gắn với bàn
     }
 }

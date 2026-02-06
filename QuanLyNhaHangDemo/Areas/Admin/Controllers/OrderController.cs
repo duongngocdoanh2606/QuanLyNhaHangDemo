@@ -250,7 +250,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             string tableInfo;
             if (order.TableId.HasValue)
             {
-                var table = await _dataContext.tableModels
+                var table = await _dataContext.Table
                     .FirstOrDefaultAsync(t => t.Id == order.TableId.Value);
 
                 // Nếu có bàn → in số bàn

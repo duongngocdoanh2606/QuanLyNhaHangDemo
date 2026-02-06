@@ -1,140 +1,232 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    var c = ViewContext.RouteData.Values["controller"]?.ToString();
+    var a = ViewContext.RouteData.Values["action"]?.ToString();
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <title>@ViewData["Title"] - Admin Areas</title>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Admin</title>
 
-    <link href="~/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
-    <link href="//cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/buttons/3.1.1/css/buttons.dataTables.css" rel="stylesheet">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
-    <link href="~/css/prettyPhoto.css" rel="stylesheet">
-    <link href="~/css/price-range.css" rel="stylesheet">
-    <link href="~/css/animate.css" rel="stylesheet">
-    <link href="~/css/main.css" rel="stylesheet">
-    <link href="~/css/responsive.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!--[if lt IE 9]>
-    <script src="js/html5shiv.js"></script>
-    <script src="js/respond.min.js"></script>
-    <![endif]-->
-    <link rel="shortcut icon" href="images/ico/favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/ico/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="images/ico/apple-touch-icon-57-precomposed.png">
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/admin-layout.css" />
+    <link rel="stylesheet" href="~/css/admin-sidebar.css" />
+    <link rel="stylesheet" href="~/css/admin-responsive.css" />
 </head>
 
 <body>
 
-    <div class="header-bottom">
-        <!--header-bottom-->
-        <div class="container">
-            <div class="row">
-                <div class="col-sm-9">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                            <span class="sr-only">Toggle navigation</span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-                    </div>
-                    <div class="mainmenu pull-left">
-                        <ul class="nav navbar-nav collapse navbar-collapse">
-                            <li><a asp-area="" asp-action="Index" asp-controller="Home">Homepage</a></li>
-                            <li><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
-                            <li><a asp-action="Index" asp-controller="Slider">Sliders</a></li>
-                            <li><a asp-action="Index" asp-controller="Product">Products</a></li>
-                            <li><a asp-action="Index" asp-controller="Category">Categories</a></li>
-                            <li><a asp-action="Index" asp-controller="Brand">Brands</a></li>
-                            <li><a asp-action="Index" asp-controller="User">Users</a></li>
-                            <li><a asp-action="Index" asp-controller="Role">Roles</a></li>
-                            <li><a asp-action="Index" asp-controller="Order">Orders</a></li>
-                            <li><a asp-action="Index" asp-controller="Shipping">Shipping</a></li>
-                            <li><a asp-action="Index" asp-controller="TableAdmin">Table</a></li>
-                            <li><a asp-action="Index" asp-controller="Warehouse">Warehouse</a></li>
-                            <li>
-                                <a asp-area="Admin" asp-controller="ReservationAdmin" asp-action="Index">
-                                    Đơn đặt bàn
-                                </a>
-                            </li>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a class="logo" href="#">
+                <i class="fas fa-tachometer-alt"></i> Admin
+            </a>
+        </div>
 
-                            @* Dropdown Kitchen chia 3 khu *@
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    Kitchen <b class="caret"></b>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a asp-area="Admin" asp-controller="Kitchen" asp-action="KhaiVi">
-                                            Khu bếp khai vị
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a asp-area="Admin" asp-controller="Kitchen" asp-action="MonChinh">
-                                            Khu bếp món chính
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a asp-area="Admin" asp-controller="Kitchen" asp-action="DoUong">
-                                            Khu đồ uống
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
+        <div class="sidebar-menu">
 
-                        </ul>
+            <div class="menu-title">Main</div>
+
+            <a class="nav-link @(c == "Home" ? "active" : "")"
+               asp-area=""
+               asp-controller="Home"
+               asp-action="Index">
+                <i class="fas fa-home"></i> Home
+            </a>
+
+            <a class="nav-link @(c == "Product" ? "active" : "")"
+               asp-controller="Product" asp-action="Index">
+                <i class="fas fa-box"></i> Products
+            </a>
+
+            <a class="nav-link d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               href="#restaurantMenu"
+               role="button"
+               aria-expanded="false">
+
+                <span>
+                    <i class="fas fa-utensils"></i> Restaurant
+                </span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+
+            <div class="collapse @(area == "Admin" && (c == "TableAdmin" || c == "Kitchen" || c == "Warehouse") ? "show" : "")"
+                 id="restaurantMenu">
+
+                <a class="nav-link ms-4 @(c == "TableAdmin" ? "active" : "")"
+                   asp-area="Admin" asp-controller="TableAdmin" asp-action="Index">
+                    <i class="fas fa-chair"></i> Tables
+                </a>
+
+                <a class="nav-link ms-4 @(c == "Kitchen" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Kitchen" asp-action="Index">
+                    <i class="fas fa-utensils"></i> Kitchen
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Warehouse" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Warehouse" asp-action="Index">
+                    <i class="fas fa-warehouse"></i> Warehouse
+                </a>
+            </div>
+
+            <a class="nav-link d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               href="#ManagerUser"
+               role="button"
+               aria-expanded="false">
+
+                <span>
+                    <i class="fas fa-user"></i> User
+                </span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+
+            <div class="collapse @(area == "Admin" && (c == "User" || c == "Role" || c == "Supplier" || c == "Brand") ? "show" : "")"
+                 id="ManagerUser">
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Role" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Role" asp-action="Index">
+                    <i class="fas fa-id-badge"></i> Role
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "User" ? "active" : "")"
+                   asp-area="Admin" asp-controller="User" asp-action="Index">
+                    <i class="fas fa-users-cog"></i> User
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Supplier" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Supplier" asp-action="Index">
+                    <i class="fas fa-handshake"></i> Supplier
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Brand" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Brand" asp-action="Index">
+                    <i class="fas fa-tags"></i> Brand
+                </a>
+
+            </div>
+
+
+
+            <a class="nav-link d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               href="#Receipt"
+               role="button"
+               aria-expanded="false">
+
+                <span>
+                    <i class="fas fa-file-invoice"></i> Receipt
+                </span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+
+            <div class="collapse @(area == "Admin" && (c == "Order" || c == "Dashboard" || c == "ReservationAdmin") ? "show" : "")"
+                 id="Receipt">
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Order" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Order" asp-action="Index">
+                    <i class="fas fa-receipt"></i> Order
+                </a>
+
+                <a class="nav-link ms-4 @(c == "Dashboard" ? "active" : "")"
+                   asp-controller="Dashboard" asp-action="Index">
+                    <i class="fas fa-chart-bar"></i> Dashboard
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "ReservationAdmin" ? "active" : "")"
+                   asp-area="Admin" asp-controller="ReservationAdmin" asp-action="Index">
+                    <i class="fas fa-clipboard-list"></i> Reservations
+                </a>
+            </div>
+            <a class="nav-link d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               href="#Other"
+               role="button"
+               aria-expanded="false">
+
+                <span>
+                    <i class="fas fa-exclamation-circle"></i> Other
+                </span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+
+            <div class="collapse @(area == "Admin" && (c == "Shipping" || c == "Slider" || c == "Discount" || c == "Category") ? "show" : "")"
+                 id="Other">
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Shipping" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Shipping" asp-action="Index">
+                    <i class="fas fa-truck"></i> Shipping
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Slider" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Slider" asp-action="Index">
+                    <i class="fas fa-images"></i> Slider
+                </a>
+
+                <a class="nav-link ms-4 @(area == "Admin" && c == "Discount" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Coupon" asp-action="Index">
+                    <i class="fas fa-ticket-alt"></i> Discount
+                </a>
+
+                <a class="nav-link ms-4 @(c == "Category" ? "active" : "")"
+                   asp-controller="Category" asp-action="Index">
+                    <i class="fas fa-tags"></i> Categories
+                </a>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+        <div class="content-wrapper">
+
+            <header class="header">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="sidebar-toggle" id="toggleSidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title">
+                        <h1>@ViewData["Title"]</h1>
                     </div>
                 </div>
 
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-user"></i> Admin
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item">Profile</a></li>
+                        <li><a class="dropdown-item">Logout</a></li>
+                    </ul>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    @RenderBody()
+                </div>
             </div>
+
         </div>
-    </div>
-
-    <section>
-        <div class="container">
-            <div class="row">
-                <partial name="_NotificationPartial" />
-                @RenderBody()
-            </div>
-        </div>
-    </section>
-
-    <footer id="footer">
-        <!--Footer-->
-    </footer>
-
-    <script src="~/js/jquery.js"></script>
-    <script src="~/js/bootstrap.min.js"></script>
-    <script src="~/js/jquery.scrollUp.min.js"></script>
-    <script src="~/js/price-range.js"></script>
-    <script src="~/js/jquery.prettyPhoto.js"></script>
-
-    <script src="//cdn.datatables.net/2.1.3/js/dataTables.min.js"></script>
-
-    <script src="https://cdn.datatables.net/buttons/3.1.1/js/dataTables.buttons.js"></script>
-    <script src="https://cdn.datatables.net/buttons/3.1.1/js/buttons.dataTables.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/3.1.1/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/3.1.1/js/buttons.print.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>  
-    <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
-    <script src="~/js/main.js"></script>
-    <script src="~/backend/js/site.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
+    </main>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById("toggleSidebar")?.addEventListener("click", () => {
+            document.querySelector(".sidebar").classList.toggle("show");
+        });
+    </script>
     <script>
         $(function () {
             var message = '@TempData["success"]';
@@ -143,16 +235,6 @@
         });
     </script>
 
-    <script>
-        let table = new DataTable('#myTable', {
-            layout: {
-                topStart: {
-                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
-                }
-            }
-        });
-    </script>
-
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", false)
 </body>
 </html>

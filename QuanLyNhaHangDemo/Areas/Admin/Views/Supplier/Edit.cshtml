@@ -1,0 +1,51 @@
+﻿@model QuanLyNhaHangDemo.Models.ViewModels.SupplierViewModel
+
+<h2>Thêm nhà cung cấp</h2>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" asp-for ="Supplier.SupplierId" />
+
+    <div class="form-group">
+        <label>Tên nhà cung cấp</label>
+        <input asp-for="Supplier.SupplierName" class="form-control" />
+        <span asp-validation-for="Supplier.SupplierName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input asp-for="Supplier.SupplierEmail" class="form-control" />
+        <span asp-validation-for="Supplier.SupplierEmail" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Địa chỉ</label>
+        <input asp-for="Supplier.SupplierAddress" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Thương hiệu</label>
+        <select asp-for="Supplier.BrandId"
+                asp-items="Model.Brands"
+                class="form-control">
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Trạng thái</label>
+        <select asp-for="Supplier.Status" class="form-control">
+            <option value="Active">Hoạt động</option>
+            <option value="Inactive">Ngừng</option>
+        </select>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-success">Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

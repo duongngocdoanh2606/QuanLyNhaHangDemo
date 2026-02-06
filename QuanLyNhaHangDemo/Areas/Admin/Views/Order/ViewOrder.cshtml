@@ -44,19 +44,19 @@
                     <td>@item.Quantity</td>
                     <td>@subtotal.ToString("#,##0 VNĐ")</td>
                     <td>
-                        @if (item.Status == 0)
+                        @if (item.Status == StatusProduct.Pending)
                         {
                             <span class="text text-success">Đang Chuẩn Bị</span>
                         }
-                        else if (item.Status == 1)
+                        else if (item.Status == StatusProduct.Cooking)
                         {
                             <span class="text text-warning">Đang chế biến</span>
                         }
-                        else if (item.Status == 2)
+                        else if (item.Status == StatusProduct.Done)
                         {
                             <span class="text text-primary">Hoàn Thành</span>
                         }
-                        else if (item.Status == 3)
+                        else if (item.Status == StatusProduct.Cancelled)
                         {
                             <span class="text text-danger">Đã Hủy</span>
                         }

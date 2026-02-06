@@ -16,6 +16,7 @@
             <th>Tồn kho</th>
             <th>Ngưỡng cảnh báo</th>
             <th>Đơn giá nhập mới nhất</th>
+            <th>Đơn vị cung cấp</th>
             <th>Trạng thái</th>
             <th width="180px">Hành động</th>
         </tr>
@@ -41,6 +42,7 @@
                         <span class="text-muted">Chưa có</span>
                     }
                 </td>
+                <td>@m.Supplier.SupplierName</td>
                 <td>
                     @if (m.Status == 1)
                     {

@@ -19,7 +19,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var tables = await _context.tableModels.ToListAsync();
+            var tables = await _context.Table.ToListAsync();
             return View(tables);
         }
 
@@ -40,7 +40,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
             table.Status = TableStatus.Empty;
 
-            _context.tableModels.Add(table);
+            _context.Table.Add(table);
             TempData["success"] = "Thêm bàn thành công";
             await _context.SaveChangesAsync();
             return RedirectToAction("Index");
@@ -50,7 +50,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
-            var table = await _context.tableModels.FindAsync(id);
+            var table = await _context.Table.FindAsync(id);
             if (table == null) return NotFound();
 
             return View(table);
@@ -76,10 +76,10 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var table = await _context.tableModels.FindAsync(id);
+            var table = await _context.Table.FindAsync(id);
             if (table == null) return NotFound();
 
-            _context.tableModels.Remove(table);
+            _context.Table.Remove(table);
             TempData["success"] = "Xóa bàn thành công";
             await _context.SaveChangesAsync();
             return RedirectToAction("Index");

@@ -21,11 +21,8 @@ namespace QuanLyNhaHangDemo.Controllers
         public async Task<IActionResult> Details(int id)
         {
             if (id == 0) return RedirectToAction("Index");
-
-            // Lấy sản phẩm + Category + Brand + Ratings
             var product = await _dataContext.Products
                 .Include(p => p.Category)
-                .Include(p => p.Brand)
                 .Include(p => p.Ratings)
                 .FirstOrDefaultAsync(p => p.Id == id);
 

@@ -1,0 +1,13 @@
+﻿@model KitchenModel
+
+<h3 class="text-danger">🗑️ Xóa khu bếp</h3>
+
+<p>Bạn có chắc muốn xóa bếp:</p>
+<strong>@Model.Name</strong>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <br />
+    <button type="submit" class="btn btn-danger">Xóa</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

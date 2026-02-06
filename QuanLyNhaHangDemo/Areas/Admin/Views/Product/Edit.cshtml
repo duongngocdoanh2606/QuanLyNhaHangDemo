@@ -28,13 +28,7 @@
             </select>
             <span asp-validation-for="CategoryId" class="text-danger" />
         </div>
-        <div class="form-group">
-            <label>Brand Id</label>
-            <select asp-for="BrandId" class="form-control" asp-items="ViewBag.Brands">
-                <option>--Choose a Brands--</option>
-            </select>
-            <span asp-validation-for="BrandId" class="text-danger" />
-        </div>
+        
         <div class="form-group">
             <label>Image</label>
             <input asp-for="ImageUpLoad" class="form-control" />

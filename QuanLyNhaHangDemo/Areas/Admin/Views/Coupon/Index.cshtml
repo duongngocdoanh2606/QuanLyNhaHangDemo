@@ -1,0 +1,52 @@
+﻿@model IEnumerable<CouponModel>
+
+<h3>Coupon List</h3>
+<a asp-action="Create" class="btn btn-primary mb-2">Add Coupon</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Discount</th>
+            <th>Time</th>
+            <th>Usage</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Code</td>
+                <td>@item.Name</td>
+                <td>
+                    @if (item.DiscountType == DiscountTypeEnum.Percentage)
+                    {
+                        <span>@item.DiscountValue % (Max: @item.MaxDiscountAmount?.ToString("N0"))</span>
+                    }
+                    else
+                    {
+                        <span>@item.DiscountValue.ToString("N0") VNĐ</span>
+                    }
+                </td>
+                <td>
+                    @item.StartDate.ToShortDateString()
+                    -
+                    @item.EndDate.ToShortDateString()
+                </td>
+                <td>@item.UsedCount / @item.UsageLimit</td>
+                <td>
+                    @(item.IsActive ? "Active" : "Inactive")
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id"
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('Xóa coupon này?')">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

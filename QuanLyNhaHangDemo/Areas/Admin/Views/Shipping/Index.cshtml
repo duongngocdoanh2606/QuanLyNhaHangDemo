@@ -1,7 +1,4 @@
 ﻿@model QuanLyNhaHangDemo.Models.ShippingModel
-@{
-    ViewData["title"] = "Create Shipping";
-}
 <style type="text/css">
     .css_select_div{ text-align: center;}
     .css_select{ display: inline-table; width: 25%; padding: 5px; margin: 5px 2%; border: solid 1px #686868; border-radius: 5px;}
@@ -31,7 +28,6 @@
             <button type="button" class="btn btn-primary btn-add-shipping">Create</button>
         </div>
     
-    <a asp-action="Index" asp-controller="Shipping">Back to List Shipping</a>
     <h2>Shipping List</h2>
     <table class="table table-striped" id="myTable">
         <thead>
@@ -63,31 +59,57 @@
     }
     <script>
         $(".btn-add-shipping").click(function () {
-            var tinh = $("#tinh").find('option:selected').text();
-            var quan = $("#quan").find('option:selected').text();
+            var tinh = $("#tinh option:selected").text();
+            var quan = $("#quan option:selected").text();
             var price = $("#price-shipping").val();
 
-            if (tinh == '' || quan == '' || price == '') {
+            if (tinh === 'Tỉnh Thành' || quan === 'Phường Xã' || price === '') {
                 Swal.fire("Vui lòng nhập đầy đủ thông tin.");
-            } else {
-                $.ajax({
-                    type: "POST",
-                    url: '@Url.Action("StoreShipping", "Shipping")',
-                    data: { tinh: tinh, quan: quan, price: price },
-                    success: function (result) {
-                        if (result.success) {
-                            Swal.fire("Thêm phí vận chuyển thành công.");
-                        } else if (result.duplicate) {
-                            Swal.fire("Thêm phí vận chuyển thất bại (trùng dữ liệu).");
-                        }
-                    },
-                    error: function () {
-                        Swal.fire("Lỗi server!");
-                    }
-                });
+                return;
             }
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("StoreShipping", "Shipping")',
+                data: { tinh: tinh, quan: quan, price: price },
+                success: function (result) {
+
+                    if (result.success) {
+
+                        var row = `
+                            <tr>
+                                <td>${result.data.city}</td>
+                                <td>${result.data.district}</td>
+                                <td>${result.data.price} VNĐ</td>
+                                <td>
+                                    <a href="/Admin/Shipping/Delete/${result.data.id}"
+                                       class="btn btn-danger btn-sm confirmDeletion">
+                                       Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+
+                        $("#myTable tbody").append(row);
+
+                        Swal.fire("Thêm phí vận chuyển thành công.");
+
+                        // reset form
+                        $("#price-shipping").val('');
+                        $("#tinh").val(0);
+                        $("#quan").html('<option value="0">Phường Xã</option>');
+                    }
+                    else if (result.duplicate) {
+                        Swal.fire("Thêm phí vận chuyển thất bại (trùng dữ liệu).");
+                    }
+                },
+                error: function () {
+                    Swal.fire("Lỗi server!");
+                }
+            });
         });
     </script>
+
 
 
     <script>

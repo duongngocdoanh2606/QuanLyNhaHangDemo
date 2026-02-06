@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
+using QuanLyNhaHangDemo.Models.ViewModels;
 using QuanLyNhaHangDemo.Repository;
 
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
@@ -18,12 +20,11 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         // 1. Danh sách nguyên liệu
         public async Task<IActionResult> Index()
         {
-            // Lấy tất cả nguyên liệu
             var materials = await _dataContext.Materials
+                .Include(m=>m.Supplier)
                 .OrderBy(m => m.Name)
                 .ToListAsync();
 
-            // Lấy tất cả các giao dịch nhập kho (Type == "IN")
             var transactions = await _dataContext.InventoryTransactions
                 .Where(t => t.Type == "IN")
                 .ToListAsync();
@@ -56,6 +57,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
             // Truyền giá trị vào ViewBag để hiển thị trong View
             ViewBag.LatestPriceByMaterial = latestPriceByMaterial;
+            
 
             return View(materials);
         }
@@ -65,23 +67,65 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult CreateMaterial()
         {
-            return View();
+            var vm = new CreateMaterialViewModel
+            {
+                Material = new MaterialModel(),
+                Brands = _dataContext.Brands
+                    .Select(b => new SelectListItem
+                    {
+                        Value = b.Id.ToString(),
+                        Text = b.Name
+                    }).ToList(),
+                Suppliers = new List<SelectListItem>() // ban đầu rỗng
+            };
+
+            return View(vm);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateMaterial(MaterialModel model)
+        public async Task<IActionResult> CreateMaterial(CreateMaterialViewModel vm)
         {
             if (!ModelState.IsValid)
-                return View(model);
+                return View(vm);
 
-            model.CurrentQuantity = 0;
-            _dataContext.Materials.Add(model);
-            await _dataContext.SaveChangesAsync();
+            using var transaction = await _dataContext.Database.BeginTransactionAsync();
 
-            TempData["success"] = "Thêm nguyên liệu thành công";
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                vm.Material.CurrentQuantity = vm.InitialQuantity;
+
+                _dataContext.Materials.Add(vm.Material);
+                await _dataContext.SaveChangesAsync();
+
+                var inventory = new InventoryTransactionModel
+                {
+                    MaterialId = vm.Material.Id,
+                    DateCreated = DateTime.Now,
+                    Quantity = vm.InitialQuantity,
+                    UnitPrice = vm.UnitPrice,
+                    TotalPrice = vm.InitialQuantity * vm.UnitPrice,
+                    Type = "IN", 
+                    Note = vm.Note
+                };
+
+                _dataContext.InventoryTransactions.Add(inventory);
+                await _dataContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                TempData["success"] = "Tạo nguyên liệu và nhập kho ban đầu thành công";
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError("", "Có lỗi khi lưu dữ liệu");
+                return View(vm);
+            }
         }
+
 
         // 3. Sửa nguyên liệu
         [HttpGet]
@@ -270,5 +314,20 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
             return View();
         }
+        [HttpGet]
+        public IActionResult GetSuppliersByBrand(int brandId)
+        {
+            var suppliers = _dataContext.Suppliers
+                .Where(s => s.BrandId == brandId)
+                .Select(s => new
+                {
+                    id = s.SupplierId,
+                    name = s.SupplierName
+                })
+                .ToList();
+
+            return Json(suppliers);
+        }
+
     }
 }

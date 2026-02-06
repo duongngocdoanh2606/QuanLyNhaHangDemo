@@ -21,8 +21,7 @@ namespace QuanLyNhaHangDemo.Controllers
         {
             var products = _dataContext.Products
                             .Include(p => p.Category)
-                            .Include(p => p.Brand)
-                            .Where(p =>p.Category.Status == 1 && p.Brand.Status == 1)
+                            .Where(p =>p.Category.Status == 1)
                             .OrderByDescending(p => p.Id)
                             .ToList();
             var sliders = _dataContext.Sliders.Where(s => s.Status == 1).ToList();

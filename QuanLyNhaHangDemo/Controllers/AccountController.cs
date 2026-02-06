@@ -223,7 +223,7 @@ namespace QuanLyNhaHangDemo.Controllers
                 foreach (var d in details)
                 {
                     // quy ước: 3 = Hủy món
-                    d.Status = 3;
+                    d.Status = (StatusProduct)3;
                 }
 
                 _dataContext.Orders.Update(order);

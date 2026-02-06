@@ -28,11 +28,27 @@ namespace QuanLyNhaHangDemo.Repository
         public DbSet<InventoryTransactionModel> InventoryTransactions { get; set; }
         public DbSet<ProductMaterialModel> ProductMaterials { get; set; }
 
-        public DbSet<UserModel> userModels { get; set; }
+        public DbSet<UserModel> User { get; set; }
 
-        public DbSet<TableModel> tableModels { get; set; }
+        public DbSet<TableModel> Table { get; set; }
         public DbSet<ReservationModel> Reservations { get; set; }
 
+        public DbSet<SupplierModel> Suppliers { get; set; }
+        public DbSet<CouponModel> Coupon { get; set; }
+        public DbSet<KitchenModel> Kitchen { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            
+
+            modelBuilder.Entity<MaterialModel>()
+                .HasOne(m => m.Supplier)
+                .WithMany(s=>s.Materials)
+                .HasForeignKey(m => m.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict); // ⛔ NO CASCADE
+        }
 
 
     }

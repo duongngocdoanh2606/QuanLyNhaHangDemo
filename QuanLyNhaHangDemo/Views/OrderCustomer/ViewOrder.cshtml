@@ -8,17 +8,7 @@
     decimal shipping = (decimal)ViewBag.Shipping;
     decimal grand = (decimal)ViewBag.GrandTotal;
 
-    // 🟢 Hàm helper đổi status món -> text
-    string GetItemStatusText(int status)
-    {
-        return status switch
-        {
-            0 => "Đang chuẩn bị",
-            1 => "Đang chế biến",
-            2 => "Hoàn thành",
-            _ => "Không xác định"
-        };
-    }
+    
 }
 
 <h3>Chi tiết đơn hàng: @order.OrderCode</h3>
@@ -91,3 +81,16 @@
 <a class="btn btn-secondary" asp-controller="Account" asp-action="History">
     ← Quay lại lịch sử đơn
 </a>
+@functions {
+    string GetItemStatusText(StatusProduct status)
+    {
+        return status switch
+        {
+            StatusProduct.Pending => "⏳ Chờ làm",
+            StatusProduct.Cooking => "🔥 Đang nấu",
+            StatusProduct.Done => "✅ Hoàn thành",
+            StatusProduct.Cancelled => "❌ Đã hủy",
+            _ => "Không xác định"
+        };
+    }
+}

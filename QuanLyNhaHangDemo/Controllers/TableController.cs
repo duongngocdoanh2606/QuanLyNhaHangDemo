@@ -18,7 +18,7 @@ namespace QuanLyNhaHangDemo.Controllers
         // /Table/Index – hiển thị sơ đồ bàn
         public async Task<IActionResult> Index()
         {
-            var tables = await _context.tableModels
+            var tables = await _context.Table
                                        .OrderBy(t => t.Id)
                                        .ToListAsync();
             return View(tables);
@@ -26,7 +26,7 @@ namespace QuanLyNhaHangDemo.Controllers
 
         public async Task<IActionResult> Choose(int tableId)
         {
-            var table = await _context.tableModels.FindAsync(tableId);
+            var table = await _context.Table.FindAsync(tableId);
             if (table == null) return NotFound();
 
             HttpContext.Session.SetInt32("CurrentTableId", tableId);
@@ -34,47 +34,12 @@ namespace QuanLyNhaHangDemo.Controllers
             if (table.Status == TableStatus.Empty)
             {
                 table.Status = TableStatus.Serving;
-                _context.tableModels.Update(table);
+                _context.Table.Update(table);
                 await _context.SaveChangesAsync();
             }
 
             return RedirectToAction("Index", "Home");
         }
-        [HttpGet]
-        public async Task<IActionResult> ViewOrderAtTable(int tableId)
-        {
-            var table = await _context.tableModels.FindAsync(tableId);
-            if (table == null) return NotFound();
-
-            // Ưu tiên CurrentOrderCode nếu đã set
-            string? orderCode = table.CurrentOrderCode;
-
-            if (string.IsNullOrEmpty(orderCode))
-            {
-                // Nếu chưa có, tìm đơn đang mở của bàn này
-                var order = await _context.Orders
-                    .Where(o => o.TableId == tableId &&
-                                o.Status != 2 &&   // != Hoàn thành
-                                o.Status != 5)     // != Hủy (nếu có)
-                    .OrderByDescending(o => o.CreatedDate)
-                    .FirstOrDefaultAsync();
-
-                if (order == null)
-                {
-                    TempData["error"] = "Bàn này chưa có đơn hàng nào đang mở.";
-                    return RedirectToAction("Index");
-                }
-
-                orderCode = order.OrderCode;
-            }
-
-            // 👉 Nhảy thẳng sang Admin/Order/ViewOrder (ở đó có nút In hóa đơn)
-            return RedirectToAction(
-                actionName: "ViewOrder",
-                controllerName: "Order",
-                routeValues: new { area = "Admin", ordercode = orderCode }
-            );
-
-        }
+        
     }
 }

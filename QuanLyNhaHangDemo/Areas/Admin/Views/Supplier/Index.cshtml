@@ -1,0 +1,36 @@
+﻿@model IEnumerable<SupplierModel>
+
+<h2>Danh sách nhà cung cấp</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Thêm mới</a>
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Tên</th>
+            <th>Email</th>
+            <th>Địa chỉ</th>
+            <th>Thương hiệu</th>
+            <th>Trạng thái</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.SupplierName</td>
+                <td>@item.SupplierEmail</td>
+                <td>@item.SupplierAddress</td>
+                <td>@item.Brand.Name</td>
+                <td>@item.Status</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.SupplierId">Sửa</a> |
+                    <a asp-action="Delete" asp-route-id="@item.SupplierId">Xoá</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
