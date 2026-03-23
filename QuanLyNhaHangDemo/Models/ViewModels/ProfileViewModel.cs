@@ -13,5 +13,10 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
         public string Email { get; set; }    // không cho sửa nếu muốn
 
         public string PhoneNumber { get; set; }
+
+        public string Address { get; set; }
+        
+
     }
+
 }
