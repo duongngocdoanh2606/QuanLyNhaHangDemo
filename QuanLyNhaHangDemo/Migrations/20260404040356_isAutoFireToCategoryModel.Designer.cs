@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuanLyNhaHangDemo.Repository;
 
@@ -11,9 +12,10 @@ using QuanLyNhaHangDemo.Repository;
 namespace QuanLyNhaHangDemo.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260404040356_isAutoFireToCategoryModel")]
+    partial class isAutoFireToCategoryModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -167,9 +169,6 @@ namespace QuanLyNhaHangDemo.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -227,6 +226,33 @@ namespace QuanLyNhaHangDemo.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.BrandModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Slug")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Brands");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.CategoryModel", b =>
@@ -744,7 +770,7 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SupplierId"), 1L, 1);
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int>("BrandId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -764,7 +790,7 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     b.HasKey("SupplierId");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("BrandId");
 
                     b.ToTable("Suppliers");
                 });
@@ -986,13 +1012,18 @@ namespace QuanLyNhaHangDemo.Migrations
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.SupplierModel", b =>
                 {
-                    b.HasOne("QuanLyNhaHangDemo.Models.CategoryModel", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
+                    b.HasOne("QuanLyNhaHangDemo.Models.BrandModel", "Brand")
+                        .WithMany("suppliers")
+                        .HasForeignKey("BrandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Category");
+                    b.Navigation("Brand");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.BrandModel", b =>
+                {
+                    b.Navigation("suppliers");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.KitchenModel", b =>

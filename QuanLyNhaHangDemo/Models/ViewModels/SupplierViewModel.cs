@@ -5,8 +5,6 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
     public class SupplierViewModel
     {
         public SupplierModel Supplier { get; set; }
-
-        // Dropdown Brand
-        public List<SelectListItem> Brands { get; set; }
+        public List<SelectListItem> Categories { get; set; }
     }
 }

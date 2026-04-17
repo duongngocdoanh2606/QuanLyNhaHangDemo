@@ -33,13 +33,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             var activeCategories = _dataContext.Categories
                 .Where(c => c.Status == 1)        // chỉ lấy category đang hiện
                 .ToList();
-
-            var activeBrands = _dataContext.Brands
-                .Where(b => b.Status == 1)        // nếu bạn cũng có Status cho Brand
-                .ToList();
-
             ViewBag.Categories = new SelectList(activeCategories, "Id", "Name");
-            ViewBag.Brands = new SelectList(activeBrands, "Id", "Name");
 
             return View();
         }
@@ -51,10 +45,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             var activeCategories = _dataContext.Categories
                 .Where(c => c.Status == 1)
         .       ToList();
-
-            var activeBrands = _dataContext.Brands
-                .Where(b => b.Status == 1)
-                .ToList();
             ViewBag.Categories = new SelectList(_dataContext.Categories, "Id", "Name", product.CategoryId);
 
 
@@ -110,10 +100,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             var activeCategories = _dataContext.Categories
                 .Where(c => c.Status == 1)
                 .ToList();
-
-            var activeBrands = _dataContext.Brands
-                .Where(b => b.Status == 1)
-                .ToList();
             ViewBag.Categories = new SelectList(_dataContext.Categories, "Id", "Name", product.CategoryId);
 
             return View(product);
@@ -123,7 +109,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         public async Task<IActionResult> Edit(ProductModel product)
         {
             var activeCategories = _dataContext.Categories.Where(c => c.Status == 1).ToList();
-            var activeBrands = _dataContext.Brands.Where(b => b.Status == 1).ToList();
             ViewBag.Categories = new SelectList(_dataContext.Categories, "Id", "Name", product.CategoryId);
             var existed_product = _dataContext.Products.Find(product.Id);
             if (ModelState.IsValid)

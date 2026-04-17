@@ -17,9 +17,9 @@ namespace QuanLyNhaHangDemo.Models
         public string? SupplierAddress { get; set; }
         public SupplierStatus Status {  get; set; } = SupplierStatus.Active;
 
-        public int BrandId {  get; set; }
-        [ForeignKey("BrandId")]
-        public BrandModel Brand { get; set; }
+        public int CategoryId {  get; set; }
+        [ForeignKey("CategoryId")]
+        public CategoryModel Category { get; set; }
         public ICollection<MaterialModel> Materials { get; set; }
 
 

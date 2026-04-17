@@ -8,6 +8,9 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
         {
             public MaterialModel Material { get; set; }
 
+            [Display(Name = "Danh mục")]
+            public int CategoryId { get; set; }
+
             [Required]
             [Display(Name = "Số lượng nhập ban đầu")]
             public decimal InitialQuantity { get; set; }
@@ -18,7 +21,7 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
 
             [Display(Name = "Ghi chú")]
             public string? Note { get; set; }
-            public List<SelectListItem> Brands { get; set; }
+            public List<SelectListItem> Categories { get; set; }
             public List<SelectListItem> Suppliers { get; set; }
         }
 

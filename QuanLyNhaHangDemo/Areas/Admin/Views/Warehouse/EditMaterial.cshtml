@@ -1,36 +1,46 @@
-﻿@model MaterialModel
-@{
-    ViewData["Title"] = "Sửa nguyên liệu";
-}
+﻿@model QuanLyNhaHangDemo.Models.ViewModels.CreateMaterialViewModel
 
-<h3>Sửa nguyên liệu</h3>
+<h2>Sửa nguyên liệu</h2>
 
-<form asp-action="EditMaterial" method="post">
-    <input type="hidden" asp-for="Id" />
+<form asp-action="EditMaterial">
+    <input type="hidden" asp-for="Material.Id" />
 
-    <div class="form-group">
+    <div class="mb-3">
         <label>Tên</label>
-        <input asp-for="Name" class="form-control" />
+        <input asp-for="Material.Name" class="form-control" />
     </div>
 
-    <div class="form-group">
+    <div class="mb-3">
         <label>Đơn vị</label>
-        <input asp-for="Unit" class="form-control" />
+        <input asp-for="Material.Unit" class="form-control" />
     </div>
 
-    <div class="form-group">
-        <label>Ngưỡng cảnh báo</label>
-        <input asp-for="ReorderLevel" class="form-control" />
+    <select asp-for="Material.SupplierId"
+            id="supplierDropdown">
+        <option value=""></option>
+        @foreach (var item in Model.Suppliers)
+        {
+            <option value="@item.Value">@item.Text</option>
+        }
+    </select>
+
+    <div class="mb-3">
+        <label>Số lượng ban đầu</label>
+        <input asp-for="InitialQuantity" class="form-control" />
     </div>
 
-    <div class="form-group">
-        <label>Trạng thái</label>
-        <select asp-for="Status" class="form-control">
-            <option value="1">Đang dùng</option>
-            <option value="0">Ngừng dùng</option>
-        </select>
+    <div class="mb-3">
+        <label>Giá nhập</label>
+        <input asp-for="UnitPrice" class="form-control" />
     </div>
 
-    <button type="submit" class="btn btn-primary">Cập nhật</button>
-    <a asp-action="Index" class="btn btn-secondary">Trở lại</a>
+    <div class="mb-3">
+        <label>Mức cảnh báo</label>
+        <input asp-for="Material.ReorderLevel" class="form-control" />
+    </div>
+
+    <button class="btn btn-success">Cập nhật</button>
 </form>
+@section Scripts {
+    <script src="~/js/material-form.js"></script>
+}

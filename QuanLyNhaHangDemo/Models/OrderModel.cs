@@ -24,8 +24,6 @@ namespace QuanLyNhaHangDemo.Models
 
         public decimal GrandTotal {  get; set; }
 
-
-        
         public int? TableId { get; set; }      
         public TableModel? Table { get; set; }
 

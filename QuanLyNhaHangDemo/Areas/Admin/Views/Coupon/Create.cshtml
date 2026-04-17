@@ -56,3 +56,8 @@
 
     <button type="submit" class="btn btn-success">Save</button>
 </form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,62 +1,60 @@
 ﻿@model IEnumerable<QuanLyNhaHangDemo.Models.MaterialModel>
+
 @{
-    ViewData["Title"] = "Quản lý kho";
+    ViewData["Title"] = "Warehouse";
+    var prices = ViewBag.LatestPriceByMaterial as Dictionary<int, decimal>;
 }
 
-<h3>Quản lý Nguyên liệu</h3>
+<h2 class="mb-3">Danh sách nguyên liệu</h2>
 
-<a asp-action="CreateMaterial" class="btn btn-primary mb-3">+ Thêm nguyên liệu</a>
-<a asp-action="ImportHistory" class="btn btn-primary mb-3">Lịch sử nhập hàng</a>
+<a asp-action="CreateMaterial" class="btn btn-primary mb-3">
+    + Thêm nguyên liệu
+</a>
+<a asp-action="ImportHistory" class="btn btn-primary mb-3">
+    Lịch sử nhập kho
+</a>
 
-<table class="table table-bordered table-striped">
-    <thead>
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
         <tr>
             <th>Tên</th>
+            <th>Nhà cung cấp</th>
+            <th>Số lượng</th>
             <th>Đơn vị</th>
-            <th>Tồn kho</th>
-            <th>Ngưỡng cảnh báo</th>
-            <th>Đơn giá nhập mới nhất</th>
-            <th>Đơn vị cung cấp</th>
+            <th>Giá nhập gần nhất</th>
             <th>Trạng thái</th>
-            <th width="180px">Hành động</th>
+            <th width="250">Hành động</th>
         </tr>
     </thead>
     <tbody>
-        @{
-            var priceDict = ViewBag.LatestPriceByMaterial as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
-        }
-        @foreach (var m in Model)
+        @foreach (var item in Model)
         {
+            var price = prices != null && prices.ContainsKey(item.Id)
+            ? prices[item.Id]
+            : 0;
+
             <tr>
-                <td>@m.Name</td>
-                <td>@m.Unit</td>
-                <td>@m.CurrentQuantity</td>
-                <td>@m.ReorderLevel</td>
+                <td>@item.Name</td>
+                <td>@item.Supplier?.SupplierName</td>
+                <td>@item.CurrentQuantity</td>
+                <td>@item.Unit</td>
+                <td>@price.ToString("N0")</td>
                 <td>
-                    @if (priceDict.ContainsKey(m.Id))
+                    @if (item.CurrentQuantity < item.ReorderLevel)
                     {
-                        @priceDict[m.Id].ToString("N0") 
+                        <span class="badge bg-danger">Sắp hết</span>
                     }
                     else
                     {
-                        <span class="text-muted">Chưa có</span>
-                    }
-                </td>
-                <td>@m.Supplier.SupplierName</td>
-                <td>
-                    @if (m.Status == 1)
-                    {
-                        <span class="badge bg-success">Đang dùng</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">Ngừng dùng</span>
+                        <span class="badge bg-success">Ổn</span>
                     }
                 </td>
                 <td>
-                    <a asp-action="EditMaterial" asp-route-id="@m.Id" class="btn btn-sm btn-info">Sửa</a>
-                    <a asp-action="Import" asp-route-id="@m.Id" class="btn btn-sm btn-success">Nhập</a>
-                    <a asp-action="ImportHistoryTungMon" asp-route-id="@m.Id" class="btn btn-sm btn-warning">Lịch sử nhập hàng</a>
+                    <a asp-action="EditMaterial" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
+
+                    <a asp-action="Import" asp-route-id="@item.Id" class="btn btn-success btn-sm">Nhập</a>
+
+                    <a asp-action="Export" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Xuất</a>
                 </td>
             </tr>
         }

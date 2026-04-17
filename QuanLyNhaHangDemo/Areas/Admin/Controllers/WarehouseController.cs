@@ -17,71 +17,57 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             _dataContext = dataContext;
         }
 
-        // 1. Danh sách nguyên liệu
+        // ENUM thay cho string
+        public enum TransactionType
+        {
+            IN,
+            OUT
+        }
+
+        // =========================
+        // 1. DANH SÁCH NGUYÊN LIỆU
+        // =========================
         public async Task<IActionResult> Index()
         {
             var materials = await _dataContext.Materials
-                .Include(m=>m.Supplier)
+                .Include(m => m.Supplier)
                 .OrderBy(m => m.Name)
                 .ToListAsync();
 
-            var transactions = await _dataContext.InventoryTransactions
-                .Where(t => t.Type == "IN")
-                .ToListAsync();
-
-            // Tìm ngày mới nhất cho mỗi nguyên liệu và lấy đơn giá nhập kho tương ứng
-            var latestDates = transactions
+            // Lấy giá nhập mới nhất (tối ưu)
+            var latestPriceByMaterial = await _dataContext.InventoryTransactions
+                .Where(t => t.Type == TransactionType.IN.ToString())
                 .GroupBy(t => t.MaterialId)
-                .Select(g => new
-                {
-                    MaterialId = g.Key,
-                    LatestDate = g.Max(x => x.DateCreated)
-                })
-                .ToList();
+                .Select(g => g.OrderByDescending(x => x.DateCreated)
+                              .Select(x => new { x.MaterialId, x.UnitPrice })
+                              .FirstOrDefault())
+                .ToDictionaryAsync(x => x.MaterialId, x => x.UnitPrice);
 
-            // Lấy đơn giá nhập kho mới nhất cho mỗi nguyên liệu
-            var latestTxs = (from t in transactions
-                             join l in latestDates on t.MaterialId equals l.MaterialId
-                             where t.DateCreated == l.LatestDate
-                             select new
-                             {
-                                 t.MaterialId,
-                                 t.UnitPrice
-                             })
-                             .ToList();
-
-            // Chuyển đổi danh sách giao dịch mới nhất thành từ điển
-            var latestPriceByMaterial = latestTxs
-                .GroupBy(x => x.MaterialId)
-                .ToDictionary(g => g.Key, g => g.First().UnitPrice);
-
-            // Truyền giá trị vào ViewBag để hiển thị trong View
             ViewBag.LatestPriceByMaterial = latestPriceByMaterial;
-            
 
             return View(materials);
         }
 
-
-        // 2. Tạo nguyên liệu
+        // =========================
+        // 2. TẠO NGUYÊN LIỆU
+        // =========================
         [HttpGet]
         public IActionResult CreateMaterial()
         {
             var vm = new CreateMaterialViewModel
             {
                 Material = new MaterialModel(),
-                Brands = _dataContext.Brands
+                Categories = _dataContext.Categories
                     .Select(b => new SelectListItem
                     {
                         Value = b.Id.ToString(),
                         Text = b.Name
                     }).ToList(),
-                Suppliers = new List<SelectListItem>() // ban đầu rỗng
+                Suppliers = new List<SelectListItem>()
             };
 
             return View(vm);
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -106,7 +92,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     Quantity = vm.InitialQuantity,
                     UnitPrice = vm.UnitPrice,
                     TotalPrice = vm.InitialQuantity * vm.UnitPrice,
-                    Type = "IN", 
+                    Type = TransactionType.IN.ToString(),
                     Note = vm.Note
                 };
 
@@ -115,51 +101,76 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
                 await transaction.CommitAsync();
 
-                TempData["success"] = "Tạo nguyên liệu và nhập kho ban đầu thành công";
+                TempData["success"] = "Tạo nguyên liệu thành công";
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
                 await transaction.RollbackAsync();
-                ModelState.AddModelError("", "Có lỗi khi lưu dữ liệu");
+                ModelState.AddModelError("", "Lỗi khi lưu dữ liệu");
                 return View(vm);
             }
         }
 
-
-        // 3. Sửa nguyên liệu
+        // =========================
+        // 3. SỬA NGUYÊN LIỆU
+        // =========================
         [HttpGet]
         public async Task<IActionResult> EditMaterial(int id)
         {
             var material = await _dataContext.Materials.FindAsync(id);
             if (material == null) return NotFound();
 
-            return View(material);
+            // Lấy supplier hiện tại
+            var supplier = await _dataContext.Suppliers
+                .FirstOrDefaultAsync(s => s.SupplierId == material.SupplierId);
+
+            if (supplier == null) return NotFound();
+
+            // Load supplier cùng category
+            var suppliers = await _dataContext.Suppliers
+                .Where(s => s.CategoryId == supplier.CategoryId)
+                .Select(s => new SelectListItem
+                {
+                    Value = s.SupplierId.ToString(),
+                    Text = s.SupplierName
+                })
+                .ToListAsync();
+
+            var vm = new CreateMaterialViewModel
+            {
+                Material = material,
+                Suppliers = suppliers
+            };
+
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditMaterial(MaterialModel model)
+        public async Task<IActionResult> EditMaterial(CreateMaterialViewModel vm)
         {
             if (!ModelState.IsValid)
-                return View(model);
+                return View(vm);
 
-            var material = await _dataContext.Materials.FindAsync(model.Id);
+            var material = await _dataContext.Materials.FindAsync(vm.Material.Id);
             if (material == null) return NotFound();
 
-            material.Name = model.Name;
-            material.Unit = model.Unit;
-            material.ReorderLevel = model.ReorderLevel;
-            material.Status = model.Status;
+            material.Name = vm.Material.Name;
+            material.Unit = vm.Material.Unit;
+            material.SupplierId = vm.Material.SupplierId;
+            material.ReorderLevel = vm.Material.ReorderLevel;
 
-            _dataContext.Materials.Update(material);
+            _dataContext.Update(material);
             await _dataContext.SaveChangesAsync();
 
-            TempData["success"] = "Cập nhật nguyên liệu thành công";
+            TempData["success"] = "Cập nhật thành công";
             return RedirectToAction(nameof(Index));
         }
 
-        // 4. Nhập kho
+        // =========================
+        // 4. NHẬP KHO
+        // =========================
         [HttpGet]
         public async Task<IActionResult> Import(int id)
         {
@@ -168,23 +179,17 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
             ViewBag.Material = material;
 
-            // lấy đơn giá nhập mới nhất (Type == "IN") cho material này
-            var latestUnitPrice = await _dataContext.InventoryTransactions
-                .Where(t => t.MaterialId == id && t.Type == "IN")
+            var latestPrice = await _dataContext.InventoryTransactions
+                .Where(t => t.MaterialId == id && t.Type == TransactionType.IN.ToString())
                 .OrderByDescending(t => t.DateCreated)
-                .ThenByDescending(t => t.Id)
                 .Select(t => t.UnitPrice)
                 .FirstOrDefaultAsync();
 
-            var model = new InventoryTransactionModel
+            return View(new InventoryTransactionModel
             {
                 MaterialId = id,
-                DateCreated = DateTime.Now,
-                Type = "IN",
-                UnitPrice = latestUnitPrice // nếu không có giao dịch trước đó -> 0
-            };
-
-            return View(model);
+                UnitPrice = latestPrice
+            });
         }
 
         [HttpPost]
@@ -197,128 +202,124 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             if (model.Quantity <= 0)
                 ModelState.AddModelError("Quantity", "Số lượng phải > 0");
 
-            if (model.UnitPrice < 0)
-                ModelState.AddModelError("UnitPrice", "Đơn giá không hợp lệ");
-
             if (!ModelState.IsValid)
             {
                 ViewBag.Material = material;
-                model.Id = 0;
                 return View(model);
             }
-            model.Id = 0;
-            model.Type = "IN";
-            model.DateCreated = DateTime.Now;
-            model.TotalPrice = model.Quantity * model.UnitPrice;
 
-            material.CurrentQuantity += model.Quantity;
+            using var transaction = await _dataContext.Database.BeginTransactionAsync();
 
-            _dataContext.InventoryTransactions.Add(model);
-            _dataContext.Materials.Update(material);
-            await _dataContext.SaveChangesAsync();
+            try
+            {
+                material.CurrentQuantity += model.Quantity;
 
-            TempData["success"] = "Nhập kho thành công";
-            return RedirectToAction(nameof(Index));
+                model.Type = TransactionType.IN.ToString();
+                model.DateCreated = DateTime.Now;
+                model.TotalPrice = model.Quantity * model.UnitPrice;
+
+                _dataContext.InventoryTransactions.Add(model);
+                _dataContext.Materials.Update(material);
+
+                await _dataContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["success"] = "Nhập kho thành công";
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                var materialReload = await _dataContext.Materials.FindAsync(model.MaterialId);
+                ViewBag.Material = materialReload;
+
+                return View(model);
+            }
         }
 
-        // New: Lịch sử nhập kho (chỉ IN transactions)
+        // =========================
+        // 5. XUẤT KHO
+        // =========================
         [HttpGet]
-        public async Task<IActionResult> ImportHistory(DateTime? from, DateTime? to)
-        {
-            var query = _dataContext.InventoryTransactions
-                .Include(t => t.Material)  // Bao gồm thông tin nguyên liệu
-                .Where(t => t.Type == "IN")  // Chỉ lấy các giao dịch nhập kho
-                .AsQueryable();
-
-            // Lọc theo khoảng thời gian nếu có
-            if (from.HasValue)
-                query = query.Where(t => t.DateCreated >= from.Value.Date);
-            if (to.HasValue)
-                query = query.Where(t => t.DateCreated <= to.Value.Date);
-
-            var importHistory = await query
-                .OrderByDescending(t => t.DateCreated)  // Sắp xếp theo ngày nhập
-                .ThenByDescending(t => t.Id)
-                .ToListAsync();
-
-            // Tính tổng chi phí nhập kho
-            var totalImportCost = importHistory.Sum(t => t.TotalPrice);
-
-            // Trả về dữ liệu lịch sử nhập kho và tổng chi phí
-            ViewBag.TotalImportCost = totalImportCost;  // Lưu tổng chi phí nhập kho vào ViewBag
-            return View(importHistory);
-        }
-
-        // Lịch sử nhập kho (chỉ IN transactions)
-        [HttpGet]
-        public async Task<IActionResult> ImportHistoryTungMon(int id, DateTime? from, DateTime? to)
+        public async Task<IActionResult> Export(int id)
         {
             var material = await _dataContext.Materials.FindAsync(id);
             if (material == null) return NotFound();
 
-            var query = _dataContext.InventoryTransactions
-                .Where(t => t.Type == "IN" && t.MaterialId == id)
-                .AsQueryable();
+            ViewBag.Material = material;
 
-            if (from.HasValue)
-                query = query.Where(t => t.DateCreated >= from.Value.Date);
-            if (to.HasValue)
-                query = query.Where(t => t.DateCreated <= to.Value.Date);
+            return View(new InventoryTransactionModel
+            {
+                MaterialId = id
+            });
+        }
 
-            var list = await query
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Export(InventoryTransactionModel model)
+        {
+            var material = await _dataContext.Materials.FindAsync(model.MaterialId);
+            if (material == null) return NotFound();
+
+            if (model.Quantity > material.CurrentQuantity)
+                ModelState.AddModelError("", "Không đủ hàng");
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Material = material;
+                return View(model);
+            }
+
+            using var transaction = await _dataContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                material.CurrentQuantity -= model.Quantity;
+
+                model.Type = TransactionType.OUT.ToString();
+                model.DateCreated = DateTime.Now;
+
+                _dataContext.InventoryTransactions.Add(model);
+                _dataContext.Materials.Update(material);
+
+                await _dataContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["success"] = "Xuất kho thành công";
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                var materialReload = await _dataContext.Materials.FindAsync(model.MaterialId);
+                ViewBag.Material = materialReload;
+
+                return View(model);
+            }
+        }
+
+        // =========================
+        // 6. LỊCH SỬ NHẬP KHO
+        // =========================
+        public async Task<IActionResult> ImportHistory()
+        {
+            var list = await _dataContext.InventoryTransactions
+                .Include(t => t.Material)
+                .Where(t => t.Type == TransactionType.IN.ToString())
                 .OrderByDescending(t => t.DateCreated)
-                .ThenByDescending(t => t.Id)
                 .ToListAsync();
 
-            ViewBag.Material = material;
-            ViewBag.TotalImportQuantity = list.Sum(x => x.Quantity);
-            ViewBag.TotalImportCost = list.Sum(x => x.TotalPrice);
+            ViewBag.TotalCost = list.Any() ? list.Sum(x => x.TotalPrice) : 0;
 
             return View(list);
         }
-
-
-
-
-        // 6. Báo cáo doanh thu + chi phí nguyên liệu (dựa trên bảng Statisticals + InventoryTransactions)
         [HttpGet]
-        public async Task<IActionResult> RevenueReport(DateTime? from, DateTime? to)
-        {
-            var stats = _dataContext.Statisticals.AsQueryable();
-            var imports = _dataContext.InventoryTransactions
-                .Where(t => t.Type == "IN")
-                .AsQueryable();
-
-            if (from.HasValue)
-            {
-                stats = stats.Where(s => s.DateCreated >= from.Value);
-                imports = imports.Where(t => t.DateCreated >= from.Value);
-            }
-
-            if (to.HasValue)
-            {
-                stats = stats.Where(s => s.DateCreated <= to.Value);
-                imports = imports.Where(t => t.DateCreated <= to.Value);
-            }
-
-            var totalRevenue = await stats.SumAsync(s => s.Revenue);
-            var totalProfit = await stats.SumAsync(s => s.Profit);
-            var totalImportCost = await imports.SumAsync(t => t.TotalPrice);
-
-            ViewBag.From = from;
-            ViewBag.To = to;
-            ViewBag.TotalRevenue = totalRevenue;
-            ViewBag.TotalProfit = totalProfit;
-            ViewBag.TotalImportCost = totalImportCost;
-            ViewBag.NetProfit = totalRevenue - totalImportCost;
-
-            return View();
-        }
-        [HttpGet]
-        public IActionResult GetSuppliersByBrand(int brandId)
+        public IActionResult GetSuppliersByCategory(int categoryId)
         {
             var suppliers = _dataContext.Suppliers
-                .Where(s => s.BrandId == brandId)
+                .Where(s => s.CategoryId == categoryId)
                 .Select(s => new
                 {
                     id = s.SupplierId,
@@ -328,6 +329,5 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
             return Json(suppliers);
         }
-
     }
 }

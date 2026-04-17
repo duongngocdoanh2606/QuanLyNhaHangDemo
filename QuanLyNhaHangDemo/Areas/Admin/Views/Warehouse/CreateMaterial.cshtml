@@ -1,92 +1,54 @@
 ﻿@model QuanLyNhaHangDemo.Models.ViewModels.CreateMaterialViewModel
 
-@{
-    ViewData["Title"] = "Thêm nguyên liệu";
-}
+<h2>Thêm nguyên liệu</h2>
 
-<h3>Thêm nguyên liệu</h3>
-
-<form asp-action="CreateMaterial" method="post">
-    <div class="form-group">
-        <label>Tên nguyên liệu</label>
+<form asp-action="CreateMaterial">
+    <div class="mb-3">
+        <label>Tên</label>
         <input asp-for="Material.Name" class="form-control" />
-        <span asp-validation-for="Material.Name" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label>Đơn vị (kg, g, chai,...)</label>
+    <div class="mb-3">
+        <label>Đơn vị</label>
         <input asp-for="Material.Unit" class="form-control" />
     </div>
 
-    <div class="form-group">
-        <label>Ngưỡng cảnh báo</label>
-        <input asp-for="Material.ReorderLevel" type="number" step="0.1" class="form-control" />
+    <div class="mb-3">
+        <label>Danh mục</label>
+        <select id="categoryDropdown" class="form-control">
+            <option value="">-- Chọn danh mục --</option>
+            @foreach (var item in Model.Categories)
+            {
+                <option value="@item.Value">@item.Text</option>
+            }
+        </select>
     </div>
 
-    <div class="form-group">
-        <label>Số lượng nhập</label>
-        <input asp-for="InitialQuantity" type="number" step="1" class="form-control" />
+    <div class="mb-3">
+        <label>Nhà cung cấp</label>
+        <select asp-for="Material.SupplierId" id="supplierDropdown" class="form-control">
+            <option value="">-- Chọn nhà cung cấp --</option>
+        </select>
     </div>
 
-    <div class="form-group">
-        <label>Đơn giá</label>
+    <div class="mb-3">
+        <label>Số lượng ban đầu</label>
+        <input asp-for="InitialQuantity" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Giá nhập</label>
         <input asp-for="UnitPrice" class="form-control" />
     </div>
 
-    <div class="form-group">
-        <label>Danh mục nhà cung cấp</label>
-        <select class="form-control" id="brandSelect">
-            <option value="">
-                --Chọn danh mục nhà cung cấp --
-            </option>
-            @foreach(var b in Model.Brands)
-                {
-                    <option value="@b.Value">@b.Text</option>
-                }
-            </select>
-        
+    <div class="mb-3">
+        <label>Mức cảnh báo</label>
+        <input asp-for="Material.ReorderLevel" class="form-control" />
     </div>
 
-
-    <div class="form-group">
-        <label>Nhà cung cấp</label>
-        <select asp-for="Material.SupplierId"
-                class="form-control"
-                id="supplierSelect">
-            <option value="">-- Chọn nhà cung cấp --</option>
-        </select>
-        <span asp-validation-for="Material.SupplierId" class="text-danger"></span>
-    </div>
-
-
-    <button type="submit" class="btn btn-success">Lưu</button>
-    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+    <button class="btn btn-primary">Lưu</button>
 </form>
-@section Scripts {
-    <script>
-        $(document).ready(function () {
-            $('#brandSelect').on('change', function () {
-                var brandId = $(this).val();
-                $('#supplierSelect').empty();
 
-                if (!brandId) {
-                    $('#supplierSelect').append('<option value="">-- Chọn nhà cung cấp --</option>');
-                    return;
-                }
-
-                $.get('/Admin/Warehouse/GetSuppliersByBrand',
-                    { brandId: brandId },
-                    function (data) {
-                        $('#supplierSelect').append('<option value="">-- Chọn nhà cung cấp --</option>');
-                        $.each(data, function (i, item) {
-                            $('#supplierSelect').append(
-                                `<option value="${item.id}">${item.name}</option>`
-                            );
-                        });
-                    }
-                );
-            });
-        });
-    </script>
+@section Scripts{
+    <script src ="~/js/material-form.js"></script>
 }
-

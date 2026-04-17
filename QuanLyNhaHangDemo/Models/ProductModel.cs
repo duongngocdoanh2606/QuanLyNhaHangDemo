@@ -17,8 +17,6 @@ namespace QuanLyNhaHangDemo.Models
         [Required(ErrorMessage = "Yeu cau nhap gia san pham")]
         [Range(1, double.MaxValue, ErrorMessage = "Gia phai lon hon 0")]
         public decimal Price { get; set; }
-
-       
         public int CategoryId { get; set; }
 
         public CategoryModel Category { get; set; }

@@ -24,9 +24,6 @@ namespace QuanLyNhaHangDemo.Controllers
                             .Where(p =>p.Category.Status == 1)
                             .OrderByDescending(p => p.Id)
                             .ToList();
-            var sliders = _dataContext.Sliders.Where(s => s.Status == 1).ToList();
-            ViewBag.Sliders = sliders;
-
             return View(products);
         }
 

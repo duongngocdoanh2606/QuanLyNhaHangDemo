@@ -1,0 +1,19 @@
+﻿@model QuanLyNhaHangDemo.Models.InventoryTransactionModel
+
+<h2>Xuất kho</h2>
+
+<div class="alert alert-warning">
+    Nguyên liệu: <b>@ViewBag.Material.Name</b><br />
+    Tồn hiện tại: <b>@ViewBag.Material.CurrentQuantity</b>
+</div>
+
+<form asp-action="Export">
+    <input type="hidden" asp-for="MaterialId" />
+
+    <div class="mb-3">
+        <label>Số lượng xuất</label>
+        <input asp-for="Quantity" class="form-control" />
+    </div>
+
+    <button class="btn btn-danger">Xuất kho</button>
+</form>

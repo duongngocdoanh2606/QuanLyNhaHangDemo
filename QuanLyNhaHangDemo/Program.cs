@@ -30,7 +30,7 @@ builder.Services.AddIdentity<AppUserModel, IdentityRole>(options =>
 .AddEntityFrameworkStores<DataContext>()
 .AddDefaultTokenProviders();
 
-
+builder.Services.AddHostedService<CleanupService>();
 builder.Services.Configure<IdentityOptions>(options =>
 {
     // Password settings.

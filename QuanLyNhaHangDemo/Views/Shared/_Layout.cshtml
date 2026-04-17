@@ -1,117 +1,138 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="description" content="">
-	<meta name="author" content="">
-	<title>Home | E-Shopper</title>
-	<link href="~/css/bootstrap.min.css" rel="stylesheet">
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-	<link href="~/css/prettyPhoto.css" rel="stylesheet">
-	<link href="~/css/price-range.css" rel="stylesheet">
-	<link href="~/css/animate.css" rel="stylesheet">
-	<link href="~/css/main.css" rel="stylesheet">
-	<link href="~/css/responsive.css" rel="stylesheet">
-	<!--[if lt IE 9]>
-	<script src="js/html5shiv.js"></script>
-	<script src="js/respond.min.js"></script>
-	<![endif]-->
-	
-</head><!--/head-->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | E-Shopper</title>
+
+    <!-- CSS -->
+    <link href="~/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Other CSS -->
+    <link href="~/css/prettyPhoto.css" rel="stylesheet">
+    <link href="~/css/price-range.css" rel="stylesheet">
+    <link href="~/css/animate.css" rel="stylesheet">
+    <link href="~/css/main.css" rel="stylesheet">
+    <link href="~/css/responsive.css" rel="stylesheet">
+</head>
 
 <body>
-	<header id="header">
-		<!--header-->
-		<div class="header-middle">
-			<!--header-middle-->
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-4">
-						<div class="logo pull-left">
-                            <a href="index.html"><img src="images/home/logo.png" alt=""/></a>
-						</div>					
-					</div>
-					<div class="col-sm-8">
-						<div class="shop-menu pull-right">
-							<ul class="nav navbar-nav">
-								@if (User.Identity?.IsAuthenticated ?? false)
-								{
-									<li><a asp-controller="Account" asp-action="Logout"><i class="fa fa-lock"></i> Logout (@User.Identity.Name)</a></li>
-									<li><a asp-controller="Account" asp-action="Profile"><i class="fa fa-user"></i> Hồ sơ cá nhân</a></li>
-									<li><a asp-controller="Account" asp-action="History"><i class="fa fa-crosshairs"></i> Checkout</a></li>
+
+    <!-- HEADER -->
+    <header id="header">
+        <div class="header-middle">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="logo pull-left">
+                            <a href="#"><img src="~/images/home/logo.png" alt="" /></a>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-8">
+                        <div class="shop-menu pull-right">
+                            <ul class="nav navbar-nav">
+                                @if (User.Identity?.IsAuthenticated ?? false)
+                                {
+                                    <li>
+                                        <a asp-controller="Account" asp-action="Logout">
+                                            <i class="fa fa-lock"></i> Logout (@User.Identity.Name)
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a asp-controller="Account" asp-action="Profile">
+                                            <i class="fa fa-user"></i> Hồ sơ
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a asp-controller="Account" asp-action="History">
+                                            <i class="fa fa-crosshairs"></i> Lịch sử
+                                        </a>
+                                    </li>
+
                                     <li>
                                         <a asp-controller="Cart" asp-action="Index">
                                             <i class="fa fa-shopping-cart"></i> Cart
                                         </a>
                                     </li>
-								}
-								else
-								{
-									<li><a asp-controller="Account" asp-action="Login"><i class="fa fa-lock"></i>Login</a></li>
-								}
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div><!--/header-middle-->
+                                }
+                                else
+                                {
+                                    <li>
+                                        <a asp-controller="Account" asp-action="Login">
+                                            <i class="fa fa-lock"></i> Login
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-		<div class="header-bottom">
-			<!--header-bottom-->
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-9">
-						<div class="navbar-header">
-							<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-								<span class="sr-only">Toggle navigation</span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-							</button>
-						</div>
-						<div class="mainmenu pull-left">
-							<ul class="nav navbar-nav collapse navbar-collapse">
-								<li><a asp-controller="Home" asp-action="Index" class="active">Home</a></li>
-								<li><a asp-controller="Table" asp-action="Index">Sơ đồ bàn</a></li>
+        <div class="header-bottom">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-9">
+                        <div class="mainmenu pull-left">
+                            <ul class="nav navbar-nav">
+                                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                                <li><a asp-controller="Table" asp-action="Index">Sơ đồ bàn</a></li>
+                            </ul>
+                        </div>
+                    </div>
 
-								
-							</ul>
-						</div>
-					</div>
-					<div class="col-sm-3">
-						<form asp-controller="Product" asp-action="Search" method="post">
-							<div class="search_box pull-right">
-								<input type="text" placeholder="Search" name="searchTerm" />
-								<button class="btn btn-warning" type="submit">Search</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div><!--/header-bottom-->
-	</header><!--/header-->
+                    <div class="col-sm-3">
+                        <form asp-controller="Product" asp-action="Search" method="post">
+                            <div class="search_box pull-right">
+                                <input type="text" name="searchTerm" placeholder="Search" />
+                                <button class="btn btn-warning" type="submit">Search</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 
-	
+    <!-- BODY -->
+    <section>
+        <div class="container">
+            <div class="row">
+                @Html.Partial("_NotificationPartial")
+                @RenderBody()
+            </div>
+        </div>
+    </section>
 
-	<section>
-		<div class="container">
-			<div class="row">
-				@Html.Partial("_NotificationPartial")
-				@RenderBody()
-			</div>
-		</div>
-	</section>
+    <!-- ================= SCRIPTS ================= -->
+    <!-- jQuery (CHỈ 1 LẦN) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-	<script src="~/js/jquery.js"></script>
-	<script src="~/js/bootstrap.min.js"></script>
-	<script src="~/js/jquery.scrollUp.min.js"></script>
-	<script src="~/js/price-range.js"></script>
-	<script src="~/js/jquery.prettyPhoto.js"></script>
-	<script src="~/js/main.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
-	@await RenderSectionAsync("Scripts", required: false)
+    <!-- Bootstrap -->
+    <script src="~/js/bootstrap.min.js"></script>
+
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+
+    <!-- Plugins -->
+    <script src="~/js/jquery.scrollUp.min.js"></script>
+    <script src="~/js/price-range.js"></script>
+    <script src="~/js/jquery.prettyPhoto.js"></script>
+    <script src="~/js/main.js"></script>
+
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
+
+    <!-- View Scripts -->
+    @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

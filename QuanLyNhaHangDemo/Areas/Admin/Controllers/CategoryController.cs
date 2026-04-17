@@ -143,6 +143,17 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             TempData["success"] = "Đã xóa danh mục";
             return RedirectToAction("Index");
         }
-        
+        [HttpPost]
+        public IActionResult UpdateAutoFire(int id,bool status)
+        {
+            var category = _dataContext.Categories.Find(id);
+            if(category != null)
+            {
+                category.isAutoFire = status;
+                _dataContext.SaveChanges();
+                return Json(new { success = true, message = "Cập nhật thành công" });
+            }
+            return Json(new { success = false, message = "Không tìm thấy danh mục" });
+        }
     }
 }

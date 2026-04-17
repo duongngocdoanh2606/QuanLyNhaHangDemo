@@ -7,5 +7,7 @@ namespace QuanLyNhaHangDemo.Models
         public string Occupation { get; set; }
 
         public string RoleId { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

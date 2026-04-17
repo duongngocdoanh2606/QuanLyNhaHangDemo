@@ -19,7 +19,7 @@ public class SupplierController : Controller
     public async Task<IActionResult> Index()
     {
         var suppliers = await _context.Suppliers
-            .Include(s => s.Brand)
+            .Include(s => s.Category)
             .ToListAsync();
 
         return View(suppliers);
@@ -30,7 +30,7 @@ public class SupplierController : Controller
         var vm = new SupplierViewModel
         {
             Supplier = new SupplierModel(),
-            Brands = GetBrands()
+            Categories = GetCategories()
         };
 
         return View(vm);
@@ -42,7 +42,7 @@ public class SupplierController : Controller
     {
         if (!ModelState.IsValid)
         {
-            vm.Brands = GetBrands();
+            vm.Categories = GetCategories();
             return View(vm);
         }
 
@@ -60,7 +60,7 @@ public class SupplierController : Controller
         var vm = new SupplierViewModel
         {
             Supplier = supplier,
-            Brands = GetBrands()
+            Categories = GetCategories()
         };
 
         return View(vm);
@@ -75,7 +75,7 @@ public class SupplierController : Controller
 
         if (!ModelState.IsValid)
         {
-            vm.Brands = GetBrands();
+            vm.Categories = GetCategories();
             return View(vm);
         }
 
@@ -89,7 +89,7 @@ public class SupplierController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         var supplier = await _context.Suppliers
-            .Include(s => s.Brand)
+            .Include(s => s.Category)
             .FirstOrDefaultAsync(s => s.SupplierId == id);
 
         if (supplier == null) return NotFound();
@@ -110,9 +110,9 @@ public class SupplierController : Controller
     }
 
     // ================== HELPER ==================
-    private List<SelectListItem> GetBrands()
+    private List<SelectListItem> GetCategories()
     {
-        return _context.Brands
+        return _context.Categories
             .Select(b => new SelectListItem
             {
                 Value = b.Id.ToString(),

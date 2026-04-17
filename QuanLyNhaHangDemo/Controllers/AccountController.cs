@@ -40,13 +40,15 @@ namespace QuanLyNhaHangDemo.Controllers
             if (user != null)
             {
                 var roles = await _userManage.GetRolesAsync(user);
-
-                // ✳ CHỈ kiểm tra với role Customer
-                if (roles.Any(r => string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase)) &&
-                    !await _userManage.IsEmailConfirmedAsync(user))
+                if (roles.Any(r => string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase)))
                 {
-                    ModelState.AddModelError("", "Bạn cần xác nhận email trước khi đăng nhập.");
-                    return View(loginVM);
+                    // Kiểm tra xem số điện thoại đã được xác nhận chưa
+                    var isPhoneConfirmed = await _userManage.IsPhoneNumberConfirmedAsync(user);
+                    if (!isPhoneConfirmed)
+                    {
+                        ModelState.AddModelError("", "Số điện thoại của bạn chưa được xác thực OTP.");
+                        return View(loginVM);
+                    }
                 }
             }
 
@@ -212,10 +214,8 @@ namespace QuanLyNhaHangDemo.Controllers
 
                 if (order == null) return NotFound();
 
-                // trạng thái đơn = ĐÃ HỦY (vd: 3)
-                order.Status = 3;
 
-                // 🔴 LẤY TẤT CẢ MÓN TRONG ĐƠN VÀ ĐÁNH DẤU HỦY
+                order.Status = 3;
                 var details = await _dataContext.OrderDetails
                     .Where(d => d.OrderCode == ordercode)
                     .ToListAsync();

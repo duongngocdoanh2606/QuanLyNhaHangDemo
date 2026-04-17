@@ -110,7 +110,6 @@
                 // LẤY ĐÚNG ordercode của DÒNG hiện tại
                 var ordercode = $(this).closest('tr').closest('tbody')
                     .find('.getId').first().val(); 
-                // nếu muốn chắc chắn lấy từ dòng trên, có thể đổi cách tổ chức HTML cho dễ.
 
                 $.ajax({
                     type: "POST",

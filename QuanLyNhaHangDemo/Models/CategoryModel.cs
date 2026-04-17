@@ -11,11 +11,12 @@ namespace QuanLyNhaHangDemo.Models
         public string Name { get; set; }
         [Required(ErrorMessage = "Yeu cau nhap mo ta ten danh muc")]
         public string Description { get; set; }
+        public int DefaultPrepTime { get; set; } = 15;
         public int Priority { get; set; }
         [ForeignKey("KitchenId")]
         public int KitchenId { get; set; }
         public KitchenModel Kitchen { get; set; }
-
+        public bool isAutoFire { get; set; } = true;
         public string Slug { get; set; }
         public int Status { get; set; }
 

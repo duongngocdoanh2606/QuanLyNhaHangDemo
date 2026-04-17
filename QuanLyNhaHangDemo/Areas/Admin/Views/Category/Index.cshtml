@@ -12,6 +12,9 @@
             <th scope="col">Category Description</th> 
             <th scope="col">Kitchen</th>
             <th scope="col">Category Status</th>
+            <th scope="col">Time</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Chế độ bếp</th>
             <th scope="col">Action</th>
 
         </tr>
@@ -22,9 +25,8 @@
             <tr>
                 <th scope="row">@item.Id</th>
                 <td>@item.Name</td>
-                <td>@Html.Raw(item.Description)</td> 
+                <td>@Html.Raw(item.Description)</td>
                 <td>@item.Kitchen.Name</td>
-                
                 <td>
                     @if (item.Status == 1)
                     {
@@ -35,6 +37,19 @@
                         <span class="text text-erroe">An</span>
                     }
                 </td>
+                <td>@item.DefaultPrepTime</td>
+                <td>@item.Priority</td>
+                <td>
+                    <input type="checkbox"
+                           class="auto-fire-toggle"
+                           data-id="@item.Id"
+                           @(item.isAutoFire ? "checked" : "") />
+
+                    <span class="status-label @(item.isAutoFire ? "text-success" : "text-muted")">
+                        @(item.isAutoFire ? "Auto" : "Hold")
+                    </span>
+                </td>
+                
                 
                 <td>
                     <a asp-action="Edit" class="btn btn-warning btn-sm" asp-controller="Category" asp-route-Id="@item.Id">Edit</a>
@@ -46,3 +61,32 @@
         
     </tbody>
 </table>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.auto-fire-toggle').change(function () {
+                var id = $(this).data('id');
+                var isChecked = $(this).is(':checked');
+                var label = $(this).closest('td').find('.status-label');
+
+                $.ajax({
+                    url: '@Url.Action("UpdateAutoFire", "Category", new { area = "Admin" })',
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        status: isChecked
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Cập nhật nhãn chữ ngay lập tức
+                            label.text(isChecked ? "Auto" : "Hold");
+                            label.toggleClass('text-success text-muted');
+                        } else {
+                            alert("Lỗi khi cập nhật trạng thái!");
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    }

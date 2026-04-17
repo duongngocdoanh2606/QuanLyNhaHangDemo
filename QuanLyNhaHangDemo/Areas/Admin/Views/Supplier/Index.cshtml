@@ -12,7 +12,7 @@
             <th>Tên</th>
             <th>Email</th>
             <th>Địa chỉ</th>
-            <th>Thương hiệu</th>
+            <th>Danh mục</th>
             <th>Trạng thái</th>
             <th></th>
         </tr>
@@ -24,7 +24,7 @@
                 <td>@item.SupplierName</td>
                 <td>@item.SupplierEmail</td>
                 <td>@item.SupplierAddress</td>
-                <td>@item.Brand.Name</td>
+                <td>@item.Category.Name</td>
                 <td>@item.Status</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.SupplierId">Sửa</a> |
