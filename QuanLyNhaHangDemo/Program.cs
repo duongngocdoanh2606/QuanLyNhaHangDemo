@@ -8,13 +8,13 @@ using QuanLyNhaHangDemo.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 
-// =====================================================
-// DATABASE
-// =====================================================
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.EnableRetryOnFailure()
+    options.UseMySql(
+        connectionString,
+        new MySqlServerVersion(new Version(8, 0, 30)), // Ép chạy bản 8.0 offline, không check mạng
+        mysqlOptions => mysqlOptions.EnableRetryOnFailure()
     )
 );
 
@@ -122,19 +122,30 @@ var app = builder.Build();
 
 
 // =====================================================
-// DEVELOPMENT
+// TỰ ĐỘNG CHẠY MIGRATION TẠO BẢNG KHI DEPLOY
+// =====================================================
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+    // Tự động Migrate cấu trúc bảng sang MySQL trên Railway
+    context.Database.Migrate();
+
+    // Nếu chạy ở máy Local (Development) thì mới đổ dữ liệu Seed cứng
+    if (app.Environment.IsDevelopment())
+    {
+        SeedData.SeedingData(context);
+    }
+}
+
+
+// =====================================================
+// DEVELOPMENT (SWAGGER)
 // =====================================================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-
-    using var scope = app.Services.CreateScope();
-
-    var context = scope.ServiceProvider
-        .GetRequiredService<DataContext>();
-
-    SeedData.SeedingData(context);
 }
 
 
@@ -176,6 +187,7 @@ app.MapControllerRoute(
 
 // API Controllers
 app.MapControllers();
+
 
 
 // SignalR
