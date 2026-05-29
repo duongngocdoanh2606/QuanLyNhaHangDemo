@@ -8,12 +8,15 @@ using QuanLyNhaHangDemo.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 
+// =====================================================
+// DATABASE (CẤU HÌNH MYSQL CHẠY OFFLINE KHI UPDATE MIGRATION)
+// =====================================================
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseMySql(
         connectionString,
-        new MySqlServerVersion(new Version(8, 0, 30)), // Ép chạy bản 8.0 offline, không check mạng
+        new MySqlServerVersion(new Version(8, 0, 30)), // Ép chạy bản 8.0 offline, không check mạng dưới local
         mysqlOptions => mysqlOptions.EnableRetryOnFailure()
     )
 );
@@ -122,19 +125,24 @@ var app = builder.Build();
 
 
 // =====================================================
-// TỰ ĐỘNG CHẠY MIGRATION TẠO BẢNG KHI DEPLOY
+// TỰ ĐỘNG CHẠY MIGRATION VÀ KHỞI TẠO TÀI KHOẢN ADMIN (CẢ LOCAL & PRODUCTION)
 // =====================================================
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<DataContext>();
 
-    // Tự động Migrate cấu trúc bảng sang MySQL trên Railway
-    context.Database.Migrate();
-
-    // Nếu chạy ở máy Local (Development) thì mới đổ dữ liệu Seed cứng
-    if (app.Environment.IsDevelopment())
+    try
     {
+        // 1. Tự động Migrate cấu trúc bảng sang MySQL trên Railway khi khởi chạy
+        context.Database.Migrate();
+
+        // 2. Chạy hàm Seed dữ liệu (Tạo tài khoản Admin) ở cả môi trường chạy thật Railway
         SeedData.SeedingData(context);
+    }
+    catch (Exception ex)
+    {
+        // Ghi log lỗi ra bảng console của Railway nếu quá trình Seed hoặc Migrate bị trùng lặp/gặp lỗi
+        Console.WriteLine($"[Migration/Seed Error]: {ex.Message}");
     }
 }
 
@@ -187,11 +195,6 @@ app.MapControllerRoute(
 
 // API Controllers
 app.MapControllers();
-
-
-
 // SignalR
 app.MapHub<OrderHub>("/hubs/order");
-
-
 app.Run();
