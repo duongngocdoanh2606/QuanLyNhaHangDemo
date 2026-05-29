@@ -1,36 +1,988 @@
-﻿@model IEnumerable<TableModel>
+@model QuanLyNhaHangDemo.Models.ViewModels.TableFloorViewModel
 
-<h2>Danh sách bàn</h2>
+@{
+    ViewData["Title"] = "Sơ đồ nhà hàng";
+}
 
-<a class="btn btn-primary" asp-action="Create" asp-controller="TableAdmin">Add Table</a>
-<br />
-<br />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>Tên bàn</th>
-            <th>Loại bàn</th>
-            <th>Trạng thái</th>
-            <th>OrderCode</th>
-            <th>Chức năng</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var t in Model)
-        {
-            <tr>
-                <td>@t.Id</td>
-                <td>@t.TableName</td>
-                <td>@t.Capacity</td>
-                <td>@t.Status</td>
-                <td></td>
-                <td>
-                    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="TableAdmin" asp-route-Id="@t.Id">Edit</a>
-                    <a class="btn btn-danger btn-sm confirmDeletion" asp-action="Delete" asp-controller="TableAdmin" asp-route-Id="@t.Id">Delete</a>
-                </td>
-            </tr>
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    .top-dashboard {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .dashboard-card {
+        padding: 20px;
+        border-radius: 18px;
+        color: white;
+        box-shadow: 0 5px 16px rgba(0,0,0,.08);
+    }
+
+        .dashboard-card .value {
+            font-size: 34px;
+            font-weight: bold;
         }
-    </tbody>
-</table>
+
+    .restaurant-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr 350px;
+        gap: 16px;
+        height: calc(100vh - 180px);
+    }
+
+    .zone-sidebar,
+    .floor-wrapper,
+    .live-panel {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 5px 16px rgba(0,0,0,.06);
+    }
+
+    .zone-sidebar {
+        padding: 16px;
+        overflow-y: auto;
+    }
+
+    .zone-btn {
+        width: 100%;
+        border: none;
+        background: #f8f9fa;
+        margin-bottom: 10px;
+        padding: 14px;
+        border-radius: 14px;
+        text-align: left;
+        transition: .2s;
+    }
+
+        .zone-btn:hover {
+            background: #eceff3;
+        }
+
+        .zone-btn.active {
+            background: #0d6efd;
+            color: white;
+        }
+
+    .zone-disabled {
+        opacity: .5;
+    }
+
+    .zone-tools {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .zone-tool-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 8px;
+        color: white;
+    }
+
+    .floor-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .floor-toolbar {
+        padding: 14px 18px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+    }
+
+    /* Vùng chứa cuộn của sơ đồ */
+    .floor-plan-container {
+        flex: 1;
+        overflow: auto;
+        background-color: #cbd5e1; /* Màu nền tối hơn một chút bên ngoài rìa map */
+        padding: 20px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+
+    /* Sơ đồ bàn: Có hiệu ứng mượt khi đổi kích thước */
+    #floor-plan {
+        position: relative;
+        width: 1200px;
+        height: 800px;
+        flex-shrink: 0;
+        background-color: #f8fafc;
+        background-image: linear-gradient(#e9ecef 1px, transparent 1px), linear-gradient(90deg, #e9ecef 1px, transparent 1px);
+        background-size: 40px 40px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        transition: width 0.4s ease, height 0.4s ease;
+    }
+
+    .floor-plan-container {
+        position: relative;
+        overflow: auto;
+        transform-origin: top left;
+    }
+
+    #floor-plan {
+        transform-origin: top left;
+    }
+
+    .table-item {
+        position: absolute;
+        cursor: move;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 4px solid rgba(255,255,255,.15);
+        box-shadow: 0 10px 20px rgba(0,0,0,.12);
+        transition: transform .15s, box-shadow .15s;
+        user-select: none;
+    }
+
+        .table-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,.2);
+            z-index: 20;
+        }
+
+    .table-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: none;
+        gap: 5px;
+    }
+
+    .table-item:hover .table-actions {
+        display: flex;
+    }
+
+    .mini-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,.3);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .mini-btn:hover {
+            background: rgba(255,255,255,.6);
+        }
+
+    .round-table {
+        border-radius: 999px;
+    }
+
+    .rect-table {
+        border-radius: 18px;
+    }
+
+    .status-empty {
+        background: linear-gradient(135deg,#0d6efd,#3b82f6);
+    }
+
+    .status-serving {
+        background: linear-gradient(135deg,#dc3545,#ef4444);
+    }
+
+    .status-booked {
+        background: linear-gradient(135deg,#f59e0b,#fbbf24);
+        color: #111;
+    }
+
+    .table-name {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .table-capacity {
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .table-zone {
+        font-size: 11px;
+        opacity: .9;
+    }
+
+    .live-header {
+        padding: 16px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .live-content {
+        padding: 16px;
+        overflow-y: auto;
+    }
+
+    .legend-group {
+        display: flex;
+        gap: 15px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .dot-empty {
+        background: #0d6efd;
+    }
+
+    .dot-serving {
+        background: #dc3545;
+    }
+
+    .dot-booked {
+        background: #f59e0b;
+    }
+</style>
+
+<div class="top-dashboard">
+    <div class="dashboard-card bg-primary">
+        <div class="value">@Model.Tables.Count()</div>
+        <div>Tổng bàn</div>
+    </div>
+
+    <div class="dashboard-card bg-success">
+        <div class="value">@Model.Tables.Count(x => x.Status == TableStatus.Empty)</div>
+        <div>Bàn trống</div>
+    </div>
+
+    <div class="dashboard-card bg-danger">
+        <div class="value">@Model.Tables.Count(x => x.Status == TableStatus.Serving)</div>
+        <div>Đang phục vụ</div>
+    </div>
+
+    <div class="dashboard-card bg-warning text-dark">
+        <div class="value">@Model.Tables.Count(x => x.Status == TableStatus.Reserved)</div>
+        <div>Đặt trước</div>
+    </div>
+</div>
+
+<div class="restaurant-layout">
+
+    <div class="zone-sidebar">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Khu vực</h5>
+            <button class="btn btn-primary btn-sm btn-add-zone-modal" data-bs-toggle="modal" data-bs-target="#zoneModal">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        @foreach (var zone in Model.Zones)
+        {
+            <div class="zone-btn @(zone.ZoneStatus == ZoneStatus.Maintenance ? "zone-disabled" : "")"
+                 data-zone="@zone.ZoneId"
+                 data-width="@zone.Width"
+                 data-height="@zone.Height">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-layer-group me-2"></i>
+                        @zone.ZoneName
+
+                        @if (zone.ZoneStatus == ZoneStatus.Maintenance)
+                        {
+                            <span class="badge bg-danger ms-1">Bảo trì</span>
+                        }
+                    </div>
+
+                    <div class="zone-tools">
+                        <span class="badge bg-light text-dark">
+                            @Model.Tables.Count(x => x.ZoneId == zone.ZoneId)
+                        </span>
+
+                        <button class="zone-tool-btn bg-warning btn-edit-zone"
+                                data-id="@zone.ZoneId"
+                                data-name="@zone.ZoneName"
+                                data-status="@((int)zone.ZoneStatus)"
+                                data-width="@zone.Width"
+                                data-height="@zone.Height">
+                            <i class="fas fa-pen"></i>
+                        </button>
+
+                        <button class="zone-tool-btn bg-danger btn-delete-zone" data-id="@zone.ZoneId">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <hr />
+        <a asp-action="Create" class="btn btn-primary w-100 mb-2">
+            <i class="fas fa-plus"></i> Thêm bàn
+        </a>
+        <button id="save-layout" class="btn btn-success w-100">
+            <i class="fas fa-save"></i> Lưu sơ đồ
+        </button>
+    </div>
+
+    <div class="floor-wrapper">
+        <div class="floor-toolbar">
+            <strong>Sơ đồ phục vụ <span id="current-zone-size" class="text-muted font-monospace ms-2" style="font-size:13px;"></span></strong>
+            <div class="legend-group">
+                <div class="legend-item"><span class="legend-dot dot-empty"></span> Trống</div>
+                <div class="legend-item"><span class="legend-dot dot-serving"></span> Có khách</div>
+                <div class="legend-item"><span class="legend-dot dot-booked"></span> Đặt trước</div>
+            </div>
+        </div>
+
+        <div class="floor-plan-container">
+            <div id="floor-plan">
+                @foreach (var item in Model.Tables)
+                {
+                    var statusClass = item.Status switch
+                    {
+                        TableStatus.Empty => "status-empty",
+                        TableStatus.Reserved => "status-booked",
+                        _ => "status-serving"
+                    };
+
+                    <div class="table-item @statusClass @(item.Capacity <= 2 ? "round-table" : "rect-table")"
+                         data-id="@item.Id"
+                         data-zone="@item.ZoneId"
+                         data-zonename="@item.Zone?.ZoneName"
+                         style="left:@(item.PosX)px; top:@(item.PosY)px; width:@(item.Width)px; height:@(item.Height)px;">
+
+                        <div class="table-actions">
+                            <button class="mini-btn btn-edit" data-id="@item.Id" title="Sửa thông tin">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="mini-btn btn-delete" data-id="@item.Id" title="Xóa bàn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="table-name">@item.TableName</div>
+                        <div class="table-capacity">@item.Capacity ghế</div>
+                        <div class="table-zone">@item.Zone?.ZoneName</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="live-panel">
+        <div class="live-header">
+            <h5>Thông tin bàn</h5>
+        </div>
+        <div class="live-content" id="live-content">
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-hand-pointer fa-3x mb-3"></i>
+                <p>Chọn bàn để xem chi tiết</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="zoneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="zone-form">
+                <div class="modal-header">
+                    <h5 id="zone-title">Thêm khu vực</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="zone-id" />
+                    <div class="mb-3">
+                        <label class="form-label">Tên khu vực / Tầng</label>
+                        <input type="text" class="form-control" id="zone-name" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Chiều rộng (px)</label>
+                            <input type="number" class="form-control" id="zone-width" min="200" max="5000" placeholder="Ví dụ: 1200" required />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Chiều cao (px)</label>
+                            <input type="number" class="form-control" id="zone-height" min="200" max="5000" placeholder="Ví dụ: 800" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Trạng thái</label>
+                        <select class="form-select" id="zone-status">
+                            <option value="0">Hoạt động</option>
+                            <option value="1">Bảo trì</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Lưu khu vực</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gộp Bàn -->
+<div class="modal fade" id="mergeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gộp bàn: <span id="merge-source-name" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="merge-source-id" />
+                <div class="mb-3">
+                    <label class="form-label">Chọn bàn đích để gộp vào:</label>
+                    <select id="merge-target-id" class="form-select">
+                        <option value="">-- Chọn bàn --</option>
+                        @foreach (var table in Model.Tables)
+                        {
+                            <option value="@table.Id">@table.TableName (@(table.Zone?.ZoneName ?? "Chưa xếp khu vực"))</option>
+                        }
+                    </select>
+                </div>
+                <div class="alert alert-warning">
+                    <strong>Lưu ý:</strong> Bàn hiện tại sẽ được chuyển thành trạng thái Trống sau khi chuyển toàn bộ món ăn và tiền hóa đơn sang bàn đích.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnConfirmMerge">Xác nhận gộp</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chuyển Bàn -->
+<div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chuyển bàn: <span id="transfer-source-name" class="text-info"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="transfer-source-id" />
+                <div class="mb-3">
+                    <label class="form-label">Chọn bàn đích (đang trống) để chuyển đến:</label>
+                    <select id="transfer-target-id" class="form-select">
+                        <option value="">-- Chọn bàn trống --</option>
+                        @foreach (var table in Model.Tables.Where(t => t.Status == TableStatus.Empty))
+                        {
+                            <option value="@table.Id">@table.TableName (@(table.Zone?.ZoneName ?? "Chưa xếp khu vực"))</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info text-white" id="btnConfirmTransfer">Xác nhận chuyển</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tách Bàn -->
+<div class="modal fade" id="splitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tách món từ bàn: <span id="split-source-name" class="text-info"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="split-source-id" />
+                <div class="row">
+                    <div class="col-md-5">
+                        <label class="form-label font-weight-bold">Chọn bàn đích để tách món sang:</label>
+                        <select id="split-target-id" class="form-select mb-3">
+                            <option value="">-- Chọn bàn đích --</option>
+                            @foreach (var table in Model.Tables)
+                            {
+                                <option value="@table.Id">@table.TableName (@(table.Zone?.ZoneName ?? "Chưa xếp khu vực"))</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label font-weight-bold">Chọn các món muốn chuyển đi:</label>
+                        <div id="split-items-container" class="border p-2 rounded" style="max-height: 300px; overflow-y: auto; background: #f8f9fa;">
+                            <!-- Danh sách checkbox món ăn sẽ load bằng ajax -->
+                            <div class="text-center text-muted p-2">Đang tải danh sách món...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnConfirmSplit">Xác nhận tách</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <script>
+        $(function () {
+            const baseUrl = '/Admin/TableAdmin';
+
+                    // HÀM ĐỔI KÍCH THƯỚC MAP TỰ ĐỘNG
+            function updateFloorPlanSize(width, height) {
+                const w = parseInt(width) > 0 ? parseInt(width) : 1200;
+                const h = parseInt(height) > 0 ? parseInt(height) : 800;
+
+                $("#floor-plan").css({
+                    "width": w + "px",
+                    "height": h + "px"
+                });
+
+                $("#current-zone-size").text(`(${w}px × ${h}px)`);
+            }
+
+            // 1. LỌC KHU VỰC VÀ CO GIÃN THEO TẦNG ĐƯỢC CHỌN
+            $(document).on('click', '.zone-btn', function (e) {
+
+                // Nếu bấm nhầm vào nút sửa/xóa thì bỏ qua
+                if ($(e.target).closest('.zone-tool-btn').length) return;
+
+                $('.zone-btn').removeClass('active');
+                $(this).addClass('active');
+
+                const currentZone = $(this).closest('.zone-btn');
+
+                const zone = currentZone.attr('data-zone');
+                const zoneWidth = currentZone.attr('data-width');
+                const zoneHeight = currentZone.attr('data-height');
+
+                // Đổi kích thước map
+                updateFloorPlanSize(zoneWidth, zoneHeight);
+
+                // Hiện bàn theo khu vực
+                if (zone === 'all') {
+                    $('.table-item').show();
+                    return;
+                }
+
+                $('.table-item').hide();
+                $(`.table-item[data-zone="${zone}"]`).show();
+            });
+
+
+            // TỰ ĐỘNG CHỌN ZONE ĐẦU TIÊN KHI LOAD
+            $(document).ready(function () {
+                $('.zone-btn').first().trigger('click');
+            });
+
+            // 2. KÉO THẢ BÀN
+            $(".table-item").draggable({
+                containment: "#floor-plan",
+                grid: [10, 10],
+                distance: 10
+            });
+                    let currentZoom = 1;
+
+            const MIN_ZOOM = 0.3;
+            const MAX_ZOOM = 2.5;
+            const ZOOM_STEP = 0.1;
+
+            const floorContainer = document.querySelector('.floor-plan-container');
+            const floorPlan = document.getElementById('floor-plan');
+
+            function applyZoom() {
+
+                floorPlan.style.transform = `scale(${currentZoom})`;
+
+                floorPlan.style.marginBottom =
+                    (floorPlan.offsetHeight * (currentZoom - 1)) + 'px';
+
+                floorPlan.style.marginRight =
+                    (floorPlan.offsetWidth * (currentZoom - 1)) + 'px';
+            }
+
+            floorContainer.addEventListener('wheel', function (e) {
+
+                if (!e.ctrlKey) return;
+
+                e.preventDefault();
+
+                const rect = floorPlan.getBoundingClientRect();
+
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const zoomX = mouseX / currentZoom;
+                const zoomY = mouseY / currentZoom;
+
+                if (e.deltaY < 0) {
+                    currentZoom += ZOOM_STEP;
+                }
+                else {
+                    currentZoom -= ZOOM_STEP;
+                }
+
+                currentZoom = Math.max(MIN_ZOOM,
+                    Math.min(MAX_ZOOM, currentZoom));
+
+                applyZoom();
+
+                floorContainer.scrollLeft =
+                    (zoomX * currentZoom) - (e.clientX - rect.left);
+
+                floorContainer.scrollTop =
+                    (zoomY * currentZoom) - (e.clientY - rect.top);
+
+            }, { passive: false });
+
+            applyZoom();
+
+            // 3. XEM CHI TIẾT BÀN KHI CLICK
+            $(document).on("click", ".table-item", function (e) {
+                if ($(e.target).closest('.mini-btn').length) return;
+
+                const id = $(this).data("id");
+                const name = $(this).find(".table-name").text().trim();
+                const capacity = $(this).find(".table-capacity").text().trim();
+                const zoneName = $(this).data("zonename");
+
+                let statusText = "Trống";
+                let statusClass = "bg-primary";
+
+                if ($(this).hasClass("status-serving")) {
+                    statusText = "Đang phục vụ";
+                    statusClass = "bg-danger";
+                } else if ($(this).hasClass("status-booked")) {
+                    statusText = "Đặt trước";
+                    statusClass = "bg-warning text-dark";
+                }
+                
+                $("#live-content").html(`<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><p class="mt-2 text-muted">Đang tải thông tin...</p></div>`);
+
+                $.get(`${baseUrl}/GetTableDetails/${id}`, function (data) {
+                    let orderHtml = '';
+                    if (data.order) {
+                        let itemsHtml = '';
+                        data.order.items.forEach(item => {
+                            let noteHtml = item.note ? `<div class="text-danger mt-1" style="font-size: 0.85em;"><i class="fas fa-comment-dots"></i> ${item.note}</div>` : '';
+                            let modifiersHtml = '';
+                            if (item.modifiers && item.modifiers.length > 0) {
+                                modifiersHtml = '<ul class="mb-0 ps-3 mt-1" style="font-size: 0.85em; color: #555;">';
+                                item.modifiers.forEach(mod => {
+                                    modifiersHtml += `<li>${mod.name} (+${mod.price.toLocaleString('vi-VN')})</li>`;
+                                });
+                                modifiersHtml += '</ul>';
+                            }
+                            
+                            let actionHtml = '';
+                                    if (item.status === 3) { // 3: Done
+                                    // Đảm bảo data-id và data-tableid viết THƯỜNG toàn bộ tên thuộc tính
+                                    actionHtml = `<div class="mt-1">
+                                        <button class="btn btn-sm btn-success serve-btn"
+                                                data-id="${item.id}"
+                                                data-tableid="${id}"
+                                                style="font-size: 0.8em; padding: 2px 5px;">
+                                            <i class="fas fa-check"></i> Phục vụ
+                                        </button>
+                                    </div>`;
+        }
+                            itemsHtml += `
+                                <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                                    <div>
+                                        <strong>${item.productName}</strong> x${item.quantity}
+                                        ${modifiersHtml}
+                                        ${noteHtml}
+                                        ${actionHtml}
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge ${item.statusClass}">${item.statusLabel}</span><br>
+                                        <small class="text-muted">${item.price.toLocaleString('vi-VN')} đ</small>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        orderHtml = `
+                            <div class="alert alert-info mt-3 mb-3 p-2">
+                                <strong>Đơn hàng: ${data.order.orderCode}</strong><br>
+                                <small>Giờ vào: ${data.order.timeIn}</small><br>
+                                <small>Tổng tiền: <strong>${data.order.totalAmount.toLocaleString('vi-VN')} đ</strong></small>
+                            </div>   
+                            <div class="order-items-list mb-3" style="max-height: 250px; overflow-y: auto;">
+                                ${itemsHtml}
+                            </div>
+                        `;
+                    } else {
+                        orderHtml = `<div class="alert alert-secondary mt-3 mb-3 text-center p-2"><small>Không có đơn hàng hoạt động</small></div>`;
+                    }
+
+                    let actionButtonsHtml = '';
+                    if (data.order) {
+                        actionButtonsHtml = `
+                            <div class="mt-3 border-top pt-3 d-flex gap-2">
+                                <button class="btn btn-primary btn-sm btn-merge-table" data-id="${id}" data-name="${name}"><i class="fas fa-object-group"></i> Gộp bàn</button>
+                                <button class="btn btn-info btn-sm text-white btn-transfer-table" data-id="${id}" data-name="${name}"><i class="fas fa-exchange-alt"></i> Chuyển bàn</button>
+                            </div>
+                        `;
+                    }
+                    const html = `
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h4 class="card-title text-primary mb-3">${name}</h4>
+                                <p class="mb-2"><strong>Khu vực:</strong> ${zoneName || 'Chưa rõ'}</p>
+                                <p class="mb-2"><strong>Sức chứa:</strong> ${capacity}</p>
+                                <p class="mb-2"><strong>Trạng thái:</strong> <span class="badge ${statusClass}">${statusText}</span></p>
+                                ${orderHtml}
+                                ${actionButtonsHtml}
+                            </div>
+                        </div>
+                    `;
+                    $("#live-content").html(html);
+                }).fail(function() {
+                    $("#live-content").html(`<div class="text-danger p-3">Lỗi khi tải thông tin bàn.</div>`);
+                });
+            });
+
+            // 4. LƯU VỊ TRÍ SƠ ĐỒ
+            $("#save-layout").on("click", function () {
+                let layoutData = [];
+
+                $(".table-item:visible").each(function () { // Chỉ lưu các bàn đang hiển thị ở tầng này
+                    const item = $(this);
+                    layoutData.push({
+                        Id: item.data("id"),
+                        PosX: parseInt(item.css("left")),
+                        PosY: parseInt(item.css("top"))
+                    });
+                });
+
+                $.ajax({
+                    url: `${baseUrl}/UpdateLayout`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(layoutData),
+                    success: function () {
+                        alert("Đã cập nhật sơ đồ bàn thành công!");
+                    },
+                    error: function () {
+                        alert("Lỗi khi lưu sơ đồ!");
+                    }
+                });
+            });
+
+            // 5. MODAL: RESET KHI THÊM MỚI KHU VỰC
+            $('.btn-add-zone-modal').on('click', function() {
+                $("#zone-title").text("Thêm khu vực");
+                $("#zone-id").val("");
+                $("#zone-form")[0].reset();
+                // Cho giá trị mặc định đẹp mắt khi tạo mới tầng
+                $("#zone-width").val(1200);
+                $("#zone-height").val(800);
+            });
+
+            // 6. MODAL: ĐỔ DỮ LIỆU KHI SỬA KHU VỰC
+            $(document).on('click', '.btn-edit-zone', function (e) {
+                e.stopPropagation();
+
+                $("#zone-title").text("Sửa khu vực");
+                $("#zone-id").val($(this).data("id"));
+                $("#zone-name").val($(this).data("name"));
+                $("#zone-status").val($(this).data("status"));
+                $("#zone-width").val($(this).data("width") || 1200);   // Nếu database bằng 0, tự điền 1200
+                $("#zone-height").val($(this).data("height") || 800);  // Nếu database bằng 0, tự điền 800
+
+                $("#zoneModal").modal('show');
+            });
+
+            // 7. SUBMIT FORM: THÊM / SỬA KHU VỰC ĐỒNG BỘ BACKEND
+            $("#zone-form").submit(function (e) {
+                e.preventDefault();
+                const id = $("#zone-id").val();
+
+                const zoneData = {
+                    ZoneId: id ? parseInt(id) : 0,
+                    ZoneName: $("#zone-name").val().trim(),
+                    Width: parseInt($("#zone-width").val()),
+                    Height: parseInt($("#zone-height").val()),
+                    ZoneStatus: parseInt($("#zone-status").val())
+                };
+
+                $.ajax({
+                    url: id ? `${baseUrl}/UpdateZone` : `${baseUrl}/CreateZone`,
+                    type: 'POST',
+                    data: zoneData,
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseText || "Có lỗi xảy ra khi lưu khu vực.");
+                    }
+                });
+            });
+
+            // 8. XÓA KHU VỰC
+            $(document).on('click', '.btn-delete-zone', function (e) {
+                e.stopPropagation();
+                const id = $(this).data("id");
+
+                if (!confirm("Bạn có chắc chắn muốn xóa khu vực này? Các bàn thuộc khu vực cũng có thể bị ảnh hưởng."))
+                    return;
+
+                $.post(`${baseUrl}/DeleteZone/${id}`)
+                    .done(function () {
+                        location.reload();
+                    })
+                    .fail(function (xhr) {
+                        alert(xhr.responseText || "Lỗi khi xóa khu vực");
+                    });
+            });
+
+            // 9. SỬA BÀN
+            $(document).on("click", ".btn-edit", function (e) {
+                e.stopPropagation();
+                const id = $(this).data("id");
+                window.location.href = `${baseUrl}/Edit/${id}`;
+            });
+
+            // 10. XÓA BÀN
+            $(document).on("click", ".btn-delete", function (e) {
+                e.stopPropagation();
+                const id = $(this).data("id");
+
+                if (!confirm("Xóa bàn này khỏi hệ thống?"))
+                    return;
+
+                $.post(`${baseUrl}/Delete/${id}`)
+                    .done(function () {
+                        location.reload();
+                    })
+                    .fail(function() {
+                        alert("Lỗi khi xóa bàn!");
+                    });
+            });
+                    // 11. XÁC NHẬN PHỤC VỤ (SERVE) - DÙNG 1 HÀM DUY NHẤT
+        $(document).on("click", ".serve-btn", function () {
+            const id = $(this).data("id");
+            const tableId = $(this).data("tableid");
+
+            console.log("OrderDetail ID lấy được:", id);
+            console.log("Table ID lấy được:", tableId);
+
+            if (!id || id === "undefined") {
+                alert("Lỗi: Không lấy được ID món ăn từ nút bấm!");
+                return;
+            }
+
+            $.ajax({
+                // 1. Thay đổi URL trỏ trực tiếp về route của hàm ServeItem duy nhất
+                url: `/Admin/TableAdmin/ServeItem/${id}`,
+                // 2. Chuyển phương thức từ PUT thành POST cho khớp với [HttpPost] bên Back-end
+                type: 'POST',
+                success: function (res) {
+                    // 3. Kiểm tra kết quả trả về từ Json
+                    if (res.success) {
+                        // Tải lại thông tin bàn hiện tại trên panel bằng cách click lại vào bàn
+                        $(`.table-item[data-id='${tableId}']`).trigger("click");
+                    } else {
+                        alert(res.message); // Hiển thị thông báo lỗi logic nếu có
+                    }
+                },
+                error: function (xhr) {
+                    console.error("Chi tiết lỗi hệ thống:", xhr);
+                    alert("Lỗi hệ thống khi xác nhận phục vụ");
+                }
+            });
+        });
+        
+        // 12. GỘP BÀN VÀ CHUYỂN BÀN
+        $(document).on("click", ".btn-merge-table", function() {
+            const id = $(this).data("id");
+            const name = $(this).data("name");
+            $("#merge-source-id").val(id);
+            $("#merge-source-name").text(name);
+            $("#mergeModal").modal("show");
+        });
+
+        $(document).on("click", ".btn-transfer-table", function() {
+            const id = $(this).data("id");
+            const name = $(this).data("name");
+            $("#transfer-source-id").val(id);
+            $("#transfer-source-name").text(name);
+            $("#transferModal").modal("show");
+        });
+
+        $("#btnConfirmMerge").on("click", function() {
+            const sourceId = $("#merge-source-id").val();
+            const targetId = $("#merge-target-id").val();
+
+            if (!targetId) {
+                alert("Vui lòng chọn bàn đích.");
+                return;
+            }
+
+            $.ajax({
+                url: '/api/TablesApi/merge',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ sourceTableId: parseInt(sourceId), targetTableId: parseInt(targetId) }),
+                success: function(res) {
+                    alert(res.message);
+                    $("#mergeModal").modal("hide");
+                    location.reload(); 
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || "Lỗi khi gộp bàn");
+                }
+            });
+        });
+
+        $("#btnConfirmTransfer").on("click", function() {
+            const sourceId = $("#transfer-source-id").val();
+            const targetId = $("#transfer-target-id").val();
+
+            if (!targetId) {
+                alert("Vui lòng chọn bàn đích.");
+                return;
+            }
+
+            $.ajax({
+                url: '/api/TablesApi/transfer',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ sourceTableId: parseInt(sourceId), targetTableId: parseInt(targetId) }),
+                success: function(res) {
+                    alert(res.message);
+                    $("#transferModal").modal("hide");
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || "Lỗi khi chuyển bàn");
+                }
+            });
+        });
+        
+    });
+            
+    </script>
+}

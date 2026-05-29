@@ -112,7 +112,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 existingCategory.Slug = category.Slug;
                 existingCategory.Description = category.Description;
                 existingCategory.Status = category.Status;
-                existingCategory.Priority = category.Priority;
                 await _dataContext.SaveChangesAsync();
                 TempData["success"] = "Cập nhật danh mục thành công";
                 return RedirectToAction("Index");

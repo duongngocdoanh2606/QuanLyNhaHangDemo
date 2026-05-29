@@ -19,16 +19,6 @@ namespace QuanLyNhaHangDemo.Repository
                 _context.Roles.Add(adminRole);
             }
 
-            if (!_context.Roles.Any(r => r.Name == "Customer"))
-            {
-                var customerRole = new IdentityRole
-                {
-                    Name = "Customer",
-                    NormalizedName = "CUSTOMER"
-                };
-                _context.Roles.Add(customerRole);
-            }
-
             _context.SaveChanges();
 
             if (!_context.Users.Any(u => u.UserName == "admin"))
@@ -49,7 +39,7 @@ namespace QuanLyNhaHangDemo.Repository
                 };
 
                 var hasher = new PasswordHasher<AppUserModel>();
-                adminUser.PasswordHash = hasher.HashPassword(adminUser, "Admin@123");
+                adminUser.PasswordHash = hasher.HashPassword(adminUser, "admin123");
 
                 _context.Users.Add(adminUser);
 

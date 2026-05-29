@@ -1,16 +1,112 @@
-﻿@model TableModel
+@model QuanLyNhaHangDemo.Models.TableModel
 
-<h2>Thêm bàn</h2>
+@{
+    ViewData["Title"] = "Thêm bàn mới";
+    // Lấy danh sách khu vực động từ ViewBag do Controller truyền sang
+    var zones = ViewBag.Zones as List<QuanLyNhaHangDemo.Models.ZoneModel> ?? new List<QuanLyNhaHangDemo.Models.ZoneModel>();
+}
 
-<form method="post">
-    <div class="form-group">
-        <label>Tên bàn</label>
-        <input asp-for="TableName" class="form-control" />
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Thêm bàn mới
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <input type="hidden" asp-for="PosX" value="0" />
+                        <input type="hidden" asp-for="PosY" value="0" />
+
+                        <div class="mb-3">
+                            <label asp-for="TableName" class="form-label fw-semibold">Tên bàn</label>
+                            <input asp-for="TableName" class="form-control form-control-lg" placeholder="VD: Bàn VIP 01" required />
+                            <span asp-validation-for="TableName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Capacity" class="form-label fw-semibold">Sức chứa (Số ghế)</label>
+                            <input asp-for="Capacity" id="input-capacity" class="form-control form-control-lg" type="number" min="1" value="2" />
+                            <span asp-validation-for="Capacity" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ZoneId" class="form-label fw-semibold">Khu vực / Tầng</label>
+                            <select asp-for="ZoneId" class="form-select form-select-lg" required
+                                    asp-items="@(new SelectList(zones, "ZoneId", "ZoneName"))">
+                                <option value="">-- Chọn khu vực đặt bàn --</option>
+                            </select>
+                            <span asp-validation-for="ZoneId" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Width" class="form-label fw-semibold">Chiều rộng (px)</label>
+                                <input asp-for="Width" id="input-width" class="form-control" readonly />
+                                <small class="text-muted d-block mt-1"><i>* Tự động theo sức chứa</i></small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Height" class="form-label fw-semibold">Chiều cao (px)</label>
+                                <input asp-for="Height" id="input-height" class="form-control" readonly />
+                                <small class="text-muted d-block mt-1"><i>* Tự động theo sức chứa</i></small>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="Status" value="@((int)QuanLyNhaHangDemo.Models.TableStatus.Empty)" />
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary px-4">
+                                <i class="fas fa-arrow-left me-1"></i> Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="fas fa-save me-1"></i> Tạo bàn
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
     </div>
-    <div class="form-group">
-        <label>Loại bàn</label>
-        <input asp-for="Capacity" type="number" min="1" class="form-control" />
-    </div>
+</div>
 
-    <button class="btn btn-success">Thêm</button>
-</form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Logic tính toán kích thước tự động của bạn được giữ nguyên
+            function updateSize() {
+                var capacity = parseInt($("#input-capacity").val()) || 0;
+                var width = 0;
+                var height = 0;
+
+                if (capacity <= 2) {
+                    width = 80; height = 80;
+                } else if (capacity <= 4) {
+                    width = 120; height = 80;
+                } else if (capacity <= 6) {
+                    width = 160; height = 90;
+                } else if (capacity <= 10) {
+                    width = 220; height = 100;
+                } else {
+                    width = 300; height = 120;
+                }
+
+                $("#input-width").val(width);
+                $("#input-height").val(height);
+            }
+
+            $("#input-capacity").on("input change", updateSize);
+            updateSize(); // Chạy ngay khi load trang
+        });
+    </script>
+}

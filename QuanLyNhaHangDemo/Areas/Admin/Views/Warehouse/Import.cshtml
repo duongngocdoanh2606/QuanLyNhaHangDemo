@@ -1,4 +1,4 @@
-﻿@model InventoryTransactionModel
+@model InventoryTransactionModel
 @{
     var material = ViewBag.Material as MaterialModel;
 }
@@ -8,6 +8,7 @@
 <form asp-action="Import" method="post">
 
     <input type="hidden" asp-for="MaterialId" />
+    <div asp-validation-summary="All" class="text-danger"></div>
 
     <div class="form-group">
         <label>Số lượng nhập</label>

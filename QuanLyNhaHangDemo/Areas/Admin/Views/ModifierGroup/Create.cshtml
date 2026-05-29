@@ -1,0 +1,135 @@
+@model QuanLyNhaHangDemo.Models.ModifierGroupModel
+
+<div class="col-md-12">
+    <h4>Tạo Nhóm Tùy Chọn</h4>
+    <hr />
+    <form asp-action="Create">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label font-weight-bold">Tên Nhóm (VD: Kích cỡ, Topping...)</label>
+                    <input asp-for="Name" class="form-control" placeholder="Nhập tên nhóm..." required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="form-label font-weight-bold">Loại hiển thị (Type)</label>
+                    <select asp-for="Type" class="form-control" id="groupTypeSelect">
+                        <option value="TOPPING">Topping (Chọn nhiều - Checkbox)</option>
+                        <option value="SIZE">Size / Kích cỡ (Chọn 1 - RadioButton)</option>
+                    </select>
+                    <span asp-validation-for="Type" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label class="form-label font-weight-bold">Chọn tối đa</label>
+                    <input asp-for="MaxSelect" id="maxSelectInput" class="form-control" type="number" value="1" min="1" />
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-check" style="margin-bottom: 12px; margin-left: 10px;">
+                    <input asp-for="IsRequired" id="isRequiredCheck" class="form-check-input" type="checkbox" />
+                    <label class="form-check-label font-weight-bold" for="IsRequired">Bắt buộc chọn</label>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="mt-4">Danh sách Tùy chọn con</h5>
+        <table class="table table-bordered" id="ModifierTable">
+            <thead>
+                <tr class="bg-light">
+                    <th>Tên tùy chọn (Size M, Trân châu...)</th>
+                    <th>Giá cộng thêm (đ)</th>
+                    <th style="width: 180px;">Tỉ lệ trừ kho (Size S=1, L=1.5...)</th>
+                    <th>Nguyên liệu trừ kho</th>
+                    <th style="width: 80px;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <input type="hidden" name="Modifiers.Index" value="0" />
+                    <td>
+                        <input type="text" name="Modifiers[0].Name" class="form-control" placeholder="Tên size (Ví dụ: Size L)" required />
+                    </td>
+                    <td>
+                        <input type="number" name="Modifiers[0].Price" class="form-control" placeholder="Giá cộng thêm" value="0" />
+                    </td>
+                    <td class="multiplier-cell">
+                        <input type="number" name="Modifiers[0].Multiplier" class="form-control dynamic-multiplier" step="0.1" value="1.0" placeholder="Hệ số" />
+                    </td>
+                    <td class="material-cell">
+                        <input type="hidden" name="Modifiers[0].ModifierMaterials[0].Id" value="0" />
+                        <select name="Modifiers[0].ModifierMaterials[0].MaterialId" class="form-control material-select">
+                            <option value="">-- Không trừ kho --</option>
+                            @foreach (var item in ViewBag.Materials)
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+                        </select>
+                        <input type="hidden" name="Modifiers[0].ModifierMaterials[0].QuantityRequired" value="1" />
+                    </td>
+                    <td class="text-center"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button type="button" class="btn btn-outline-success" onclick="addRow()">+ Thêm tùy chọn con</button>
+        <hr />
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary px-4">Lưu hệ thống</button>
+            <a asp-action="Index" class="btn btn-secondary px-4">Quay lại</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let index = 1;
+        var materialsHtml = `@foreach (var item in ViewBag.Materials) {
+        <option value="@item.Id">@item.Name</option>
+    }
+`;
+
+    function addRow() {
+        var row = `<tr>
+            <input type="hidden" name="Modifiers.Index" value="${index}" />
+            <td><input name="Modifiers[${index}].Name" class="form-control" required /></td>
+            <td><input name="Modifiers[${index}].Price" class="form-control" type="number" value="0" min="0" /></td>
+            <td class="multiplier-cell"><input name="Modifiers[${index}].Multiplier" class="form-control dynamic-multiplier" type="number" step="0.1" value="1.0" min="0" /></td>
+            <td class="material-cell">
+                <input type="hidden" name="Modifiers[${index}].ModifierMaterials[0].Id" value="0" />
+                <select name="Modifiers[${index}].ModifierMaterials[0].MaterialId" class="form-control material-select">
+                    <option value="">-- Không trừ kho --</option>
+                    ${materialsHtml}
+                </select>
+                <input type="hidden" name="Modifiers[${index}].ModifierMaterials[0].QuantityRequired" value="1" />
+            </td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-sm" onclick="$(this).closest('tr').remove()">Xóa</button></td>
+        </tr>`;
+        $("#ModifierTable tbody").append(row);
+        toggleMaterialColumn($("#groupTypeSelect").val());
+        index++;
+    }
+
+    function toggleMaterialColumn(groupType) {
+        if (groupType === "SIZE") {
+            $("#maxSelectInput").val(1).attr("readonly", true);
+            $("#isRequiredCheck").prop("checked", true);
+            $('.material-select').val("").css({ 'pointer-events': 'none', 'background-color': '#e9ecef', 'opacity': '0.6' });
+            $('.dynamic-multiplier').css({ 'pointer-events': 'auto', 'background-color': '#fff', 'opacity': '1' });
+        } else {
+            $("#maxSelectInput").attr("readonly", false);
+            $('.material-select').css({ 'pointer-events': 'auto', 'background-color': '#fff', 'opacity': '1' });
+            $('.dynamic-multiplier').val(1.0).css({ 'pointer-events': 'none', 'background-color': '#e9ecef', 'opacity': '0.6' });
+        }
+    }
+
+    $("#groupTypeSelect").change(function () { toggleMaterialColumn($(this).val()); });
+    $(document).ready(function() { toggleMaterialColumn($("#groupTypeSelect").val()); });
+</script>
+}

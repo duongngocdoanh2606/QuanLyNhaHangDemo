@@ -3,7 +3,7 @@
     "QuanLyNhaHangDemo": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5272",
+      "launchUrl": "Account/Login",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

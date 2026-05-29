@@ -1,18 +1,14 @@
-﻿
-@model List<KitchenModel>
+﻿@model List<KitchenModel>
 
 @{
-    // Lấy id bếp được chọn từ controller (nếu không có, fallback về bếp đầu)
     int selectedKitchenId = ViewBag.SelectedKitchenId != null ? (int)ViewBag.SelectedKitchenId : (Model.FirstOrDefault()?.Id ?? 0);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h3 class="mb-3">Khu bếp</h3>
-    <a asp-action="Create" class="btn btn-primary">
-        Add Kitchen
-    </a>
+    <a asp-action="Create" class="btn btn-primary">Add Kitchen</a>
 </div>
-<!-- TAB HEADER -->
+
 <ul class="nav nav-tabs" id="kitchenTabs" role="tablist">
     @for (int i = 0; i < Model.Count; i++)
     {
@@ -23,7 +19,8 @@
                     data-bs-toggle="tab"
                     data-bs-target="#pane-@kitchen.Id"
                     type="button"
-                    role="tabpanel"
+                    role="tab"
+                    aria-controls="pane-@kitchen.Id"
                     aria-selected="@(kitchen.Id == selectedKitchenId ? "true" : "false")">
                 @kitchen.Name
             </button>
@@ -31,34 +28,39 @@
     }
 </ul>
 
-<!-- TAB CONTENT -->
-<div class="tab-content border border-top-0 p-3">
+<div class="tab-content border border-top-0 p-3" id="kitchen-board">
     @for (int i = 0; i < Model.Count; i++)
     {
         var kitchen = Model[i];
         <div class="tab-pane fade @(kitchen.Id == selectedKitchenId ? "show active" : "")"
              id="pane-@kitchen.Id"
-             role="tabpanel">
+             role="tabpanel"
+             aria-labelledby="tab-@kitchen.Id">
 
-            <!-- CRUD -->
             <div class="d-flex justify-content-end mb-2">
-                <a asp-action="Edit" asp-route-id="@kitchen.Id"
-                   class="btn btn-sm btn-outline-warning me-1">
-                    ✏️ Sửa
-                </a>
-                <a asp-action="Delete"
-                   asp-route-id="@kitchen.Id"
-                   class="btn btn-sm btn-outline-danger"
-                   onclick="return confirm('Xóa bếp này?')">
-                    🗑 Xóa
-                </a>
+                <a asp-action="Edit" asp-route-id="@kitchen.Id" class="btn btn-sm btn-outline-warning me-1">✏️ Sửa</a>
+                <a asp-action="Delete" asp-route-id="@kitchen.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa bếp này?')">🗑 Xóa</a>
             </div>
 
-            <!-- MÀN HÌNH BẾP -->
-            @await Component.InvokeAsync(
-            "KitchenScreen",
-                new { kitchenId = kitchen.Id }
-                )
-    </div>
-        }
+            @await Component.InvokeAsync("KitchenScreen", new { kitchenId = kitchen.Id })
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        // SỬA LỖI: Tự động giữ lại Tab bếp đang chọn sau khi bấm Lưu trạng thái dữ liệu
+        document.addEventListener("DOMContentLoaded", function () {
+            var activeTabId = '@selectedKitchenId';
+            if (activeTabId && activeTabId !== '0') {
+                var tabTrigger = document.getElementById('tab-' + activeTabId);
+                if (tabTrigger) {
+                    var tab = new bootstrap.Tab(tabTrigger);
+                    tab.show();
+                }
+            }
+        });
+
+        window.onKitchenRefresh = function () { location.reload(); };
+    </script>
+}

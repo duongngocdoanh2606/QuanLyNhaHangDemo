@@ -24,16 +24,16 @@
     </div>
 </form>
 
-
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
             <th>Order Code</th>
             <th>User Name</th>
             <th>Ngày tạo</th>
-            <th>Doanh thu (món)</th>
-            <th>Phí ship</th>
-            <th>Tổng (món + ship)</th>
+            <th>Doanh thu (món gốc)</th>
+            <th>Mã Coupon</th>
+            <th>Tiền giảm giá</th>
+            <th>Thành tiền (Grand Total)</th>
             <th>In hóa đơn</th>
         </tr>
     </thead>
@@ -45,8 +45,12 @@
                 <td>@o.UserName</td>
                 <td>@o.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@o.OrderRevenue.ToString("#,##0 đ")</td>
-                <td>@o.ShippingCost.ToString("#,##0 đ")</td>
-                <td>@o.TotalWithShipping.ToString("#,##0 đ")</td>
+
+                <td><span class="badge bg-secondary text-white">@o.CouponCode</span></td>
+
+                <td class="text-danger">-@o.CouponDiscount.ToString("#,##0 đ")</td>
+
+                <td class="fw-bold text-success">@o.TotalWithCoupon.ToString("#,##0 đ")</td>
                 <td>
                     <a class="btn btn-secondary"
                        href="/Admin/Order/Invoice?ordercode=@o.OrderCode"
@@ -59,7 +63,9 @@
     </tbody>
 </table>
 
-<div class="mt-3">
-    <h5>Tổng doanh thu (chỉ tiền món): @(((decimal)ViewBag.TotalRevenue).ToString("#,##0 đ"))</h5>
-    <h5>Tổng doanh thu (món + ship): @(((decimal)ViewBag.TotalRevenueWithShipping).ToString("#,##0 đ"))</h5>
+<div class="mt-3 p-3 bg-light border rounded">
+    <h5>BÁO CÁO THU NHẬP</h5>
+    <hr />
+    <h6>Tổng doanh thu món gốc (SubTotal): @(((decimal)ViewBag.TotalRevenue).ToString("#,##0 đ"))</h6>
+    <h5 class="text-success">Tổng doanh thu thực tế nhận về (GrandTotal): @(((decimal)ViewBag.TotalRevenueWithCoupon).ToString("#,##0 đ"))</h5>
 </div>

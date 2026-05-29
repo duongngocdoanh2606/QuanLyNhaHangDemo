@@ -155,6 +155,94 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OrderModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int?>("CouponId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("GuestName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PayStatus")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ServiceRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("VATRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
+
+                    b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.AdminNotificationModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderDetailId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TableId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableId");
+
+                    b.ToTable("AdminNotifications");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.AppUserModel", b =>
                 {
                     b.Property<string>("Id")
@@ -237,9 +325,6 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("DefaultPrepTime")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -250,9 +335,6 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("int");
 
                     b.Property<string>("Slug")
                         .HasColumnType("nvarchar(max)");
@@ -282,42 +364,15 @@ namespace QuanLyNhaHangDemo.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreateAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DiscountType")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("DiscountValue")
+                    b.Property<decimal>("DiscountAmount")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<decimal?>("MaxDiscountAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("MinOrderAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UsageLimit")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsedCount")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.ToTable("Coupon");
+                    b.ToTable("CouponModel");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.InventoryTransactionModel", b =>
@@ -343,6 +398,12 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<decimal>("Quantity")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SupplierId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -357,6 +418,8 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.HasIndex("MaterialId");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("SupplierId");
 
                     b.ToTable("InventoryTransactions");
                 });
@@ -395,6 +458,9 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<decimal>("CurrentQuantity")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -418,7 +484,7 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.ToTable("Materials");
                 });
 
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetails", b =>
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierGroupModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -426,94 +492,32 @@ namespace QuanLyNhaHangDemo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
 
-                    b.Property<string>("OrderCode")
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxSelect")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserName")
+                    b.Property<string>("Type")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("OrderDetails");
+                    b.ToTable("ModifierGroups");
                 });
 
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int?>("CouponId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("GrandTotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("OrderCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("ServiceAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ServiceRate")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ShippingCost")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("SubTotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("TableId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("VATAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("VATRate")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CouponId");
-
-                    b.HasIndex("TableId");
-
-                    b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductMaterialModel", b =>
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierMaterialModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -524,22 +528,144 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<int>("MaterialId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductId")
+                    b.Property<int>("ModifierId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("QuantityPerProduct")
+                    b.Property<decimal>("QuantityRequired")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MaterialId");
 
+                    b.HasIndex("ModifierId");
+
+                    b.ToTable("ModifierMaterials");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("ModifierGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Multiplier")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModifierGroupId");
+
+                    b.ToTable("Modifiers");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetailModifierModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("ModifierId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ModifierPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("OrderDetailId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModifierId");
+
+                    b.HasIndex("OrderDetailId");
+
+                    b.ToTable("OrderDetailModifiers");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetailsModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FireCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FiredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsFired")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductMaterials");
+                    b.ToTable("OrderDetails");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductMaterialsModel", b =>
+                {
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaterialId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("QuantityRequired")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("ProductId", "MaterialId");
+
+                    b.HasIndex("MaterialId");
+
+                    b.ToTable("productMaterials");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductModel", b =>
@@ -567,13 +693,13 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
                     b.Property<string>("Slug")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Sold")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -605,38 +731,19 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.ToTable("ProductQuantities");
                 });
 
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.RatingModel", b =>
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProModifierGroupModel", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Stars")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ModifierGroupId")
+                        .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("ProductId", "ModifierGroupId");
 
-                    b.HasIndex("ProductId")
-                        .IsUnique();
+                    b.HasIndex("ModifierGroupId");
 
-                    b.ToTable("Ratings");
+                    b.ToTable("ProductModifierMappings");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.ReservationModel", b =>
@@ -681,31 +788,6 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.HasIndex("TableId");
 
                     b.ToTable("Reservations");
-                });
-
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ShippingModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<string>("City")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("District")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Ward")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Shippings");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.StatisticalModel", b =>
@@ -780,13 +862,35 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CurrentOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Height")
+                        .HasColumnType("real");
+
+                    b.Property<float>("PosX")
+                        .HasColumnType("real");
+
+                    b.Property<float>("PosY")
+                        .HasColumnType("real");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("TableName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<float>("Width")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ZoneId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CurrentOrderId");
+
+                    b.HasIndex("ZoneId");
 
                     b.ToTable("Table");
                 });
@@ -814,6 +918,35 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ZoneModel", b =>
+                {
+                    b.Property<int>("ZoneId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ZoneId"), 1L, 1);
+
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ZoneDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ZoneName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ZoneStatus")
+                        .HasColumnType("int");
+
+                    b.HasKey("ZoneId");
+
+                    b.ToTable("Zones");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -867,6 +1000,26 @@ namespace QuanLyNhaHangDemo.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OrderModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.CouponModel", "Coupon")
+                        .WithMany()
+                        .HasForeignKey("CouponId");
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.AdminNotificationModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.TableModel", "Table")
+                        .WithMany()
+                        .HasForeignKey("TableId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Table");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.CategoryModel", b =>
                 {
                     b.HasOne("QuanLyNhaHangDemo.Models.KitchenModel", "Kitchen")
@@ -886,13 +1039,19 @@ namespace QuanLyNhaHangDemo.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuanLyNhaHangDemo.Models.OrderModel", "Order")
+                    b.HasOne("OrderModel", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId");
+
+                    b.HasOne("QuanLyNhaHangDemo.Models.SupplierModel", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId");
 
                     b.Navigation("Material");
 
                     b.Navigation("Order");
+
+                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.MaterialModel", b =>
@@ -906,33 +1065,75 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Navigation("Supplier");
                 });
 
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetails", b =>
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierMaterialModel", b =>
                 {
+                    b.HasOne("QuanLyNhaHangDemo.Models.MaterialModel", "Material")
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyNhaHangDemo.Models.ModifierModel", "Modifier")
+                        .WithMany("ModifierMaterials")
+                        .HasForeignKey("ModifierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Material");
+
+                    b.Navigation("Modifier");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.ModifierGroupModel", "ModifierGroup")
+                        .WithMany("Modifiers")
+                        .HasForeignKey("ModifierGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ModifierGroup");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetailModifierModel", b =>
+                {
+                    b.HasOne("QuanLyNhaHangDemo.Models.ModifierModel", "Modifier")
+                        .WithMany()
+                        .HasForeignKey("ModifierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyNhaHangDemo.Models.OrderDetailsModel", "OrderDetail")
+                        .WithMany("OrderDetailModifiers")
+                        .HasForeignKey("OrderDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Modifier");
+
+                    b.Navigation("OrderDetail");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetailsModel", b =>
+                {
+                    b.HasOne("OrderModel", "Order")
+                        .WithMany("OrderDetails")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("QuanLyNhaHangDemo.Models.ProductModel", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Order");
+
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderModel", b =>
-                {
-                    b.HasOne("QuanLyNhaHangDemo.Models.CouponModel", "Coupon")
-                        .WithMany()
-                        .HasForeignKey("CouponId");
-
-                    b.HasOne("QuanLyNhaHangDemo.Models.TableModel", "Table")
-                        .WithMany()
-                        .HasForeignKey("TableId");
-
-                    b.Navigation("Coupon");
-
-                    b.Navigation("Table");
-                });
-
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductMaterialModel", b =>
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductMaterialsModel", b =>
                 {
                     b.HasOne("QuanLyNhaHangDemo.Models.MaterialModel", "Material")
                         .WithMany()
@@ -941,7 +1142,7 @@ namespace QuanLyNhaHangDemo.Migrations
                         .IsRequired();
 
                     b.HasOne("QuanLyNhaHangDemo.Models.ProductModel", "Product")
-                        .WithMany()
+                        .WithMany("ProductMaterials")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -954,21 +1155,29 @@ namespace QuanLyNhaHangDemo.Migrations
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductModel", b =>
                 {
                     b.HasOne("QuanLyNhaHangDemo.Models.CategoryModel", "Category")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("QuanLyNhaHangDemo.Models.RatingModel", b =>
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProModifierGroupModel", b =>
                 {
+                    b.HasOne("QuanLyNhaHangDemo.Models.ModifierGroupModel", "ModifierGroup")
+                        .WithMany("ProductModifierMappings")
+                        .HasForeignKey("ModifierGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("QuanLyNhaHangDemo.Models.ProductModel", "Product")
-                        .WithOne("Ratings")
-                        .HasForeignKey("QuanLyNhaHangDemo.Models.RatingModel", "ProductId")
+                        .WithMany("ProductModifierGroups")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ModifierGroup");
 
                     b.Navigation("Product");
                 });
@@ -995,6 +1204,33 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.TableModel", b =>
+                {
+                    b.HasOne("OrderModel", "CurrentOrder")
+                        .WithMany()
+                        .HasForeignKey("CurrentOrderId");
+
+                    b.HasOne("QuanLyNhaHangDemo.Models.ZoneModel", "Zone")
+                        .WithMany("Tables")
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CurrentOrder");
+
+                    b.Navigation("Zone");
+                });
+
+            modelBuilder.Entity("OrderModel", b =>
+                {
+                    b.Navigation("OrderDetails");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.CategoryModel", b =>
+                {
+                    b.Navigation("Products");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.KitchenModel", b =>
                 {
                     b.Navigation("Categories");
@@ -1005,14 +1241,38 @@ namespace QuanLyNhaHangDemo.Migrations
                     b.Navigation("InventoryTransactions");
                 });
 
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierGroupModel", b =>
+                {
+                    b.Navigation("Modifiers");
+
+                    b.Navigation("ProductModifierMappings");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ModifierModel", b =>
+                {
+                    b.Navigation("ModifierMaterials");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.OrderDetailsModel", b =>
+                {
+                    b.Navigation("OrderDetailModifiers");
+                });
+
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.ProductModel", b =>
                 {
-                    b.Navigation("Ratings");
+                    b.Navigation("ProductMaterials");
+
+                    b.Navigation("ProductModifierGroups");
                 });
 
             modelBuilder.Entity("QuanLyNhaHangDemo.Models.SupplierModel", b =>
                 {
                     b.Navigation("Materials");
+                });
+
+            modelBuilder.Entity("QuanLyNhaHangDemo.Models.ZoneModel", b =>
+                {
+                    b.Navigation("Tables");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,21 +20,11 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             _dataContext = context;
             _roleManager = roleManager;
         }
-        public async Task<IActionResult> Index(int pg=1)
+        public async Task<IActionResult> Index()
         {
-            const int pageSize = 10;
-            if (pg < 1) pg = 1;
 
-            var roleQuery = _dataContext.Roles.AsQueryable();
-            int recsCount = await roleQuery.CountAsync();
-
-            var pager = new Paginate(recsCount, pg, pageSize);
-            int recSkip = (pg - 1) * pageSize;
-
-            var data = await roleQuery.Skip(recSkip).Take(pager.PageSize).ToListAsync();
-
-            ViewBag.Pager = pager;
-            return View(data);
+            var roles = await _dataContext.Roles.ToListAsync();
+            return View(roles);
         }
         [Route("Create")]
         [HttpGet]
@@ -47,9 +37,9 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [Route("Create")]
         public async Task<IActionResult> Create(IdentityRole model)
         {
-            if (!_roleManager.RoleExistsAsync(model.Name).GetAwaiter().GetResult())
+            if (!await _roleManager.RoleExistsAsync(model.Name))
             {
-                _roleManager.CreateAsync(new IdentityRole(model.Name)).GetAwaiter().GetResult();
+                await _roleManager.CreateAsync(new IdentityRole(model.Name));
             }
             return RedirectToAction("Index");
         }
