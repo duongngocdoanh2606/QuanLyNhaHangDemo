@@ -1,92 +1,185 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using QuanLyNhaHangDemo.Areas.Admin.Repository;
+using QuanLyNhaHangDemo.Hubs;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
-using System.Linq.Expressions;
+using QuanLyNhaHangDemo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-//Connection db
+
+
+// =====================================================
+// DATABASE
+// =====================================================
 builder.Services.AddDbContext<DataContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure()
+    )
+);
 
-});
-builder.Services.AddTransient<IEmailSender,EmailSender>();
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.IsEssential = true;
-});
+// =====================================================
+// IDENTITY
+// =====================================================
 builder.Services.AddIdentity<AppUserModel, IdentityRole>(options =>
 {
-    options.User.RequireUniqueEmail = false;      // 1 email dùng cho nhiều user
-    options.SignIn.RequireConfirmedEmail = false; // KHÔNG ép tất cả user phải confirm
+    // Password
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+
+    // Confirm
+    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedPhoneNumber = false;
+
+    // Email
+    options.User.RequireUniqueEmail = false;
 })
 .AddEntityFrameworkStores<DataContext>()
 .AddDefaultTokenProviders();
 
-builder.Services.AddHostedService<CleanupService>();
-builder.Services.Configure<IdentityOptions>(options =>
+
+// =====================================================
+// COOKIE LOGIN
+// =====================================================
+builder.Services.ConfigureApplicationCookie(options =>
 {
-    // Password settings.
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequiredLength = 6;
-    options.User.RequireUniqueEmail = true;
+    // Chưa login sẽ về đây
+    options.LoginPath = "/Account/Login";
+
+    // Không đủ quyền
+    options.AccessDeniedPath = "/Account/AccessDenied";
+
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
 });
+
+
+// =====================================================
+// MVC
+// =====================================================
+builder.Services.AddControllersWithViews();
+
+
+// =====================================================
+// SESSION
+// =====================================================
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(8);
+    options.Cookie.IsEssential = true;
+});
+
+
+// =====================================================
+// SWAGGER
+// =====================================================
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "Restaurant API",
+        Version = "v1"
+    });
+});
+
+
+// =====================================================
+// CORS
+// =====================================================
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "https://localhost:7272",
+                "http://localhost:5272")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+
+// =====================================================
+// SIGNALR
+// =====================================================
+builder.Services.AddSignalR();
+
+
+// =====================================================
+// SERVICES
+// =====================================================
+builder.Services.AddScoped<IOrderStateService, OrderStateService>();
+
+
 var app = builder.Build();
 
-app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
-app.UseSession();
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+
+// =====================================================
+// DEVELOPMENT
+// =====================================================
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    using var scope = app.Services.CreateScope();
+
+    var context = scope.ServiceProvider
+        .GetRequiredService<DataContext>();
+
+    SeedData.SeedingData(context);
 }
 
-app.UseHttpsRedirection();
+
+// =====================================================
+// MIDDLEWARE
+// =====================================================
+app.UseStatusCodePagesWithRedirects(
+    "/Home/Error?statuscode={0}");
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
+
 app.UseAuthentication();
+
 app.UseAuthorization();
 
+app.UseCors("AllowFrontend");
 
+
+// =====================================================
+// ROUTES
+// =====================================================
+
+// AREA
 app.MapControllerRoute(
-    name: "Areas",
-    pattern: "{area:exists}/{controller=Product}/{action=Index}/{id?}");
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}"
+);
 
-app.MapControllerRoute(
-    name: "category",
-    pattern: "/category/{Slug?}",
-    defaults: new {controller="Category",action="index"});
-
-app.MapControllerRoute(
-    name: "brand",
-    pattern: "/brand/{Slug?}",
-    defaults: new { controller = "Brand", action = "index" });
-
+// DEFAULT
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}"
+);
 
 
+// API Controllers
+app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<DataContext>();
-    SeedData.SeedingData(context);
-}
+
+// SignalR
+app.MapHub<OrderHub>("/hubs/order");
+
 
 app.Run();
-

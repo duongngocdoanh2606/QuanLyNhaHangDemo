@@ -1,69 +1,88 @@
-﻿@model IEnumerable<OrderDetails>
+@using QuanLyNhaHangDemo.Helpers
+@model IEnumerable<OrderDetailsModel>
 
-<table class="table table-sm">
+<table class="table table-sm table-hover align-middle">
     <thead>
         <tr>
-            <th>Món</th>
-            <th>Thời gian đặt</th>
-            <th>SL</th>
-            <th>Trạng thái</th>
+            <th style="width: 35%;">Món</th>
+            <th style="width: 15%;">Thời gian đặt</th>
+            <th style="width: 10%;">SL</th>
+            <th style="width: 15%;">Trạng thái</th>
+            <th style="width: 25%;">Hành động</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
-            <tr>
-                <td>@item.Product.Name</td>
-                <td>@item.CreateDate</td>
-                <td>@item.Quantity</td>
+            // CẢI TIẾN: Chỉ đổi màu đỏ (table-danger) cảnh báo nếu món ăn bị ngâm quá 15 phút chưa làm xong
+            bool isDelayed = item.FiredAt.HasValue && (DateTime.Now - item.FiredAt.Value).TotalMinutes > 15;
+
+            <tr class="@(isDelayed ? "table-danger fw-bold text-danger" : "")">
                 <td>
-                    @{
-                        var statusText = item.Status switch
-                        {
-                            StatusProduct.Pending => "Đang Chuẩn Bị Nguyên Liệu",
-                            StatusProduct.Cooking => "Đang làm",
-                            StatusProduct.Done => "Hoàn thành",
-                            StatusProduct.Cancelled => "Đã hủy",
-                            _ => "Không xác định"
-                        };
+                    <span class="fw-semibold">@item.Product.Name</span>
+
+                    @if (item.FireCount > 0)
+                    {
+                        <span class="badge bg-warning text-dark d-block d-md-inline-block mt-1">Làm lại ×@item.FireCount</span>
                     }
-                    @statusText
+                    @if (item.IsFired)
+                    {
+                        <span class="badge bg-danger ms-1"><i class="fas fa-fire"></i> FIRE</span>
+                    }
+
+                    @if (item.OrderDetailModifiers != null && item.OrderDetailModifiers.Any())
+                    {
+                        <ul class="mb-0 ps-3 mt-1" style="font-size: 0.85em; color: #555;">
+                            @foreach (var mod in item.OrderDetailModifiers)
+                            {
+                                <li>@mod.Modifier?.Name</li>
+                            }
+                        </ul>
+                    }
+                    @if (!string.IsNullOrEmpty(item.Note))
+                    {
+                        <div class="text-danger mt-1 fw-bold" style="font-size: 0.9em;"><i class="fas fa-comment-dots"></i> @item.Note</div>
+                    }
+                </td>
+                <td>@item.CreateDate.ToString("HH:mm dd/MM")</td>
+                <td>
+                    <span class="fs-6 badge bg-secondary px-2.5">@item.Quantity</span>
+                </td>
+                <td>
+                    @OrderStatusHelper.GetKitchenStatusLabel(item.Status)
                 </td>
                 <td>
                     <form asp-area="Admin"
                           asp-controller="Kitchen"
                           asp-action="UpdateStatus"
-                          method="post" class="form-inline">
+                          method="post"
+                          class="d-flex align-items-center gap-1 m-0">
                         @Html.AntiForgeryToken()
 
                         <input type="hidden" name="orderDetailId" value="@item.Id" />
 
-                        @* Giữ lại action hiện tại để redirect đúng khu *@
+                        @* Giữ lại action hiện tại để redirect đúng khu bếp *@
                         <input type="hidden" name="returnAction"
                                value="@ViewContext.RouteData.Values["action"]" />
 
-                        <select name="status" class="form-select form-select-sm">
-                            <option value="0" selected="@(item.Status == StatusProduct.Pending)">
-                                Đang Chuẩn Bị Nguyên Liệu
+                        <select name="status" class="form-select form-select-sm" style="width: auto; min-width: 140px;">
+                            <option value="1" selected="@(item.Status == StatusProduct.PreparingIngredient)">
+                                Đang Chuẩn Bị
                             </option>
-                            <option value="1" selected="@(item.Status == StatusProduct.Cooking)">
+                            <option value="2" selected="@(item.Status == StatusProduct.Cooking)">
                                 Đang làm
                             </option>
-                            <option value="2" selected="@(item.Status == StatusProduct.Done)">
+                            <option value="3" selected="@(item.Status == StatusProduct.Done)">
                                 Hoàn thành
                             </option>
-
                         </select>
 
-                        <button type="submit" class="btn btn-sm btn-primary mt-1">
-                            Lưu
+                        <button type="submit" class="btn btn-sm btn-success flex-shrink-0">
+                            💾 Lưu
                         </button>
                     </form>
-
                 </td>
-
             </tr>
         }
     </tbody>
 </table>
-

@@ -1,54 +1,103 @@
 ﻿@model QuanLyNhaHangDemo.Models.ViewModels.CreateMaterialViewModel
 
-<h2>Thêm nguyên liệu</h2>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0 fs-4">Thêm Nguyên Liệu Vào Kho</h2>
+        </div>
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<form asp-action="CreateMaterial">
-    <div class="mb-3">
-        <label>Tên</label>
-        <input asp-for="Material.Name" class="form-control" />
+            <form asp-action="CreateMaterial" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên nguyên liệu</label>
+                    <input asp-for="Material.Name" class="form-control" />
+                    <span asp-validation-for="Material.Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Đơn vị tính</label>
+                    <input asp-for="Material.Unit" class="form-control" />
+                    <span asp-validation-for="Material.Unit" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Danh mục nhà cung cấp</label>
+                    <select id="categoryDropdown" name="SelectedCategoryId" class="form-control">
+                        <option value="">-- Chọn danh mục --</option>
+                        @if (Model?.Categories != null)
+                        {
+                            foreach (var item in Model.Categories)
+                            {
+                                // Giữ lại danh mục đã chọn nếu quay xe do lỗi validation
+                                var isSelected = (ViewBag.SelectedCategoryId != null && ViewBag.SelectedCategoryId.ToString() == item.Value) ? "selected" : "";
+                                <option value="@item.Value" selected="@isSelected">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nhà cung cấp</label>
+                    <select asp-for="Material.SupplierId"
+                            id="supplierDropdown"
+                            class="form-control"
+                            data-selected="@Model?.Material?.SupplierId">
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        @if (Model?.Suppliers != null)
+                        {
+                            foreach (var item in Model.Suppliers)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Material.SupplierId" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Số lượng ban đầu</label>
+                        <input asp-for="InitialQuantity" class="form-control" type="number" step="any" />
+                        <span asp-validation-for="InitialQuantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Giá nhập ban đầu</label>
+                        <input asp-for="UnitPrice" class="form-control" type="number" step="any" />
+                        <span asp-validation-for="UnitPrice" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Mức cảnh báo tồn kho</label>
+                    <input asp-for="Material.ReorderLevel" class="form-control" type="number" />
+                    <span asp-validation-for="Material.ReorderLevel" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Material.ExpiryDate" class="form-label fw-bold">Ngày hết hạn</label>
+                    <input asp-for="Material.ExpiryDate" class="form-control" type="date" />
+                    <span asp-validation-for="Material.ExpiryDate" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ghi chú</label>
+                    <textarea asp-for="Note" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary px-4">Lưu lại</button>
+                    <a asp-action="Index" class="btn btn-secondary px-4 ms-2">Quay lại</a>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label>Đơn vị</label>
-        <input asp-for="Material.Unit" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Danh mục</label>
-        <select id="categoryDropdown" class="form-control">
-            <option value="">-- Chọn danh mục --</option>
-            @foreach (var item in Model.Categories)
-            {
-                <option value="@item.Value">@item.Text</option>
-            }
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label>Nhà cung cấp</label>
-        <select asp-for="Material.SupplierId" id="supplierDropdown" class="form-control">
-            <option value="">-- Chọn nhà cung cấp --</option>
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label>Số lượng ban đầu</label>
-        <input asp-for="InitialQuantity" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Giá nhập</label>
-        <input asp-for="UnitPrice" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Mức cảnh báo</label>
-        <input asp-for="Material.ReorderLevel" class="form-control" />
-    </div>
-
-    <button class="btn btn-primary">Lưu</button>
-</form>
-
-@section Scripts{
-    <script src ="~/js/material-form.js"></script>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/material-form.js"></script>
 }

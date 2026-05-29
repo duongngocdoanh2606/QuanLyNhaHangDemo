@@ -5,6 +5,8 @@ namespace QuanLyNhaHangDemo.Models
 {
     public class MaterialModel
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [Required]
@@ -25,6 +27,9 @@ namespace QuanLyNhaHangDemo.Models
         [Display(Name = "Trạng thái")]
         public int Status { get; set; } = 1;
 
+        [DataType(DataType.Date)] 
+        public DateTime? ExpiryDate { get; set; }
+        
         [Required]
         [Display(Name = "Nhà cung cấp")]
         public int SupplierId { get; set; }

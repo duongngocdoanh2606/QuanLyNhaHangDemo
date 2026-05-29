@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuanLyNhaHangDemo.Areas.Admin.Repository;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Models.Dtos;
 using System;
@@ -12,15 +11,12 @@ public class AuthAPIController : ControllerBase
 {
     private readonly UserManager<AppUserModel> _userManager;
     private readonly SignInManager<AppUserModel> _signInManager;
-    private readonly IEmailSender _emailSender;
 
     public AuthAPIController(UserManager<AppUserModel> userManager,
-                             SignInManager<AppUserModel> signInManager,
-                             IEmailSender emailSender)
+                             SignInManager<AppUserModel> signInManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _emailSender = emailSender;
     }
 
     [HttpPost("login")]

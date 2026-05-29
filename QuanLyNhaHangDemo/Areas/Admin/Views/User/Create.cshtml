@@ -9,38 +9,102 @@
 <form asp-action="Create" method="post">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label asp-for="UserName">Tên đăng nhập</label>
         <input asp-for="UserName" class="form-control" />
         <span asp-validation-for="UserName" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <!-- PASSWORD -->
+    <div class="form-group mb-3">
         <label asp-for="Password">Mật khẩu</label>
-        <input asp-for="Password" class="form-control" />
+
+        <div class="input-group">
+            <input asp-for="Password"
+                   type="password"
+                   class="form-control"
+                   id="passwordInput" />
+
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="togglePassword('passwordInput', 'passwordIcon')">
+                <i id="passwordIcon" class="fa fa-eye"></i>
+            </button>
+        </div>
+
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <!-- CONFIRM PASSWORD -->
+    <div class="form-group mb-3">
         <label asp-for="ConfirmPassword">Nhập lại mật khẩu</label>
-        <input asp-for="ConfirmPassword" class="form-control" />
+
+        <div class="input-group">
+            <input asp-for="ConfirmPassword"
+                   type="password"
+                   class="form-control"
+                   id="confirmPasswordInput" />
+
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="togglePassword('confirmPasswordInput', 'confirmPasswordIcon')">
+                <i id="confirmPasswordIcon" class="fa fa-eye"></i>
+            </button>
+        </div>
+
         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label asp-for="RoleId">Quyền</label>
-        <select asp-for="RoleId" class="form-control" asp-items="ViewBag.Roles">
+
+        <select asp-for="RoleId"
+                class="form-control"
+                asp-items="ViewBag.Roles">
             <option value="">-- Chọn quyền --</option>
         </select>
+
         <span asp-validation-for="RoleId" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Tạo user</button>
-    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    <button type="submit" class="btn btn-primary">
+        Tạo user
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Quay lại
+    </a>
 </form>
 
 @section Scripts {
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <script>
+        function togglePassword(inputId, iconId) {
+
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === "password") {
+                input.type = "text";
+
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+
+            } else {
+
+                input.type = "password";
+
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+    </script>
 }

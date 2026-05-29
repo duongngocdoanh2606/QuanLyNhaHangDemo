@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuanLyNhaHangDemo.Models; // nếu cần
+using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
+using QuanLyNhaHangDemo.Services;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
@@ -12,13 +14,14 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
     public class KitchenController : Controller
     {
         private readonly DataContext _dataContext;
+        private readonly IOrderStateService _orderState;
 
-        public KitchenController(DataContext context)
+        public KitchenController(DataContext context, IOrderStateService orderState)
         {
             _dataContext = context;
+            _orderState = orderState;
         }
 
-        // nhận optional selectedKitchenId để chọn tab đúng khi quay về
         public async Task<IActionResult> Index(int? selectedKitchenId)
         {
             var kitchen = await _dataContext.Kitchen.OrderBy(k => k.SortOrder).ToListAsync();
@@ -62,22 +65,32 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var kitchen = await _dataContext.Kitchen.FindAsync(id);
-            _dataContext.Kitchen.Remove(kitchen);
-            await _dataContext.SaveChangesAsync();
+            if (kitchen != null)
+            {
+                _dataContext.Kitchen.Remove(kitchen);
+                await _dataContext.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
         }
 
         private async Task<IActionResult> KitchenScreen(int kitchenId)
         {
+            var filterDate = DateTime.Today;
+
             var tasks = await _dataContext.OrderDetails
                 .Include(od => od.Product)
                     .ThenInclude(p => p.Category)
+                .Include(od => od.OrderDetailModifiers)
+                    .ThenInclude(odm => odm.Modifier)
                 .Where(od => od.Product.Category.KitchenId == kitchenId
-                         && od.Status != StatusProduct.Done
-                         && od.Status != StatusProduct.Cancelled)
-                .OrderBy(od => od.Product.Category.Priority)
+                             && od.IsFired
+                             && od.Status != StatusProduct.Done
+                             && od.Status != StatusProduct.Served
+                             && od.Status != StatusProduct.Cancelled)
+                .OrderByDescending(od => od.FiredAt)
                 .ThenBy(od => od.CreateDate)
                 .ToListAsync();
+
             ViewBag.Kitchen = await _dataContext.Kitchen.FindAsync(kitchenId);
             return PartialView("_KitchenBoard", tasks);
         }
@@ -86,10 +99,13 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int orderDetailId, int status, string? returnAction)
         {
-            // Lấy OrderDetail + Product + Category để biết KitchenId
             var orderDetail = await _dataContext.OrderDetails
                 .Include(od => od.Product)
                     .ThenInclude(p => p.Category)
+                .Include(od => od.OrderDetailModifiers)
+                    .ThenInclude(odm => odm.Modifier)
+                        .ThenInclude(m => m.ModifierGroup)
+                .Include(od => od.Order)
                 .FirstOrDefaultAsync(od => od.Id == orderDetailId);
 
             if (orderDetail == null)
@@ -97,39 +113,151 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            int oldStatus = (int)orderDetail.Status;
-            orderDetail.Status = (StatusProduct)status;
+            StatusProduct oldStatus = orderDetail.Status;
+            StatusProduct newStatus = (StatusProduct)status;
 
-            // Chỉ trừ kho khi chuyển từ trạng thái KHÔNG HOÀN THÀNH -> HOÀN THÀNH (status = 2)
-            bool isJustCompleted = (oldStatus != 2 && status == 2);
+            // CẬP NHẬT TRẠNG THÁI MỚI VÀ ĐỒNG THỜI GHI NHẬN MỐC THỜI GIAN UPDATE THỰC TẾ
+            orderDetail.Status = newStatus;
+            orderDetail.UpdatedAt = DateTime.Now; // <-- ĐỒNG BỘ: Điểm mấu chốt để reset thời gian 15p ngầm ở Index đơn hàng!
 
-            // Tìm Order tương ứng (để ghi OrderId + OrderCode) — nếu cần
-            var order = await _dataContext.Orders
-                .FirstOrDefaultAsync(o => o.OrderCode == orderDetail.OrderCode);
+            bool isJustCompleted = (oldStatus != StatusProduct.Done && newStatus == StatusProduct.Done);
 
             if (isJustCompleted)
             {
-                var usages = await _dataContext.ProductMaterials
-                    .Include(pm => pm.Material)
+                decimal sizeMultiplier = 1.0m;
+
+                var sizeModifier = orderDetail.OrderDetailModifiers
+                    .FirstOrDefault(odm => odm.Modifier != null
+                                        && odm.Modifier.ModifierGroup != null
+                                        && odm.Modifier.ModifierGroup.Type.Equals("SIZE", StringComparison.OrdinalIgnoreCase));
+
+                if (sizeModifier != null)
+                {
+                    sizeMultiplier = sizeModifier.Modifier.Multiplier;
+                }
+
+                // ============================================================
+                // PHẦN 1: TẢI DỮ LIỆU NGUYÊN LIỆU MÓN GỐC VÀ MODIFIER
+                // ============================================================
+                var productMaterials = await _dataContext.productMaterials
                     .Where(pm => pm.ProductId == orderDetail.ProductId)
+                    .Include(pm => pm.Material)
                     .ToListAsync();
 
-                foreach (var usage in usages)
+                var mainMaterialIds = productMaterials
+                    .Where(pm => pm.Material != null)
+                    .Select(pm => pm.MaterialId)
+                    .Distinct()
+                    .ToList();
+
+                var itemModifiers = orderDetail.OrderDetailModifiers
+                    .Where(odm => odm.Modifier != null
+                               && odm.Modifier.ModifierGroup != null
+                               && !odm.Modifier.ModifierGroup.Type.Equals("SIZE", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                var modifierIds = itemModifiers.Select(odm => odm.ModifierId).Distinct().ToList();
+
+                var modifierMaterials = await _dataContext.ModifierMaterials
+                    .Where(mm => modifierIds.Contains(mm.ModifierId))
+                    .Include(mm => mm.Material)
+                    .ToListAsync();
+
+                var modMaterialIds = modifierMaterials
+                    .Where(mm => mm.Material != null)
+                    .Select(mm => mm.MaterialId)
+                    .Distinct()
+                    .ToList();
+
+                var allMaterialIds = mainMaterialIds.Union(modMaterialIds).Distinct().ToList();
+
+                // ============================================================
+                // SỬA LỖI: LẤY GIÁ NHẬP GẦN NHẤT AN TOÀN (Gom dữ liệu về RAM để tránh lỗi dịch LINQ)
+                // ============================================================
+                var rawImports = await _dataContext.InventoryTransactions
+                    .AsNoTracking()
+                    .Where(t => allMaterialIds.Contains(t.MaterialId) && t.Type == "IN")
+                    .ToListAsync();
+
+                var lastImports = rawImports
+                    .GroupBy(t => t.MaterialId)
+                    .Select(g => g.OrderByDescending(t => t.DateCreated)
+                                  .ThenByDescending(t => t.Id)
+                                  .FirstOrDefault())
+                    .Where(t => t != null) // Lọc bỏ giá trị null an toàn
+                    .ToDictionary(t => t.MaterialId, t => t.UnitPrice);
+
+                // ============================================================
+                // PHẦN 3: TIẾN HÀNH TRỪ KHO MÓN GỐC
+                // ============================================================
+                foreach (var pm in productMaterials)
                 {
-                    var material = usage.Material;
-                    decimal usedQuantity = orderDetail.Quantity * usage.QuantityPerProduct;
-                    material.CurrentQuantity -= usedQuantity;
-                    _dataContext.Materials.Update(material);
+                    if (pm.Material == null) continue;
+
+                    decimal usedBaseQuantity = (orderDetail.Quantity * pm.QuantityRequired) * sizeMultiplier;
+                    pm.Material.CurrentQuantity -= usedBaseQuantity;
+
+                    lastImports.TryGetValue(pm.MaterialId, out decimal unitCost);
+
+                    _dataContext.InventoryTransactions.Add(new InventoryTransactionModel
+                    {
+                        MaterialId = pm.MaterialId,
+                        DateCreated = DateTime.Now,
+                        Quantity = usedBaseQuantity,
+                        UnitPrice = unitCost,
+                        TotalPrice = usedBaseQuantity * unitCost,
+                        Type = "OUT",
+                        Reason = "OUT_SALE",
+                        OrderId = orderDetail.OrderId,
+                        Note = $"Xuất bán (Bếp) — Đơn {orderDetail.Order?.OrderCode}"
+                    });
+                }
+
+                // ============================================================
+                // PHẦN 4: TRỪ KHO NGUYÊN LIỆU CÁC MODIFIER ĐI KÈM
+                // ============================================================
+                if (itemModifiers.Any())
+                {
+                    foreach (var odm in itemModifiers)
+                    {
+                        var currentModMaterials = modifierMaterials.Where(mm => mm.ModifierId == odm.ModifierId);
+                        foreach (var mm in currentModMaterials)
+                        {
+                            if (mm.Material == null) continue;
+
+                            decimal usedModifierQuantity = orderDetail.Quantity * mm.QuantityRequired;
+                            mm.Material.CurrentQuantity -= usedModifierQuantity;
+
+                            lastImports.TryGetValue(mm.MaterialId, out decimal unitCostMod);
+
+                            _dataContext.InventoryTransactions.Add(new InventoryTransactionModel
+                            {
+                                MaterialId = mm.MaterialId,
+                                DateCreated = DateTime.Now,
+                                Quantity = usedModifierQuantity,
+                                UnitPrice = unitCostMod,
+                                TotalPrice = usedModifierQuantity * unitCostMod,
+                                Type = "OUT",
+                                Reason = "OUT_SALE",
+                                OrderId = orderDetail.OrderId,
+                                Note = $"Xuất bán (modifier) — Đơn {orderDetail.Order?.OrderCode}"
+                            });
+                        }
+                    }
                 }
             }
 
+            // Đồng bộ cập nhật thay đổi dữ liệu của OrderDetail vào database
+            _dataContext.OrderDetails.Update(orderDetail);
             await _dataContext.SaveChangesAsync();
-            TempData["success"] = "Cập nhật trạng thái món thành công.";
 
-            // Lấy kitchenId (nếu có)
-            int kitchenId = orderDetail?.Product?.Category?.KitchenId ?? 0;
+            // Chạy service xử lý trạng thái đồng bộ sau khi đổi trạng thái món ăn
+            await _orderState.SyncAfterOrderDetailStatusChangeAsync(orderDetailId, oldStatus, newStatus);
 
-            // Nếu caller muốn redirect về action khác, vẫn truyền selectedKitchenId để giữ tab
+            TempData["success"] = "Cập nhật trạng thái và trừ kho nguyên liệu thành công.";
+
+            int kitchenId = orderDetail.Product?.Category?.KitchenId ?? 0;
+
             if (!string.IsNullOrEmpty(returnAction))
             {
                 return RedirectToAction(returnAction, new { selectedKitchenId = kitchenId });
@@ -137,6 +265,5 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
             return RedirectToAction("Index", new { selectedKitchenId = kitchenId });
         }
-
     }
 }

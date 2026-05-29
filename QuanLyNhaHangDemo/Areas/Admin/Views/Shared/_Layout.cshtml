@@ -1,20 +1,24 @@
-﻿@{
+@using System.Security.Claims
+
+@{
     var c = ViewContext.RouteData.Values["controller"]?.ToString();
     var a = ViewContext.RouteData.Values["action"]?.ToString();
     var area = ViewContext.RouteData.Values["area"]?.ToString();
+
+    var roleName = User.Claims
+        .FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value ?? "User";
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>@ViewData["Title"] - Admin</title>
-
+    <title>@ViewData["Title"] - @roleName Panel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/css/admin-layout.css" />
     <link rel="stylesheet" href="~/css/admin-sidebar.css" />
@@ -23,160 +27,93 @@
 
 <body>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <a class="logo" href="#">
-                <i class="fas fa-tachometer-alt"></i> Admin
+                <i class="fas fa-shield-alt"></i> @roleName Panel
             </a>
         </div>
 
         <div class="sidebar-menu">
-
             <div class="menu-title">Main</div>
 
-            <a class="nav-link @(c == "Home" ? "active" : "")"
-               asp-area=""
-               asp-controller="Home"
-               asp-action="Index">
-                <i class="fas fa-home"></i> Home
-            </a>
-
-            <a class="nav-link @(c == "Product" ? "active" : "")"
-               asp-controller="Product" asp-action="Index">
+            <a class="nav-link @(c == "Product" ? "active" : "")" asp-controller="Product" asp-action="Index">
                 <i class="fas fa-box"></i> Products
             </a>
 
-            <a class="nav-link d-flex justify-content-between align-items-center"
-               data-bs-toggle="collapse"
-               href="#restaurantMenu"
-               role="button"
-               aria-expanded="false">
-
-                <span>
-                    <i class="fas fa-utensils"></i> Restaurant
-                </span>
-                <i class="fas fa-chevron-down"></i>
+            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#restaurantMenu" role="button">
+                <span><i class="fas fa-utensils"></i> Restaurant</span>
+                <i class="fas fa-chevron-down small"></i>
             </a>
-
-            <div class="collapse @(area == "Admin" && (c == "TableAdmin" || c == "Kitchen" || c == "Warehouse") ? "show" : "")"
-                 id="restaurantMenu">
-
-                <a class="nav-link ms-4 @(c == "TableAdmin" ? "active" : "")"
-                   asp-area="Admin" asp-controller="TableAdmin" asp-action="Index">
+            <div class="collapse @(area == "Admin" && (c == "TableAdmin" || c == "Kitchen" || c == "Warehouse") ? "show" : "")" id="restaurantMenu">
+                <a class="nav-link ms-4 @(c == "TableAdmin" ? "active" : "")" asp-area="Admin" asp-controller="TableAdmin" asp-action="Index">
                     <i class="fas fa-chair"></i> Tables
                 </a>
-
-                <a class="nav-link ms-4 @(c == "Kitchen" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Kitchen" asp-action="Index">
-                    <i class="fas fa-utensils"></i> Kitchen
+                <a class="nav-link ms-4 @(c == "Kitchen" ? "active" : "")" asp-area="Admin" asp-controller="Kitchen" asp-action="Index">
+                    <i class="fas fa-fire-burner"></i> Kitchen
                 </a>
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "Warehouse" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Warehouse" asp-action="Index">
+                <a class="nav-link ms-4 @(c == "Warehouse" ? "active" : "")" asp-area="Admin" asp-controller="Warehouse" asp-action="Index">
                     <i class="fas fa-warehouse"></i> Warehouse
                 </a>
             </div>
 
-            <a class="nav-link d-flex justify-content-between align-items-center"
-               data-bs-toggle="collapse"
-               href="#ManagerUser"
-               role="button"
-               aria-expanded="false">
-
-                <span>
-                    <i class="fas fa-user"></i> User
-                </span>
-                <i class="fas fa-chevron-down"></i>
+            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#userMenu" role="button">
+                <span><i class="fas fa-users"></i> User</span>
+                <i class="fas fa-chevron-down small"></i>
             </a>
-
-            <div class="collapse @(area == "Admin" && (c == "User" || c == "Role" || c == "Supplier" || c == "Brand") ? "show" : "")"
-                 id="ManagerUser">
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "Role" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Role" asp-action="Index">
+            <div class="collapse @(area == "Admin" && (c == "Role" || c == "User" || c == "Supplier") ? "show" : "")" id="userMenu">
+                <a class="nav-link ms-4 @(c == "Role" ? "active" : "")" asp-area="Admin" asp-controller="Role" asp-action="Index">
                     <i class="fas fa-id-badge"></i> Role
                 </a>
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "User" ? "active" : "")"
-                   asp-area="Admin" asp-controller="User" asp-action="Index">
-                    <i class="fas fa-users-cog"></i> User
+                <a class="nav-link ms-4 @(c == "User" ? "active" : "")" asp-area="Admin" asp-controller="User" asp-action="Index">
+                    <i class="fas fa-user-cog"></i> User
                 </a>
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "Supplier" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Supplier" asp-action="Index">
+                <a class="nav-link ms-4 @(c == "Supplier" ? "active" : "")" asp-area="Admin" asp-controller="Supplier" asp-action="Index">
                     <i class="fas fa-handshake"></i> Supplier
                 </a>
-
             </div>
 
-
-
-            <a class="nav-link d-flex justify-content-between align-items-center"
-               data-bs-toggle="collapse"
-               href="#Receipt"
-               role="button"
-               aria-expanded="false">
-
-                <span>
-                    <i class="fas fa-file-invoice"></i> Receipt
-                </span>
-                <i class="fas fa-chevron-down"></i>
+            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#receiptMenu" role="button">
+                <span><i class="fas fa-file-invoice"></i> Receipt</span>
+                <i class="fas fa-chevron-down small"></i>
             </a>
+            <div class="collapse @(area == "Admin" && (c == "Order" || c == "Dashboard") ? "show" : "")" id="receiptMenu">
 
-            <div class="collapse @(area == "Admin" && (c == "Order" || c == "Dashboard" || c == "ReservationAdmin") ? "show" : "")"
-                 id="Receipt">
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "Order" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Order" asp-action="Index">
+                <a class="nav-link ms-4 @(c == "Order" ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Order"
+                   asp-action="Index">
                     <i class="fas fa-receipt"></i> Order
                 </a>
 
                 <a class="nav-link ms-4 @(c == "Dashboard" ? "active" : "")"
-                   asp-controller="Dashboard" asp-action="Index">
-                    <i class="fas fa-chart-bar"></i> Dashboard
+                   asp-area="Admin"
+                   asp-controller="Dashboard"
+                   asp-action="Index">
+                    <i class="fas fa-chart-line"></i> Dashboard
                 </a>
 
-                <a class="nav-link ms-4 @(area == "Admin" && c == "ReservationAdmin" ? "active" : "")"
-                   asp-area="Admin" asp-controller="ReservationAdmin" asp-action="Index">
-                    <i class="fas fa-clipboard-list"></i> Reservations
-                </a>
             </div>
-            <a class="nav-link d-flex justify-content-between align-items-center"
-               data-bs-toggle="collapse"
-               href="#Other"
-               role="button"
-               aria-expanded="false">
 
-                <span>
-                    <i class="fas fa-exclamation-circle"></i> Other
-                </span>
-                <i class="fas fa-chevron-down"></i>
+            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#otherMenu" role="button">
+                <span><i class="fas fa-layer-group"></i> Other</span>
+                <i class="fas fa-chevron-down small"></i>
             </a>
-
-            <div class="collapse @(area == "Admin" && (c == "Shipping" || c == "Slider" || c == "Discount" || c == "Category") ? "show" : "")"
-                 id="Other">
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "Shipping" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Shipping" asp-action="Index">
-                    <i class="fas fa-truck"></i> Shipping
-                </a>
-
-                <a class="nav-link ms-4 @(area == "Admin" && c == "Discount" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Coupon" asp-action="Index">
-                    <i class="fas fa-ticket-alt"></i> Discount
-                </a>
-
-                <a class="nav-link ms-4 @(c == "Category" ? "active" : "")"
-                   asp-controller="Category" asp-action="Index">
+            <div class="collapse @(c == "Category" || c == "ModifierGroup" || c == "Coupon" ? "show" : "")" id="otherMenu">
+                <a class="nav-link ms-4 @(c == "Category" ? "active" : "")" asp-controller="Category" asp-action="Index">
                     <i class="fas fa-tags"></i> Categories
                 </a>
-            </div>
+                <a class="nav-link ms-4 @(c == "ModifierGroup" ? "active" : "")" asp-controller="ModifierGroup" asp-action="Index">
+                    <i class="fas fa-sliders"></i> Modifier Groups
+                </a>
 
+                <a class="nav-link ms-4 @(c == "Coupon" ? "active" : "")" asp-controller="Coupon" asp-action="Index">
+                    <i class="fas fa-ticket-alt"></i> Coupons
+                </a>
+            </div>
         </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main-content">
         <div class="content-wrapper">
 
@@ -186,47 +123,78 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="page-title">
-                        <h1>@ViewData["Title"]</h1>
+                        <h1 class="m-0 h4">@ViewData["Title"]</h1>
                     </div>
                 </div>
 
-                <div class="dropdown">
-                    <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                        <i class="fas fa-user"></i> Admin
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item">Profile</a></li>
-                        <li><a class="dropdown-item">Logout</a></li>
-                    </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-success position-relative" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width:320px; max-height:400px; overflow-y:auto;">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Món sẵn sàng phục vụ</span>
+                                <a href="#" id="btn-mark-all-read" class="small text-decoration-none">Đọc tất cả</a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <ul id="notif-list" class="list-unstyled mb-0">
+                                <li class="dropdown-item text-muted small text-center py-2">Đang tải thông báo...</li>
+                            </ul>
+                        </ul>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i> @roleName
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item text-danger" asp-area="" asp-controller="Account" asp-action="Logout">
+                                    <i class="fas fa-right-from-bracket me-2"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </header>
 
-            <div class="card">
-                <div class="card-body">
+            <div class="card shadow-sm border-0" style="overflow: visible;">
+                <div class="card-body" style="overflow: visible;">
                     @RenderBody()
                 </div>
             </div>
 
         </div>
     </main>
+
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="~/js/admin-order-sync.js"></script>
     <script>
         document.getElementById("toggleSidebar")?.addEventListener("click", () => {
             document.querySelector(".sidebar").classList.toggle("show");
         });
-    </script>
-    <script>
+
+        // SweetAlert thông báo tác vụ thành công từ TempData toàn hệ thống
         $(function () {
             var message = '@TempData["success"]';
-            if (message != '')
-                Swal.fire(message);
+            if (message !== '') {
+                Swal.fire({
+                    icon: 'success',
+                    title: message,
+                    showConfirmButton: false,
+                    timer: 1800
+                });
+            }
         });
     </script>
 
-    @RenderSection("Scripts", false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

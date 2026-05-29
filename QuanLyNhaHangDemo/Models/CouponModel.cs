@@ -2,39 +2,17 @@
 
 namespace QuanLyNhaHangDemo.Models
 {
-    public enum DiscountTypeEnum
-    {
-        Percentage = 1,
-        FixedAmount = 2
-    }
-
     public class CouponModel
     {
+        [Key]
         public int Id { get; set; }
 
         [Required]
-        public string Code { get; set; }
+        public string Code { get; set; } // Mã bạn tự gõ (Ví dụ: KHUYENMAI10, GIAM20K)
 
-        public string Name { get; set; }
+        [Required]
+        public decimal DiscountAmount { get; set; } // Số tiền giảm (Ví dụ: 20000)
 
-        public DiscountTypeEnum DiscountType { get; set; }
-
-        public decimal DiscountValue { get; set; }
-
-        public decimal? MinOrderAmount { get; set; }
-
-        public decimal? MaxDiscountAmount { get; set; }
-
-        public DateTime StartDate { get; set; }
-
-        public DateTime EndDate { get; set; }
-
-        public int UsageLimit { get; set; }
-
-        public int UsedCount { get; set; } = 0;
-
-        public bool IsActive { get; set; } = true;
-
-        public DateTime CreateAt { get; set; } = DateTime.Now;
+        public bool IsActive { get; set; } = true; // Trạng thái kích hoạt
     }
 }

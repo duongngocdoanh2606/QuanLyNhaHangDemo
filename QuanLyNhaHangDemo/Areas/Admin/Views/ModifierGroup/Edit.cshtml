@@ -1,0 +1,160 @@
+@model QuanLyNhaHangDemo.Models.ModifierGroupModel
+
+<div class="card">
+    <div class="card-header font-weight-bold">Chỉnh sửa Nhóm Tùy Chọn</div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Name">Tên Nhóm</label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label asp-for="Type">Loại hiển thị (Type)</label>
+                        <select asp-for="Type" class="form-control" id="groupTypeSelect">
+                            <option value="TOPPING">Topping (Chọn nhiều - Checkbox)</option>
+                            <option value="SIZE">Size / Kích cỡ (Chọn 1 - RadioButton)</option>
+                        </select>
+                        <span asp-validation-for="Type" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label asp-for="MaxSelect">Chọn tối đa</label>
+                        <input asp-for="MaxSelect" id="maxSelectInput" class="form-control" type="number" />
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check" style="margin-bottom: 12px; margin-left: 10px;">
+                        <input asp-for="IsRequired" id="isRequiredCheck" class="form-check-input" />
+                        <label class="form-check-label font-weight-bold" for="IsRequired">Bắt buộc chọn</label>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="mt-4">Chi tiết các tùy chọn</h5>
+            <table class="table table-bordered" id="ModifierTable">
+                <thead>
+                    <tr class="bg-light">
+                        <th style="width: 35%;">Tên tùy chọn (Size M, Trân châu...)</th>
+                        <th style="width: 15%;">Giá tăng (+)</th>
+                        <th style="width: 20%;" class="multiplier-column-header">Tỉ lệ trừ kho (S=1, L=1.5)</th>
+                        <th style="width: 20%;" class="material-column-header">Nguyên liệu trừ kho</th>
+                        <th style="width: 10%;" class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var modifierList = Model.Modifiers?.ToList() ?? new List<QuanLyNhaHangDemo.Models.ModifierModel>();
+                        for (int i = 0; i < modifierList.Count; i++)
+                        {
+                            var currentModifier = modifierList[i];
+                            var firstMaterial = currentModifier.ModifierMaterials?.FirstOrDefault();
+
+                            <tr>
+                                <input type="hidden" name="Modifiers.Index" value="@i" />
+                                <input type="hidden" name="Modifiers[@i].Id" value="@currentModifier.Id" />
+
+                                <td>
+                                    <input type="text" name="Modifiers[@i].Name" value="@currentModifier.Name" class="form-control" placeholder="Tên kích cỡ/đồ kèm" required />
+                                </td>
+                                <td>
+                                    <input type="number" name="Modifiers[@i].Price" value="@currentModifier.Price" class="form-control" placeholder="Giá cộng thêm" />
+                                </td>
+                                <td class="multiplier-cell">
+                                    <input type="number" name="Modifiers[@i].Multiplier" value="@currentModifier.Multiplier" class="form-control dynamic-multiplier" step="0.1" placeholder="Hệ số" />
+                                    <small class="text-muted">Gấp X lần món gốc</small>
+                                </td>
+                                <td class="material-cell">
+                                    <input type="hidden" name="Modifiers[@i].ModifierMaterials[0].Id" value="@(firstMaterial?.Id ?? 0)" />
+                                    <select name="Modifiers[@i].ModifierMaterials[0].MaterialId" class="form-control material-select">
+                                        <option value="">-- Không trừ kho --</option>
+                                        @foreach (var mat in ViewBag.Materials)
+                                        {
+                                            <option value="@mat.Id" selected="@(firstMaterial != null && mat.Id == firstMaterial.MaterialId ? "selected" : null)">@mat.Name</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" name="Modifiers[@i].ModifierMaterials[0].QuantityRequired" value="@(firstMaterial?.QuantityRequired ?? 1)" />
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger" onclick="$(this).closest('tr').remove()">Xóa</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <button type="button" class="btn btn-outline-success btn-sm" onclick="addRow()">+ Thêm dòng</button>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
+                <a asp-action="Index" class="btn btn-secondary px-4">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let index = @(Model.Modifiers?.Count ?? 0);
+
+        var materialsHtml = `@foreach (var item in ViewBag.Materials) {
+        <option value="@item.Id">@item.Name</option>
+    }
+`;
+
+    function addRow() {
+        var row = `<tr>
+            <input type="hidden" name="Modifiers.Index" value="${index}" />
+            <input type="hidden" name="Modifiers[${index}].Id" value="0" />
+
+            <td><input name="Modifiers[${index}].Name" class="form-control" required placeholder="Ví dụ: Size XL..." /></td>
+            <td><input name="Modifiers[${index}].Price" class="form-control" type="number" value="0" /></td>
+            <td class="multiplier-cell">
+                <input name="Modifiers[${index}].Multiplier" class="form-control dynamic-multiplier" type="number" step="0.1" value="1.0" />
+            </td>
+            <td class="material-cell">
+                <input type="hidden" name="Modifiers[${index}].ModifierMaterials[0].Id" value="0" />
+                <select name="Modifiers[${index}].ModifierMaterials[0].MaterialId" class="form-control material-select">
+                    <option value="">-- Không trừ kho --</option>
+                    ${materialsHtml}
+                </select>
+                <input type="hidden" name="Modifiers[${index}].ModifierMaterials[0].QuantityRequired" value="1" />
+            </td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-sm" onclick="$(this).closest('tr').remove()">Xóa</button></td>
+        </tr>`;
+
+        $("#ModifierTable tbody").append(row);
+        toggleMaterialColumn($("#groupTypeSelect").val());
+        index++;
+    }
+
+    function toggleMaterialColumn(groupType) {
+        if (groupType === "SIZE") {
+            $("#maxSelectInput").val(1).attr("readonly", true);
+            $("#isRequiredCheck").prop("checked", true);
+
+            $('.material-select').val("").css({ 'pointer-events': 'none', 'background-color': '#e9ecef', 'opacity': '0.6' });
+            $('.dynamic-multiplier').css({ 'pointer-events': 'auto', 'background-color': '#fff', 'opacity': '1' });
+        } else {
+            $("#maxSelectInput").attr("readonly", false);
+            $('.material-select').css({ 'pointer-events': 'auto', 'background-color': '#fff', 'opacity': '1' });
+            $('.dynamic-multiplier').val(1.0).css({ 'pointer-events': 'none', 'background-color': '#e9ecef', 'opacity': '0.6' });
+        }
+    }
+
+    $("#groupTypeSelect").change(function () { toggleMaterialColumn($(this).val()); });
+    $(document).ready(function() { toggleMaterialColumn($("#groupTypeSelect").val()); });
+</script>
+}

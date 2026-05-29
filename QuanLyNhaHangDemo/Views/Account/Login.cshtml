@@ -1,58 +1,362 @@
 ﻿@model LoginViewModel
+
 @{
     ViewData["Title"] = "Đăng nhập";
 }
 
-@if (TempData["ConfirmSuccess"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["ConfirmSuccess"]
+<section class="login-section">
+
+    <div class="login-container">
+
+        <div class="login-card">
+
+            <!-- LEFT SIDE -->
+            <div class="login-left">
+
+                <div class="login-content">
+
+                    <h1>Welcome Back</h1>
+
+                    <p>
+                        Đăng nhập để tiếp tục sử dụng hệ thống quản lý nhà hàng.
+                    </p>
+
+                    @if (TempData["ConfirmSuccess"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["ConfirmSuccess"]
+                        </div>
+                    }
+
+                    @if (TempData["ConfirmError"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["ConfirmError"]
+                        </div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-action="Login"
+                          asp-controller="Account"
+                          method="post">
+
+                        <!-- USERNAME -->
+                        <div class="form-group mb-4">
+
+                            <label class="form-label">
+                                Username
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <i class="fa-solid fa-user input-icon"></i>
+
+                                <input asp-for="Username"
+                                       class="form-control custom-input"
+                                       placeholder="Enter username" />
+
+                            </div>
+
+                            <span asp-validation-for="Username"
+                                  class="text-danger"></span>
+
+                        </div>
+
+                        <!-- PASSWORD -->
+                        <div class="form-group mb-4">
+
+                            <label class="form-label">
+                                Password
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <i class="fa-solid fa-lock input-icon"></i>
+
+                                <input asp-for="Password"
+                                       type="password"
+                                       class="form-control custom-input password-input"
+                                       id="passwordInput"
+                                       placeholder="Enter password" />
+
+                                <i id="passwordIcon"
+                                   class="fa-solid fa-eye password-toggle"
+                                   onclick="togglePassword()"></i>
+
+                            </div>
+
+                            <span asp-validation-for="Password"
+                                  class="text-danger"></span>
+
+                        </div>
+
+                        <!-- REMEMBER -->
+                        <div class="remember-row">
+
+                            <div>
+                                <input type="checkbox" id="remember" />
+                                <label for="remember">Remember me</label>
+                            </div>
+                        </div>
+
+                        <!-- BUTTON -->
+                        <button type="submit" class="login-btn">
+                            Login
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT SIDE -->
+            <div class="login-right">
+
+                <div class="overlay">
+
+                    <h2>Restaurant Management</h2>
+
+                    <p>
+                        Quản lý đơn hàng, nhân viên và doanh thu dễ dàng hơn.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
-}
-@if (TempData["ConfirmError"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["ConfirmError"]
-    </div>
-}
 
-<form asp-action="Login" method="post">
-    <!-- form login như hiện tại -->
-</form>
+</section>
 
-<section id="">
-	<!--form-->
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-8 col-sm-offset-1">
-				<div class="login-form">
-					<!--login form-->
-					<h2>Login to your account</h2>
-						<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-					<form asp-action="Login" asp-controller="Account">
-
-						<div class="form-group">
-							<label>Username</label>
-							<input asp-for="Username" class="form-control" />
-							<span asp-validation-for="Username" class="text-danger" />
-						</div>
-
-						<div class="form-group">
-							<label>Password</label>
-							<input asp-for="Password" class="form-control" />
-							<span asp-validation-for="Password" class="text-danger" />
-						</div>
-
-						<button class="btn btn-default">Login</button>
-						<a asp-action="Create" asp-controller="Account">Tao tai khoan moi</a>
-						<a asp-action="ForgotPassword" asp-controller="Account">Quên mật khẩu?</a>
-					</form>
-				</div><!--/login form-->
-			</div>
-			
-</section><!--/form-->
 @section Scripts {
-	@{
-		await Html.RenderPartialAsync("_ValidationScriptsPartial");
-	}
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <script>
+        function togglePassword() {
+
+            const passwordInput =
+                document.getElementById("passwordInput");
+
+            const passwordIcon =
+                document.getElementById("passwordIcon");
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+
+                passwordIcon.classList.remove("fa-eye");
+                passwordIcon.classList.add("fa-eye-slash");
+
+            } else {
+
+                passwordInput.type = "password";
+
+                passwordIcon.classList.remove("fa-eye-slash");
+                passwordIcon.classList.add("fa-eye");
+            }
+        }
+    </script>
 }
+
+<style>
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f6f9;
+    }
+
+    .login-section {
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 30px;
+        background: #ffffff;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 1100px;
+    }
+
+    .login-card {
+        width: 100%;
+        min-height: 650px;
+        background: #fff;
+        border-radius: 25px;
+        overflow: hidden;
+        display: flex;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    /* LEFT */
+
+    .login-left {
+        width: 50%;
+        padding: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+    }
+
+    .login-content {
+        width: 100%;
+        max-width: 400px;
+    }
+
+        .login-content h1 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .login-content p {
+            color: #777;
+            margin-bottom: 35px;
+            line-height: 1.6;
+        }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: block;
+        color: #333;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+    }
+
+    .custom-input {
+        height: 55px;
+        border-radius: 14px;
+        border: 1px solid #ddd;
+        padding-left: 45px;
+        padding-right: 45px;
+        font-size: 15px;
+        transition: 0.3s;
+    }
+
+        .custom-input:focus {
+            border-color: #2a5298;
+            box-shadow: 0 0 0 4px rgba(42,82,152,0.15);
+        }
+
+    .password-toggle {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+        cursor: pointer;
+    }
+
+    .remember-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+
+        .remember-row a {
+            text-decoration: none;
+            color: #2a5298;
+            font-weight: 600;
+        }
+
+    .login-btn {
+        width: 100%;
+        height: 55px;
+        border: none;
+        border-radius: 14px;
+        background: #2a5298;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+        .login-btn:hover {
+            background: #1e3c72;
+        }
+
+    /* RIGHT */
+
+    .login-right {
+        width: 50%;
+        background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1200') center/cover;
+        position: relative;
+    }
+
+    .overlay {
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.55);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 40px;
+    }
+
+        .overlay h2 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .overlay p {
+            font-size: 18px;
+            line-height: 1.8;
+            max-width: 400px;
+        }
+
+    /* RESPONSIVE */
+
+    @@media(max-width: 992px) {
+
+        .login-card {
+            flex-direction: column;
+        }
+
+        .login-left,
+        .login-right {
+            width: 100%;
+        }
+
+        .login-right {
+            min-height: 300px;
+        }
+    }
+
+</style>

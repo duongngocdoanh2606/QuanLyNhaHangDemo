@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuanLyNhaHangDemo.Models.MaterialModel>
+@model IEnumerable<QuanLyNhaHangDemo.Models.MaterialModel>
 
 @{
     ViewData["Title"] = "Warehouse";
@@ -11,7 +11,10 @@
     + Thêm nguyên liệu
 </a>
 <a asp-action="ImportHistory" class="btn btn-primary mb-3">
-    Lịch sử nhập kho
+    <i class="fas fa-arrow-circle-down me-1"></i> Lịch sử nhập kho
+</a>
+<a asp-action="ExportHistory" class="btn btn-warning mb-3">
+    <i class="fas fa-arrow-circle-up me-1"></i> Lịch sử xuất kho
 </a>
 
 <table class="table table-bordered table-hover">
@@ -22,7 +25,7 @@
             <th>Số lượng</th>
             <th>Đơn vị</th>
             <th>Giá nhập gần nhất</th>
-            <th>Trạng thái</th>
+            <th>Hạn sử dụng</th>
             <th width="250">Hành động</th>
         </tr>
     </thead>
@@ -40,13 +43,25 @@
                 <td>@item.Unit</td>
                 <td>@price.ToString("N0")</td>
                 <td>
-                    @if (item.CurrentQuantity < item.ReorderLevel)
+                    @if(item.ExpiryDate.HasValue)
                     {
-                        <span class="badge bg-danger">Sắp hết</span>
+                        var daysToExpire = (item.ExpiryDate.Value - DateTime.Now).TotalDays;
+                        if (daysToExpire < 0)
+                        {
+                            <span class="badge bg-danger">Đã hết hạn</span>
+                        }
+                        else if (daysToExpire <= 7)
+                        {
+                            <span class="badge bg-warning text-dark">Sắp hết hạn (@Math.Ceiling(daysToExpire) ngày)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Còn @Math.Ceiling(daysToExpire) ngày</span>
+                        }
                     }
                     else
                     {
-                        <span class="badge bg-success">Ổn</span>
+                        <span class="text-muted">Chưa có thông tin</span>
                     }
                 </td>
                 <td>

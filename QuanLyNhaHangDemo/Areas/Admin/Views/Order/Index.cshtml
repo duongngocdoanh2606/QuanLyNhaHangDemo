@@ -10,83 +10,80 @@
     Xem đơn hoàn thành & doanh thu
 </a>
 
-<table class="table">
+<table class="table table-bordered table-striped">
     <thead>
         <tr>
             <th>#</th>
             <th>Order Code</th>
-            <th>Shipping Cost</th>
             <th>User Name</th>
             <th>Order Date</th>
             <th>Timer</th>
             <th>Order Status</th>
-            <th>Delete</th>
-            <th>Action</th>
-            
+            <th class="text-center">Thao tác</th>
         </tr>
     </thead>
     <tbody>
+        @{
+            int stt = 1;
+        }
         @foreach (var item in Model)
         {
             <tr>
-                <td>#</td>
-                <td>@item.OrderCode</td>
-                <td>@item.ShippingCost.ToString("#,##0 VND")</td>
-                <td>@item.UserName</td>
-                <td>@item.CreatedDate</td>
+                <td>@(stt++)</td>
+                <td class="fw-bold">@item.OrderCode</td>
+                <td>@item.GuestName</td>
+                <td>@item.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>
-                    <span class="timer"
+                    <span class="timer fw-bold"
                           data-start="@item.CreatedDate.ToString("O")">
                     </span>
                 </td>
                 <td>
-                    @if (item.Status == 0)
+                    @switch (item.Status)
                     {
-                        <span class="text text-success">Đơn hàng mới</span>
-                    }
-                    else if (item.Status == 1)
-                    {
-                        <span class="text text-warning">Đang xử lý</span>
-                    }
-                    else if (item.Status == 2)
-                    {
-                        <span class="text text-primary">Hoàn thành</span>
-                    }
-                    else if (item.Status == 3)
-                    {
-                        <span class="text text-danger">Đã hủy</span>
+                        case OrderModel.OrderStatus.Pending:
+                            <span class="badge bg-secondary">Chờ bếp</span>
+                            break;
+                        case OrderModel.OrderStatus.Serving:
+                            <span class="badge bg-primary">Đang phục vụ</span>
+                            break;
+                        case OrderModel.OrderStatus.Paid:
+                            <span class="badge bg-success">Đã thanh toán</span>
+                            break;
+                        case OrderModel.OrderStatus.Completed:
+                            <span class="badge bg-info">Hoàn thành</span>
+                            break;
+                        case OrderModel.OrderStatus.Cancelled:
+                            <span class="badge bg-danger">Đã hủy</span>
+                            break;
                     }
                 </td>
-                @if (item.Status == 3)
-                {
-                    <td>
+                <td class="text-center">
+                    @if (item.Status == OrderModel.OrderStatus.Cancelled)
+                    {
                         <a asp-action="Delete"
                            asp-controller="Order"
                            asp-route-ordercode="@item.OrderCode"
                            class="btn btn-danger btn-sm confirmDeletion">
                             Delete
                         </a>
-                    </td>
-                }
-               
-                @if (item.Status != 3)
-                {
-                    <td>
-                    <a asp-action="ViewOrder"
-                       asp-controller="Order"
-                       asp-route-ordercode="@item.OrderCode"
-                       class="btn btn-warning btn-sm">
-                        View Order
-                    </a>
-                    
+                    }
+
+                    @if (item.Status != OrderModel.OrderStatus.Cancelled && item.Status != OrderModel.OrderStatus.Completed)
+                    {
+                        <a asp-action="ViewOrder"
+                           asp-controller="Order"
+                           asp-route-ordercode="@item.OrderCode"
+                           class="btn btn-warning btn-sm">
+                            View Order
+                        </a>
+                    }
                 </td>
-                }
-                
             </tr>
         }
     </tbody>
 </table>
-//Set thời gian
+
 @section Scripts {
     <script>
         setInterval(() => {
@@ -94,6 +91,8 @@
                 const start = new Date(el.dataset.start);
                 const now = new Date();
                 const diff = Math.floor((now - start) / 1000);
+
+                if (diff < 0) return; // Tránh hiển thị số âm nếu thời gian server lệch nhẹ
 
                 const m = Math.floor(diff / 60);
                 const s = diff % 60;
@@ -105,5 +104,4 @@
             });
         }, 1000);
     </script>
-
 }

@@ -7,7 +7,7 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
         public TableModel Table { get; set; }
         public OrderModel Order { get; set; }
 
-        public List<OrderDetails> OrderDetails { get; set; }
+        public List<OrderDetailsModel> OrderDetails { get; set; }
         public List<ProductModel> Products { get; set; }
 
         public int SelectedProductId { get; set; }

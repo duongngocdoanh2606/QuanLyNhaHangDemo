@@ -1,101 +1,275 @@
-﻿@model IEnumerable<QuanLyNhaHangDemo.Models.OrderDetails>
+﻿@model IEnumerable<QuanLyNhaHangDemo.Models.OrderDetailsModel>
 
 @{
-    Layout = null;  // để trang riêng biệt, in ra không có layout
-    var order = Model.First().OrderCode;
-    var total = (decimal)ViewBag.Total;
-    var shipping = (decimal)ViewBag.Shipping;
-    var buyer = (string)ViewBag.BuyerName;
+    Layout = null;
+
+    var firstItem = Model.FirstOrDefault();
+
+    var orderCode = firstItem?.Order?.OrderCode ?? "N/A";
+
+    var buyer = firstItem?.Order?.GuestName ?? "Khách lẻ";
+
+    decimal total = ViewBag.Total ?? 0;
 }
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Hóa đơn - @order</title>
+
+    <title>Hóa đơn - @orderCode</title>
 
     <style>
-        body { font-family: Arial; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
-        th { background: #f2f2f2; }
-        h2, h4 { margin: 5px 0; }
-        .total-line { font-weight: bold; font-size: 16px; }
-        .print-btn {
-            padding: 10px 15px; background: blue; color: white;
-            border: none; cursor: pointer; margin-bottom: 20px;
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px;
+            color: #222;
         }
+
+        .invoice-container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .top-actions {
+            margin-bottom: 20px;
+        }
+
+        .print-btn,
+        .pdf-btn {
+            padding: 10px 16px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        .print-btn {
+            background: #0d6efd;
+        }
+
+        .pdf-btn {
+            background: #198754;
+        }
+
+        h2, h4 {
+            margin: 6px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .total-line {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        @@media print {
+
+            .top-actions {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+            }
+        }
+
     </style>
 </head>
 
 <body>
 
-    <button class="print-btn" onclick="window.print()">In hóa đơn</button>
+    <div class="invoice-container" id="invoice">
 
-    <h2>Hóa đơn bán hàng</h2>
-    <h4>Mã đơn hàng: @order</h4>
-    <h4>Tên người mua: @buyer </h4>
-    <h4>@ViewBag.TableInfo</h4>
-    <h4>Ngày: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</h4>
+        <div class="top-actions">
 
-    <table>
-        <thead>
-            <tr>
-                <th>Sản phẩm</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Thành tiền</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+            <button class="print-btn"
+                    onclick="window.print()">
+                In hóa đơn
+            </button>
+
+            <button class="pdf-btn"
+                    onclick="downloadPDF()">
+                Xuất PDF
+            </button>
+
+        </div>
+
+        <h2>HÓA ĐƠN BÁN HÀNG</h2>
+
+        <h4>Mã đơn hàng: @orderCode</h4>
+
+        <h4>Khách hàng: @buyer</h4>
+
+        <h4>@ViewBag.TableInfo</h4>
+
+        <h4>
+            Ngày:
+            @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+        </h4>
+
+        <table>
+
+            <thead>
                 <tr>
-                    <td>@item.Product.Name</td>
-                    <td>@item.Price.ToString("N0") đ</td>
-                    <td>@item.Quantity</td>
-                    <td>@((item.Price * item.Quantity).ToString("N0")) đ</td>
+                    <th>Sản phẩm</th>
+                    <th>Đơn giá</th>
+                    <th>Số lượng</th>
+                    <th>Thành tiền</th>
                 </tr>
-            }
+            </thead>
 
-            <tr>
-                <td colspan="3" class="total-line">Tổng tiền hàng:</td>
-                <td class="total-line">@total.ToString("N0") đ</td>
-            </tr>
+            <tbody>
 
-            <tr>
-                <td colspan="3" class="total-line">Phí ship:</td>
-                <td class="total-line">@shipping.ToString("N0") đ</td>
-            </tr>
+                @foreach (var item in Model)
+                {
+                    var lineTotal = item.UnitPrice * item.Quantity;
 
-            <tr>
-                <td colspan="3" class="total-line">Tổng thanh toán:</td>
-                <td class="total-line">@((total + shipping).ToString("N0")) đ</td>
-            </tr>
-        </tbody>
-    </table>
+                    <tr>
+
+                        <td>
+                            @item.Product.Name
+                        </td>
+
+                        <td class="text-right">
+                            @item.UnitPrice.ToString("N0") đ
+                        </td>
+
+                        <td class="text-right">
+                            @item.Quantity
+                        </td>
+
+                        <td class="text-right">
+                            @lineTotal.ToString("N0") đ
+                        </td>
+
+                    </tr>
+                }
+
+                <tr>
+
+                    <td colspan="3"
+                        class="text-right total-line">
+                        Tổng tiền hàng:
+                    </td>
+
+                    <td class="text-right total-line">
+                        @total.ToString("N0") đ
+                    </td>
+
+                </tr>
+
+                <tr>
+
+                    <td colspan="3"
+                        class="text-right total-line">
+                        Phí ship:
+                    </td>
+
+                 
+
+                </tr>
+
+                <tr>
+
+                    <td colspan="3"
+                        class="text-right total-line">
+                        Tổng thanh toán:
+                    </td>
+
+                    <td class="text-right total-line">
+                        @((total).ToString("N0")) đ
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </body>
 </html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
+
     async function downloadPDF() {
+
         const { jsPDF } = window.jspdf;
+
         const pdf = new jsPDF('p', 'mm', 'a4');
 
-        const invoice = document.body;
+        const invoice = document.getElementById('invoice');
 
-        await html2canvas(invoice).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
+        const canvas = await html2canvas(invoice);
 
-            const imgWidth = 210;
-            const pageHeight = 297;
-            const imgHeight = canvas.height * imgWidth / canvas.width;
+        const imgData = canvas.toDataURL('image/png');
 
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save("hoadon.pdf");
-        });
+        const imgWidth = 210;
+
+        const pageHeight = 297;
+
+        const imgHeight =
+            canvas.height * imgWidth / canvas.width;
+
+        let heightLeft = imgHeight;
+
+        let position = 0;
+
+        pdf.addImage(
+            imgData,
+            'PNG',
+            0,
+            position,
+            imgWidth,
+            imgHeight
+        );
+
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+
+            position = heightLeft - imgHeight;
+
+            pdf.addPage();
+
+            pdf.addImage(
+                imgData,
+                'PNG',
+                0,
+                position,
+                imgWidth,
+                imgHeight
+            );
+
+            heightLeft -= pageHeight;
+        }
+
+        pdf.save(`HoaDon_${'@orderCode'}.pdf`);
     }
+
 </script>

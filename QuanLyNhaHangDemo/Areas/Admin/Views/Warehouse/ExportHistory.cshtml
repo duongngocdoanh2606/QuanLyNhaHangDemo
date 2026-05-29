@@ -1,0 +1,213 @@
+@model IEnumerable<QuanLyNhaHangDemo.Models.InventoryTransactionModel>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Lịch sử xuất kho";
+    var materials       = ViewBag.Materials as List<SelectListItem> ?? new List<SelectListItem>();
+    var selectedReason  = ViewBag.SelectedReason as string;
+    var selectedMat     = ViewBag.SelectedMaterial as int?;
+    var from            = ViewBag.From as DateTime?;
+    var to              = ViewBag.To as DateTime?;
+    decimal totalCost   = ViewBag.TotalCost ?? 0;
+    decimal totalSale   = ViewBag.TotalSale ?? 0;
+    decimal totalReturn = ViewBag.TotalReturn ?? 0;
+    decimal totalManual = ViewBag.TotalManual ?? 0;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h4 class="mb-0"><i class="fas fa-arrow-circle-up text-warning me-2"></i>Lịch sử xuất kho</h4>
+    </div>
+    <a asp-action="ImportHistory" class="btn btn-primary btn-sm">
+        <i class="fas fa-arrow-circle-down me-1"></i> Xem lịch sử nhập kho
+    </a>
+</div>
+
+<!-- Bộ lọc -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form method="get" asp-action="ExportHistory" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Loại xuất kho</label>
+                <select name="reason" class="form-select form-select-sm">
+                    <option value="">-- Tất cả loại xuất --</option>
+                    <option value="OUT_SALE" selected="@(selectedReason == "OUT_SALE")">Xuất bán hàng</option>
+                    <option value="OUT_RETURN" selected="@(selectedReason == "OUT_RETURN")">Trả hàng lỗi NCC</option>
+                    <option value="OUT_MANUAL" selected="@(selectedReason == "OUT_MANUAL")">Xuất thủ công khác</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Nguyên liệu</label>
+                <select name="materialId" class="form-select form-select-sm">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var m in materials)
+                    {
+                        <option value="@m.Value" selected="@(selectedMat?.ToString() == m.Value)">@m.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Từ ngày</label>
+                <input type="date" name="from" class="form-control form-control-sm"
+                       value="@(from?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Đến ngày</label>
+                <input type="date" name="to" class="form-control form-control-sm"
+                       value="@(to?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                    <i class="fas fa-filter"></i> Lọc
+                </button>
+                <a asp-action="ExportHistory" class="btn btn-outline-secondary btn-sm flex-fill">
+                    <i class="fas fa-times"></i> Xóa
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Thẻ tổng quan -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-warning shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                    <i class="fas fa-coins text-warning fa-lg"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">Tổng xuất kho</div>
+                    <div class="fw-bold fs-5 text-warning">@totalCost.ToString("N0") ₫</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                    <i class="fas fa-utensils text-success fa-lg"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">Xuất bán hàng</div>
+                    <div class="fw-bold fs-5 text-success">@totalSale.ToString("N0") ₫</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                    <i class="fas fa-undo-alt text-danger fa-lg"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">Trả nhà cung cấp</div>
+                    <div class="fw-bold fs-5 text-danger">@totalReturn.ToString("N0") ₫</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-secondary shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
+                    <i class="fas fa-edit text-secondary fa-lg"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">Xuất thủ công</div>
+                    <div class="fw-bold fs-5 text-secondary">@totalManual.ToString("N0") ₫</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng dữ liệu -->
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center py-4">
+        <i class="fas fa-box-open fa-2x mb-2 d-block text-muted"></i>
+        Không có dữ liệu xuất kho phù hợp với bộ lọc.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-warning">
+                <tr>
+                    <th width="40">#</th>
+                    <th>Nguyên liệu</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                    <th>Loại xuất & Liên kết</th>
+                    <th>Ghi chú</th>
+                    <th>Ngày xuất</th>
+                    <th class="text-center" width="90">In HĐ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int stt = 1; }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-muted small">@stt++</td>
+                        <td>
+                            <div class="fw-semibold">@item.Material?.Name</div>
+                            <div class="small text-muted">Đơn vị: @item.Material?.Unit</div>
+                        </td>
+                        <td class="text-center fw-semibold text-danger">
+                            -@item.Quantity <small class="text-muted">@item.Material?.Unit</small>
+                        </td>
+                        <td class="text-end">@item.UnitPrice.ToString("N0") ₫</td>
+                        <td class="text-end fw-bold text-danger">@item.TotalPrice.ToString("N0") ₫</td>
+                        <td>
+                            @if (item.Reason == "OUT_SALE")
+                            {
+                                <span class="badge bg-success mb-1">Xuất bán hàng</span>
+                                @if (item.Order != null)
+                                {
+                                    <div class="small text-muted">
+                                        <i class="fas fa-receipt me-1"></i> @item.Order.OrderCode
+                                    </div>
+                                }
+                            }
+                            else if (item.Reason == "OUT_RETURN")
+                            {
+                                <span class="badge bg-danger mb-1">Trả hàng NCC</span>
+                                @if (item.Supplier != null)
+                                {
+                                    <div class="small text-muted">
+                                        <i class="fas fa-handshake me-1"></i> @item.Supplier.SupplierName
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary mb-1">Xuất thủ công</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="small text-muted">@item.Note</span>
+                        </td>
+                        <td>
+                            <div>@item.DateCreated.ToString("dd/MM/yyyy")</div>
+                            <div class="small text-muted">@item.DateCreated.ToString("HH:mm")</div>
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="PrintExportInvoice" asp-route-id="@item.Id"
+                               class="btn btn-outline-warning btn-sm" target="_blank" title="In phiếu xuất">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

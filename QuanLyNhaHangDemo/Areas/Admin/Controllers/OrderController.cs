@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
+using QuanLyNhaHangDemo.Services;
 
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
@@ -10,219 +10,310 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
     public class OrderController : Controller
     {
         private readonly DataContext _dataContext;
-        public OrderController(DataContext context)
+        private readonly IOrderStateService _orderState;
+
+        public OrderController(
+            DataContext context,
+            IOrderStateService orderState)
         {
             _dataContext = context;
+            _orderState = orderState;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var orders = await _dataContext.Orders
-                .Where(o => o.Status != 2)               // không hiển thị đơn đã hoàn thành
+            var orders = await _dataContext.Table
+                .Include(t => t.CurrentOrder)
+                .ThenInclude(o => o.OrderDetails)
+                .Where(t =>
+                    t.CurrentOrderId != null &&
+                    t.CurrentOrder.Status != OrderModel.OrderStatus.Paid &&
+                    t.CurrentOrder.Status != OrderModel.OrderStatus.Cancelled)
+                .Select(t => t.CurrentOrder)
                 .OrderByDescending(o => o.Id)
                 .ToListAsync();
 
+            var fifteenMinutesAgo = DateTime.Now.AddMinutes(-15);
+
+            var delayedOrderCodes = new HashSet<string>();
+
+            foreach (var order in orders)
+            {
+                var servedItems = order.OrderDetails
+                    .Where(x => x.Status == StatusProduct.Served)
+                    .ToList();
+
+                DateTime baseCheckTime;
+
+                if (servedItems.Any())
+                {
+                    baseCheckTime = servedItems.Max(x =>
+                        x.UpdatedAt ?? x.CreateDate);
+                }
+                else
+                {
+                    baseCheckTime = order.CreatedDate;
+                }
+
+                bool hasRemainingItems = order.OrderDetails.Any(x =>
+                    x.Status != StatusProduct.Served &&
+                    x.Status != StatusProduct.Cancelled);
+
+                if (baseCheckTime <= fifteenMinutesAgo &&
+                    hasRemainingItems)
+                {
+                    delayedOrderCodes.Add(order.OrderCode);
+                }
+            }
+
+            ViewBag.DelayedOrderCodes = delayedOrderCodes;
+
             return View(orders);
         }
-
 
         [HttpGet]
         [Route("ViewOrder")]
         public async Task<IActionResult> ViewOrder(string ordercode)
         {
-            var DetailsOrder = await _dataContext.OrderDetails
-                .Include(od => od.Product)
-                .Where(od => od.OrderCode == ordercode)
-                .ToListAsync();
-
             var order = await _dataContext.Orders
                 .FirstOrDefaultAsync(o => o.OrderCode == ordercode);
 
             if (order == null)
-            {
                 return NotFound();
-            }
 
-            ViewBag.ShippingCost = order.ShippingCost;
+            var detailsOrder = await _dataContext.OrderDetails
+                .Include(od => od.Product)
+                .Include(od => od.Order)
+                .Include(od => od.OrderDetailModifiers)
+                    .ThenInclude(odm => odm.Modifier)
+                .Where(od =>
+                    od.OrderId == order.Id &&
+                    od.Status != StatusProduct.Cancelled)
+                .ToListAsync();
+
             ViewBag.Status = order.Status;
 
-            // ✅ Thêm danh sách trạng thái
-            var statusList = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "0", Text = "Đơn Hàng Mới" },
-                new SelectListItem { Value = "1", Text = "Đang xử lý" },
-                new SelectListItem { Value = "2", Text = "Hoàn thành" },
+            ViewBag.OrderStatusLabel =
+                Helpers.OrderStatusHelper
+                    .GetOrderStatusLabel(order.Status);
 
-            };
-            var selected = statusList.FirstOrDefault(x => x.Value == order.Status.ToString());
-            if (selected != null)
+            ViewBag.OrderStatusClass =
+                Helpers.OrderStatusHelper
+                    .GetOrderStatusBadgeClass(order.Status);
+
+            ViewBag.CanModifyItems =
+                order.Status != OrderModel.OrderStatus.Paid &&
+                order.Status != OrderModel.OrderStatus.Cancelled;
+
+            return View(detailsOrder);
+        }
+
+        [HttpPost]
+        [Route("CancelItem")]
+        public async Task<IActionResult> CancelItem(int orderDetailId)
+        {
+            var detail = await _dataContext.OrderDetails
+                .FindAsync(orderDetailId);
+
+            if (detail == null)
             {
-                selected.Selected = true;
+                return Json(new
+                {
+                    success = false,
+                    message = "Không tìm thấy món ăn cần hủy."
+                });
             }
 
-            ViewBag.StatusList = statusList;
+            if (detail.Status == StatusProduct.Done ||
+                detail.Status == StatusProduct.Served)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Món đã hoàn thành, không thể hủy."
+                });
+            }
 
-            return View(DetailsOrder);
+            var oldStatus = detail.Status;
+
+            detail.Status = StatusProduct.Cancelled;
+            detail.UpdatedAt = DateTime.Now;
+
+            await _dataContext.SaveChangesAsync();
+
+            await _orderState.SyncAfterOrderDetailStatusChangeAsync(
+                orderDetailId,
+                oldStatus,
+                detail.Status);
+
+            return Json(new
+            {
+                success = true,
+                message = "Đã hủy món thành công."
+            });
+        }
+
+        [HttpPost]
+        [Route("FireItem")]
+        public async Task<IActionResult> FireItem(
+            int orderDetailId,
+            bool remake = false)
+        {
+            var (success, message) =
+                await _orderState.FireOrderDetailAsync(
+                    orderDetailId,
+                    remake);
+
+            return Json(new { success, message });
+        }
+
+        [HttpPost]
+        [Route("Admin/TableAdmin/ServeItem/{orderDetailId}")]
+        public async Task<IActionResult> ServeItem(int orderDetailId)
+        {
+            var detail = await _dataContext.OrderDetails
+                .Include(x => x.Order)
+                .FirstOrDefaultAsync(x => x.Id == orderDetailId);
+
+            if (detail == null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Không tìm thấy món."
+                });
+            }
+
+            if (detail.Status == StatusProduct.Served)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Món đã phục vụ."
+                });
+            }
+
+            if (detail.Status != StatusProduct.Done)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Món chưa hoàn thành."
+                });
+            }
+
+            var oldStatus = detail.Status;
+
+            detail.Status = StatusProduct.Served;
+            detail.UpdatedAt = DateTime.Now;
+
+            var product = await _dataContext.Products
+                .FindAsync(detail.ProductId);
+
+            if (product != null)
+            {
+                product.Sold += detail.Quantity;
+            }
+
+            await _dataContext.SaveChangesAsync();
+
+            await _orderState.SyncAfterOrderDetailStatusChangeAsync(
+                orderDetailId,
+                oldStatus,
+                detail.Status);
+
+            return Json(new
+            {
+                success = true,
+                message = "Đã phục vụ món."
+            });
         }
 
         [HttpPost]
         [Route("UpdateOrder")]
-        public async Task<IActionResult> UpdateOrder(string ordercode, int status)
+        public async Task<IActionResult> UpdateOrder(
+            string ordercode,
+            int status)
         {
             if (string.IsNullOrEmpty(ordercode))
-                return Json(new { success = false, message = "Mã đơn hàng rỗng." });
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Mã đơn rỗng."
+                });
+            }
 
             var order = await _dataContext.Orders
-                .FirstOrDefaultAsync(o => o.OrderCode == ordercode);
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o =>
+                    o.OrderCode == ordercode);
 
             if (order == null)
-                return Json(new { success = false, message = "Không tìm thấy đơn hàng." });
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Không tìm thấy đơn."
+                });
+            }
 
-            int oldStatus = order.Status;
-            order.Status = status;
-            _dataContext.Orders.Update(order);
+            var oldStatus = order.Status;
+
+            order.Status =
+                (OrderModel.OrderStatus)status;
 
             try
             {
-                // CHỈ ghi báo cáo khi chuyển sang Hoàn thành (2) và trước đó chưa hoàn thành
-                if (status == 2 && oldStatus != 2)
-                {
-                    var detailsOrder = await _dataContext.OrderDetails
-                        .Where(od => od.OrderCode == ordercode)
-                        .ToListAsync();
-
-                    if (detailsOrder.Any())
-                    {
-                        // 1. Doanh thu: dùng giá bán thực tế trong OrderDetails
-                        decimal totalRevenue = detailsOrder.Sum(od => od.Price * od.Quantity);
-
-                        // Nếu muốn tính cả phí ship vào doanh thu thì + thêm:
-                        // totalRevenue += order.ShippingCost;
-
-                        // 2. Chi phí nguyên liệu
-                        decimal totalMaterialCost = 0m;
-
-                        foreach (var item in detailsOrder)
-                        {
-                            var usages = await _dataContext.ProductMaterials
-                                .Where(pm => pm.ProductId == item.ProductId)
-                                .ToListAsync();
-
-                            foreach (var usage in usages)
-                            {
-                                decimal usedQuantity = item.Quantity * usage.QuantityPerProduct;
-
-                                var lastImport = await _dataContext.InventoryTransactions
-                                    .Where(t => t.MaterialId == usage.MaterialId && t.Type == "IN")
-                                    .OrderByDescending(t => t.DateCreated)
-                                    .ThenByDescending(t => t.Id)
-                                    .FirstOrDefaultAsync();
-
-                                decimal unitCost = lastImport?.UnitPrice ?? 0m;
-                                totalMaterialCost += usedQuantity * unitCost;
-                            }
-                        }
-
-                        // 3. Lợi nhuận = Doanh thu – Chi phí nguyên liệu
-                        decimal profit = totalRevenue - totalMaterialCost;
-
-                        // 4. Ghi vào bảng Statisticals theo ngày tạo đơn
-                        var statisticalModel = await _dataContext.Statisticals
-                            .FirstOrDefaultAsync(s => s.DateCreated.Date == order.CreatedDate.Date);
-
-                        int totalQuantity = detailsOrder.Sum(d => d.Quantity);
-
-                        if (statisticalModel != null)
-                        {
-                            statisticalModel.Sold += 1;
-                            statisticalModel.Quantity += totalQuantity;
-                            statisticalModel.Revenue += totalRevenue;
-                            statisticalModel.Profit += profit;
-                            _dataContext.Statisticals.Update(statisticalModel);
-                        }
-                        else
-                        {
-                            statisticalModel = new StatisticalModel
-                            {
-                                DateCreated = order.CreatedDate.Date,
-                                Sold = 1,
-                                Quantity = totalQuantity,
-                                Revenue = totalRevenue,
-                                Profit = profit
-                            };
-                            await _dataContext.Statisticals.AddAsync(statisticalModel);
-                        }
-                    }
-
-                    if (order.TableId.HasValue)
-                    {
-                        var tableId = order.TableId.Value;
-
-                        var reservation = await _dataContext.Reservations
-                            .Where(r =>
-                                r.TableId == tableId &&
-                                r.Status == ReservationStatus.Approved // hoặc Pending/Approved tuỳ flow
-                            )
-                            .OrderByDescending(r => r.ReserveTime)
-                            .FirstOrDefaultAsync();
-
-                        if (reservation != null)
-                        {
-                            reservation.Status = ReservationStatus.Completed;
-                            _dataContext.Reservations.Update(reservation);
-                        }
-                    }
-
-                }
-
                 await _dataContext.SaveChangesAsync();
-                return Json(new { success = true });
+
+                await _orderState.SyncAfterOrderStatusChangeAsync(
+                    order.Id,
+                    oldStatus,
+                    order.Status);
+
+                return Json(new
+                {
+                    success = true
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
             }
         }
 
-
         [HttpGet]
-        public async Task<IActionResult> CompletedOrders(DateTime? from, DateTime? to)
+        public async Task<IActionResult> CompletedOrders(
+            DateTime? from,
+            DateTime? to)
         {
-            var ordersQuery = _dataContext.Orders
-                .Where(o => o.Status == 2)  // chỉ đơn đã hoàn thành
+            var query = _dataContext.Orders
+                .Include(o => o.Coupon)
+                .Where(o =>
+                    o.Status == OrderModel.OrderStatus.Paid)
                 .AsQueryable();
 
             if (from.HasValue)
-                ordersQuery = ordersQuery.Where(o => o.CreatedDate.Date >= from.Value.Date);
+            {
+                query = query.Where(o =>
+                    o.CreatedDate.Date >= from.Value.Date);
+            }
 
             if (to.HasValue)
-                ordersQuery = ordersQuery.Where(o => o.CreatedDate.Date <= to.Value.Date);
+            {
+                query = query.Where(o =>
+                    o.CreatedDate.Date <= to.Value.Date);
+            }
 
-            var list = await ordersQuery
+            var list = await query
                 .OrderByDescending(o => o.CreatedDate)
-                .Select(o => new CompletedOrderViewModel
-                {
-                    OrderCode = o.OrderCode,
-                    UserName = o.UserName,
-                    CreatedDate = o.CreatedDate,
-                    ShippingCost = o.ShippingCost,
-                    OrderRevenue = _dataContext.OrderDetails
-                        .Where(od => od.OrderCode == o.OrderCode)
-                        .Sum(od => od.Price * od.Quantity)
-                })
                 .ToListAsync();
-
-            // Tổng doanh thu (chỉ tiền món)
-            var totalRevenue = list.Sum(x => x.OrderRevenue);
-
-            // Nếu muốn tổng cả ship:
-            var totalRevenueWithShipping = list.Sum(x => x.TotalWithShipping);
-
-            ViewBag.From = from;
-            ViewBag.To = to;
-            ViewBag.TotalRevenue = totalRevenue;
-            ViewBag.TotalRevenueWithShipping = totalRevenueWithShipping;
 
             return View(list);
         }
@@ -234,94 +325,79 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 return NotFound();
 
             var order = await _dataContext.Orders
-                .FirstOrDefaultAsync(o => o.OrderCode == ordercode);
+                .FirstOrDefaultAsync(o =>
+                    o.OrderCode == ordercode);
 
             if (order == null)
                 return NotFound();
 
             var details = await _dataContext.OrderDetails
                 .Include(d => d.Product)
-                .Where(d => d.OrderCode == ordercode)
+                .Where(d =>
+                    d.OrderId == order.Id &&
+                    d.Status != StatusProduct.Cancelled)
                 .ToListAsync();
 
-            decimal total = details.Sum(d => d.Quantity * d.Price);
+            decimal total = details.Sum(x =>
+                x.Quantity * x.UnitPrice);
 
-            // ===== Thêm phần lấy thông tin bàn / online =====
-            string tableInfo;
-            if (order.TableId.HasValue)
-            {
-                var table = await _dataContext.Table
-                    .FirstOrDefaultAsync(t => t.Id == order.TableId.Value);
-
-                // Nếu có bàn → in số bàn
-                if (table != null)
-                {
-                    // tuỳ thuộc class TableModel của bạn:
-                    // ví dụ: table.TableNumber hoặc table.Name
-                    tableInfo = $"Bàn số: {table.TableName}";
-                }
-                else
-                {
-                    tableInfo = "Đặt tại quán (bàn không xác định)";
-                }
-            }
-            else
-            {
-                // Không có TableId → đơn online
-                tableInfo = "Đặt Online";
-            }
+            var table = await _dataContext.Table
+                .FirstOrDefaultAsync(t =>
+                    t.CurrentOrderId == order.Id);
 
             ViewBag.Order = order;
             ViewBag.Total = total;
-            ViewBag.Shipping = order.ShippingCost;
-            ViewBag.GrandTotal = total + order.ShippingCost;
-            ViewBag.Buyer = order.UserName;
+            ViewBag.Buyer = order.GuestName;
             ViewBag.OrderCode = ordercode;
-            ViewBag.TableInfo = tableInfo;     // ⭐ truyền sang View
+
+            ViewBag.TableInfo =
+                table != null
+                    ? $"Bàn số: {table.TableName}"
+                    : "Không xác định";
 
             return View(details);
         }
 
-
-
-
         [HttpGet]
-        [Route("Delete")]
         public async Task<IActionResult> Delete(string ordercode)
         {
             if (string.IsNullOrEmpty(ordercode))
-            {
                 return NotFound();
-            }
 
-            var order = await _dataContext.Orders.FirstOrDefaultAsync(o => o.OrderCode == ordercode);
+            var order = await _dataContext.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o =>
+                    o.OrderCode == ordercode);
+
             if (order == null)
-            {
                 return NotFound();
-            }
 
             try
             {
-                // delete related OrderDetails first (because there is no FK cascade configured)
-                var details = await _dataContext.OrderDetails
-                                    .Where(d => d.OrderCode == ordercode)
-                                    .ToListAsync();
+                var table = await _dataContext.Table
+                    .FirstOrDefaultAsync(t =>
+                        t.CurrentOrderId == order.Id);
 
-                if (details.Any())
+                if (table != null)
                 {
-                    _dataContext.OrderDetails.RemoveRange(details);
+                    table.CurrentOrderId = null;
+                    table.Status = TableStatus.Empty;
                 }
 
-                // then delete the order
+                _dataContext.OrderDetails
+                    .RemoveRange(order.OrderDetails);
+
                 _dataContext.Orders.Remove(order);
 
                 await _dataContext.SaveChangesAsync();
 
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
-            catch (Exception)
+            catch
             {
-                return StatusCode(500, "An error occurred while deleting the order.");
+                return StatusCode(
+                    500,
+                    "Lỗi khi xóa đơn hàng.");
             }
         }
     }

@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using QuanLyNhaHangDemo.Repository.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace QuanLyNhaHangDemo.Models
 {
@@ -18,13 +19,12 @@ namespace QuanLyNhaHangDemo.Models
         [Range(1, double.MaxValue, ErrorMessage = "Gia phai lon hon 0")]
         public decimal Price { get; set; }
         public int CategoryId { get; set; }
-
         public CategoryModel Category { get; set; }
-
-        public int Quantity{ get; set; }
+        public int Status { get; set; } = 1;
+        public virtual ICollection<ProModifierGroupModel> ProductModifierGroups { get; set; }
+        public virtual ICollection<ProductMaterialsModel> ProductMaterials { get; set; }
         public int Sold { get; set; }
         public string Image {  get; set; }
-        public RatingModel Ratings { get; set; }
         [NotMapped]
         [FileExtension]
         public IFormFile? ImageUpLoad { get; set; }
