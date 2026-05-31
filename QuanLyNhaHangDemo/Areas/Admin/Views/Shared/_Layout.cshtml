@@ -99,7 +99,7 @@
                 <span><i class="fas fa-layer-group"></i> Other</span>
                 <i class="fas fa-chevron-down small"></i>
             </a>
-            <div class="collapse @(c == "Category" || c == "ModifierGroup" || c == "Coupon" ? "show" : "")" id="otherMenu">
+            <div class="collapse @(c == "Category" || c == "ModifierGroup" || c == "Coupon" || c=="SupplierCategory"? "show" : "")" id="otherMenu">
                 <a class="nav-link ms-4 @(c == "Category" ? "active" : "")" asp-controller="Category" asp-action="Index">
                     <i class="fas fa-tags"></i> Categories
                 </a>
@@ -109,6 +109,10 @@
 
                 <a class="nav-link ms-4 @(c == "Coupon" ? "active" : "")" asp-controller="Coupon" asp-action="Index">
                     <i class="fas fa-ticket-alt"></i> Coupons
+                </a>
+
+                <a class="nav-link ms-4 @(c == "SupplierCategory" ? "active" : "")" asp-controller="SupplierCategory" asp-action="Index">
+                    <i class="fas fa-tags"></i> Supplier Categories
                 </a>
             </div>
         </div>
