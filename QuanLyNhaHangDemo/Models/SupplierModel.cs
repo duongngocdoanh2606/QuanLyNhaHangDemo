@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,22 +8,26 @@ namespace QuanLyNhaHangDemo.Models
     {
         [Key]
         public int SupplierId { get; set; }
+
         [Required]
         [MaxLength(100)]
         public string SupplierName { get; set; }
+
         [EmailAddress]
         public string? SupplierEmail { get; set; }
+
         [MaxLength(500)]
         public string? SupplierAddress { get; set; }
-        public SupplierStatus Status {  get; set; } = SupplierStatus.Active;
 
-        public int CategoryId {  get; set; }
-        [ForeignKey("CategoryId")]
-        public CategoryModel Category { get; set; }
+        public SupplierStatus Status { get; set; } = SupplierStatus.Active;
+
+        public int SupplierCategoryId { get; set; }
+        [ForeignKey("SupplierCategoryId")]
+        public SupplierCategoryModel SupplierCategory { get; set; }
+
         public ICollection<MaterialModel> Materials { get; set; }
-
-
     }
+
     public enum SupplierStatus
     {
         Active = 1,

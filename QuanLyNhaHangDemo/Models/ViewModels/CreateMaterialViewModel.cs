@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -8,8 +8,8 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
         {
             public MaterialModel Material { get; set; }
 
-            [Display(Name = "Danh mục")]
-            public int CategoryId { get; set; }
+            [Display(Name = "Danh mục nhà cung cấp")]
+            public int SupplierCategoryId { get; set; }
 
             [Required]
             [Display(Name = "Số lượng nhập ban đầu")]
@@ -21,7 +21,7 @@ namespace QuanLyNhaHangDemo.Models.ViewModels
 
             [Display(Name = "Ghi chú")]
             public string? Note { get; set; }
-            public List<SelectListItem> Categories { get; set; }
+            public List<SelectListItem> SupplierCategories { get; set; }
             public List<SelectListItem> Suppliers { get; set; }
         }
 

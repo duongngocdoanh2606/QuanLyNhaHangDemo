@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
 using System.Data.Common;
@@ -24,6 +24,7 @@ namespace QuanLyNhaHangDemo.Repository
         public DbSet<TableModel> Table { get; set; }
         public DbSet<ReservationModel> Reservations { get; set; }
         public DbSet<SupplierModel> Suppliers { get; set; }
+        public DbSet<SupplierCategoryModel> SupplierCategories { get; set; }
         public DbSet<CouponModel> Coupon { get; set; }
         public DbSet<KitchenModel> Kitchen { get; set; }
 
@@ -71,6 +72,15 @@ namespace QuanLyNhaHangDemo.Repository
                 .WithMany(s => s.Materials)
                 .HasForeignKey(m => m.SupplierId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Supplier → SupplierCategory
+            modelBuilder.Entity<SupplierModel>()
+                .HasOne(s => s.SupplierCategory)
+                .WithMany(sc => sc.Suppliers)
+                .HasForeignKey(s => s.SupplierCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
 
             // Product → ProModifierGroup
             modelBuilder.Entity<ProModifierGroupModel>()

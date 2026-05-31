@@ -67,19 +67,20 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         // Hàm trợ giúp nạp Dropdown tùy biến theo ID danh mục được chọn độc lập
         private async Task PopulateDropdownsNewAsync(CreateMaterialViewModel vm, int? selectedCategoryId)
         {
-            // Tải danh mục công khai
-            vm.Categories = await _dataContext.Categories
+            // Tải danh mục nhà cung cấp
+            vm.SupplierCategories = await _dataContext.SupplierCategories
+                .Where(c => c.IsActive)
                 .Select(b => new SelectListItem
                 {
-                    Value = b.Id.ToString(),
+                    Value = b.SupplierCategoryId.ToString(),
                     Text = b.Name
                 }).ToListAsync();
 
-            // Nếu form lỗi, dựa vào ID danh mục truyền từ Form về để tải lại danh sách Nhà cung cấp tương ứng
+            // Nếu form lỗi, dựa vào ID danh mục NCC truyền từ Form về để tải lại danh sách Nhà cung cấp tương ứng
             if (selectedCategoryId.HasValue && selectedCategoryId.Value > 0)
             {
                 vm.Suppliers = await _dataContext.Suppliers
-                    .Where(s => s.CategoryId == selectedCategoryId.Value)
+                    .Where(s => s.SupplierCategoryId == selectedCategoryId.Value)
                     .Select(s => new SelectListItem
                     {
                         Value = s.SupplierId.ToString(),
@@ -650,13 +651,13 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         }
 
         // =========================
-        // 10. SUPPLIERS BY CATEGORY (AJAX)
+        // 10. SUPPLIERS BY SUPPLIER CATEGORY (AJAX)
         // =========================
         [HttpGet]
         public IActionResult GetSuppliersByCategory(int categoryId)
         {
             var suppliers = _dataContext.Suppliers
-                .Where(s => s.CategoryId == categoryId)
+                .Where(s => s.SupplierCategoryId == categoryId)
                 .Select(s => new
                 {
                     id = s.SupplierId,

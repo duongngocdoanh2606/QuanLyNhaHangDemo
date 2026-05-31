@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Models.ViewModels;
 using QuanLyNhaHangDemo.Repository;
-using System.Security.Cryptography.Xml;
 
 [Area("Admin")]
 public class SupplierController : Controller
@@ -16,21 +15,23 @@ public class SupplierController : Controller
         _context = context;
     }
 
+    // ================== INDEX ==================
     public async Task<IActionResult> Index()
     {
         var suppliers = await _context.Suppliers
-            .Include(s => s.Category)
+            .Include(s => s.SupplierCategory)
             .ToListAsync();
 
         return View(suppliers);
     }
 
+    // ================== CREATE ==================
     public IActionResult Create()
     {
         var vm = new SupplierViewModel
         {
             Supplier = new SupplierModel(),
-            Categories = GetCategories()
+            SupplierCategories = GetSupplierCategories()
         };
 
         return View(vm);
@@ -42,16 +43,18 @@ public class SupplierController : Controller
     {
         if (!ModelState.IsValid)
         {
-            vm.Categories = GetCategories();
+            vm.SupplierCategories = GetSupplierCategories();
             return View(vm);
         }
 
         _context.Suppliers.Add(vm.Supplier);
         await _context.SaveChangesAsync();
 
+        TempData["success"] = "Thêm nhà cung cấp thành công!";
         return RedirectToAction(nameof(Index));
     }
 
+    // ================== EDIT ==================
     public async Task<IActionResult> Edit(int id)
     {
         var supplier = await _context.Suppliers.FindAsync(id);
@@ -60,7 +63,7 @@ public class SupplierController : Controller
         var vm = new SupplierViewModel
         {
             Supplier = supplier,
-            Categories = GetCategories()
+            SupplierCategories = GetSupplierCategories()
         };
 
         return View(vm);
@@ -75,13 +78,14 @@ public class SupplierController : Controller
 
         if (!ModelState.IsValid)
         {
-            vm.Categories = GetCategories();
+            vm.SupplierCategories = GetSupplierCategories();
             return View(vm);
         }
 
         _context.Suppliers.Update(vm.Supplier);
         await _context.SaveChangesAsync();
 
+        TempData["success"] = "Cập nhật nhà cung cấp thành công!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -89,7 +93,7 @@ public class SupplierController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         var supplier = await _context.Suppliers
-            .Include(s => s.Category)
+            .Include(s => s.SupplierCategory)
             .FirstOrDefaultAsync(s => s.SupplierId == id);
 
         if (supplier == null) return NotFound();
@@ -106,17 +110,19 @@ public class SupplierController : Controller
         _context.Suppliers.Remove(supplier);
         await _context.SaveChangesAsync();
 
+        TempData["success"] = "Xóa nhà cung cấp thành công!";
         return RedirectToAction(nameof(Index));
     }
 
     // ================== HELPER ==================
-    private List<SelectListItem> GetCategories()
+    private List<SelectListItem> GetSupplierCategories()
     {
-        return _context.Categories
-            .Select(b => new SelectListItem
+        return _context.SupplierCategories
+            .Where(c => c.IsActive)
+            .Select(c => new SelectListItem
             {
-                Value = b.Id.ToString(),
-                Text = b.Name
+                Value = c.SupplierCategoryId.ToString(),
+                Text = c.Name
             })
             .ToList();
     }

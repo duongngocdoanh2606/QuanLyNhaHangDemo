@@ -1,4 +1,4 @@
-﻿@model QuanLyNhaHangDemo.Models.ViewModels.CreateMaterialViewModel
+@model QuanLyNhaHangDemo.Models.ViewModels.CreateMaterialViewModel
 
 <div class="container mt-4">
     <div class="card">
@@ -27,9 +27,9 @@
                     <label class="form-label fw-bold">Danh mục nhà cung cấp</label>
                     <select id="categoryDropdown" name="SelectedCategoryId" class="form-control">
                         <option value="">-- Chọn danh mục --</option>
-                        @if (Model?.Categories != null)
+                        @if (Model?.SupplierCategories != null)
                         {
-                            foreach (var item in Model.Categories)
+                            foreach (var item in Model.SupplierCategories)
                             {
                                 // Giữ lại danh mục đã chọn nếu quay xe do lỗi validation
                                 var isSelected = (ViewBag.SelectedCategoryId != null && ViewBag.SelectedCategoryId.ToString() == item.Value) ? "selected" : "";

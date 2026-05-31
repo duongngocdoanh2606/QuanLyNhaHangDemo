@@ -1,0 +1,35 @@
+@model QuanLyNhaHangDemo.Models.SupplierCategoryModel
+
+@{
+    ViewData["Title"] = "Xóa danh mục nhà cung cấp";
+}
+
+<h2>Xác nhận xóa danh mục nhà cung cấp</h2>
+
+<div class="alert alert-warning">
+    <strong>Bạn có chắc muốn xóa danh mục này không?</strong>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Tên danh mục</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Mô tả</dt>
+    <dd class="col-sm-9">@Model.Description</dd>
+
+    <dt class="col-sm-3">Số nhà cung cấp</dt>
+    <dd class="col-sm-9">@(Model.Suppliers?.Count ?? 0) nhà cung cấp</dd>
+</dl>
+
+@if (Model.Suppliers != null && Model.Suppliers.Any())
+{
+    <div class="alert alert-danger">
+        Không thể xóa vì danh mục này đang có <strong>@Model.Suppliers.Count</strong> nhà cung cấp.
+    </div>
+}
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="SupplierCategoryId" />
+    <button type="submit" class="btn btn-danger" @(Model.Suppliers != null && Model.Suppliers.Any() ? "disabled" : "")>Xác nhận xóa</button>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</form>
