@@ -1,4 +1,4 @@
-﻿@model IEnumerable<OrderModel>
+@model IEnumerable<OrderModel>
 @{
     ViewData["title"] = "Orders Listed";
 }
@@ -59,15 +59,12 @@
                     }
                 </td>
                 <td class="text-center">
-                    @if (item.Status == OrderModel.OrderStatus.Cancelled)
-                    {
-                        <a asp-action="Delete"
-                           asp-controller="Order"
-                           asp-route-ordercode="@item.OrderCode"
-                           class="btn btn-danger btn-sm confirmDeletion">
-                            Delete
-                        </a>
-                    }
+                    <a asp-action="Delete"
+                       asp-controller="Order"
+                       asp-route-ordercode="@item.OrderCode"
+                       class="btn btn-danger btn-sm confirmDeletion">
+                        Delete
+                    </a>
 
                     @if (item.Status != OrderModel.OrderStatus.Cancelled && item.Status != OrderModel.OrderStatus.Completed)
                     {

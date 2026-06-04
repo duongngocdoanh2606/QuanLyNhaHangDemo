@@ -52,10 +52,16 @@
 
                 <td class="fw-bold text-success">@o.TotalWithCoupon.ToString("N0") ₫</td>
                 <td>
-                    <a class="btn btn-secondary"
+                    <a class="btn btn-secondary btn-sm"
                        href="/Admin/Order/Invoice?ordercode=@o.OrderCode"
                        target="_blank">
                         In hóa đơn
+                    </a>
+                    <a asp-action="Delete"
+                       asp-controller="Order"
+                       asp-route-ordercode="@o.OrderCode"
+                       class="btn btn-danger btn-sm confirmDeletion">
+                        Xóa
                     </a>
                 </td>
             </tr>
