@@ -311,9 +311,23 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     o.CreatedDate.Date <= to.Value.Date);
             }
 
-            var list = await query
+            var orders = await query
                 .OrderByDescending(o => o.CreatedDate)
                 .ToListAsync();
+
+            var list = orders.Select(o => new CompletedOrderViewModel
+            {
+                OrderCode = o.OrderCode ?? "",
+                UserName = string.IsNullOrEmpty(o.GuestName) ? "Khách vãng lai" : o.GuestName,
+                CreatedDate = o.CreatedDate,
+                CouponCode = o.Coupon?.Code ?? "",
+                CouponDiscount = o.DiscountAmount,
+                OrderRevenue = o.SubTotal,
+                TotalWithCoupon = o.GrandTotal
+            }).ToList();
+
+            ViewBag.TotalRevenue = list.Sum(x => x.OrderRevenue);
+            ViewBag.TotalRevenueWithCoupon = list.Sum(x => x.TotalWithCoupon);
 
             return View(list);
         }

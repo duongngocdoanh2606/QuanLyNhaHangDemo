@@ -1,0 +1,712 @@
+﻿namespace QuanLyNhaHangDemo.Models
+{
+    public class AdminNotificationModel
+    {
+        public int Id { get; set; }
+        public int TableId { get; set; }
+        public int OrderId { get; set; }
+        public int OrderDetailId { get; set; }
+        public string Message { get; set; }
+        public string ProductName { get; set; }
+        public bool IsRead { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        public virtual TableModel Table { get; set; }
+    }
+}
+using Microsoft.AspNetCore.Identity;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class AppUserModel :IdentityUser
+    {
+        public string Occupation { get; set; }
+
+        public string RoleId { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    }
+}
+using System.Drawing;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class CartItemModel
+    {
+        public int ProductId {  get; set; }
+        public string ProductName { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public decimal Total {
+            get { return Quantity * Price; } 
+        }
+        public string Image {  get; set; }
+        public CartItemModel()
+        {
+
+        }
+        public CartItemModel(ProductModel product)
+        {
+            ProductId = product.Id;
+            ProductName = product.Name;
+            Price = product.Price;
+            Quantity = 1;
+            Image = product.Image;
+        }
+
+    }
+}
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class CategoryModel
+    {
+        [Key]
+        public int Id { get; set; }
+        [Required(ErrorMessage ="Yeu cau nhap ten danh muc")]
+        public string Name { get; set; }
+        [Required(ErrorMessage = "Yeu cau nhap mo ta ten danh muc")]
+        public string Description { get; set; }
+        [ForeignKey("KitchenId")]
+        public int KitchenId { get; set; }
+        public KitchenModel Kitchen { get; set; }
+        public bool isAutoFire { get; set; } = true;
+        public string Slug { get; set; }
+        public int Status { get; set; }
+
+        public virtual ICollection<ProductModel> Products { get; set; }
+    }
+}
+using System;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class CompletedOrderViewModel
+    {
+        public string OrderCode { get; set; }
+        public string UserName { get; set; }
+        public DateTime CreatedDate { get; set; }
+
+        // Mã chữ của Coupon (Ví dụ: GIAM20) - Lấy từ o.Coupon.Code
+        public string CouponCode { get; set; }
+
+        // Số tiền giảm giá - Ánh xạ từ o.DiscountAmount
+        public decimal CouponDiscount { get; set; }
+
+        // Doanh thu từ tiền món gốc (SubTotal chưa thuế/giảm giá) - Ánh xạ từ o.SubTotal
+        public decimal OrderRevenue { get; set; }
+
+        // Tổng tiền thực tế thu từ khách sau khi tính toán - Ánh xạ từ o.GrandTotal
+        public decimal TotalWithCoupon { get; set; }
+    }
+}
+using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class CouponModel
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public string Code { get; set; } // Mã bạn tự gõ (Ví dụ: KHUYENMAI10, GIAM20K)
+
+        [Required]
+        public decimal DiscountAmount { get; set; } // Số tiền giảm (Ví dụ: 20000)
+
+        public bool IsActive { get; set; } = true; // Trạng thái kích hoạt
+    }
+}
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ErrorViewModel
+    {
+        public string? RequestId { get; set; }
+
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    }
+}
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+//Lá»‹ch sá»­ nháº­p xuáº¥t kho
+namespace QuanLyNhaHangDemo.Models
+{
+    public class InventoryTransactionModel
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        public int MaterialId { get; set; }
+        public MaterialModel Material { get; set; }
+
+        public DateTime DateCreated { get; set; }
+
+        public decimal Quantity { get; set; }
+
+        public decimal UnitPrice { get; set; }
+
+        public decimal TotalPrice { get; set; }
+
+        /// <summary>IN = Nháº­p kho | OUT = Xuáº¥t kho</summary>
+        public string Type { get; set; }
+
+        /// <summary>
+        /// LÃ½ do xuáº¥t kho:
+        /// OUT_SALE   â€” Xuáº¥t do bÃ¡n hÃ ng (tá»± Ä‘á»™ng khi Ä‘Æ¡n â†’ Paid)
+        /// OUT_RETURN â€” Xuáº¥t tráº£ hÃ ng lá»—i vá» nhÃ  sáº£n xuáº¥t (thá»§ cÃ´ng)
+        /// OUT_MANUAL â€” Xuáº¥t thá»§ cÃ´ng khÃ¡c
+        /// </summary>
+        public string? Reason { get; set; }
+
+        public string? Note { get; set; }
+
+        public int? OrderId { get; set; }
+        public OrderModel? Order { get; set; }
+
+        /// <summary>NCC nháº­n hÃ ng tráº£ (chá»‰ dÃ¹ng khi Reason = OUT_RETURN)</summary>
+        public int? SupplierId { get; set; }
+        public SupplierModel? Supplier { get; set; }
+    }
+}
+using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class KitchenModel
+    {
+        public int Id { get; set; }
+        [Required]
+        [Display(Name="Tên khu bếp")]
+        public string Name { get; set; }
+        public bool IsActive { get; set; } = true;
+        public int SortOrder { get; set; }
+        public ICollection<CategoryModel> Categories { get; set; }  = new List<CategoryModel>();
+
+    }
+}
+namespace QuanLyNhaHangDemo.Models
+{
+    public class KitchenOrderModel
+    {
+        public string OrderCode { get; set; }  // Mã đơn hàng
+        public string ProductName { get; set; } // Tên món
+        public int Quantity { get; set; } // Số lượng món
+        public string CategoryName { get; set; } // Danh mục món ăn
+        public int Status { get; set; } // 0: Chưa làm, 1: Đang nấu, 2: Hoàn thành, 3: Đã phục vụ
+    }
+}
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class MaterialModel
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [Display(Name = "Tên nguyên liệu")]
+        public string Name { get; set; }
+
+        [Display(Name = "Đơn vị tính")]
+        public string Unit { get; set; }
+
+        [Display(Name = "Số lượng tồn")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal CurrentQuantity { get; set; }
+
+        [Display(Name = "Ngưỡng cảnh báo")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ReorderLevel { get; set; }
+
+        [Display(Name = "Trạng thái")]
+        public int Status { get; set; } = 1;
+
+        [DataType(DataType.Date)] 
+        public DateTime? ExpiryDate { get; set; }
+        
+        [Required]
+        [Display(Name = "Nhà cung cấp")]
+        public int SupplierId { get; set; }
+
+        public SupplierModel Supplier { get; set; }
+
+        public ICollection<InventoryTransactionModel> InventoryTransactions { get; set; }
+    }
+
+    
+}
+using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography.X509Certificates;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ModifierGroupModel
+    {
+        public int Id { get; set; }
+        [Required(ErrorMessage = "Tên group không được để trống.")]
+        public string Name { get; set; }
+        public bool IsRequired { get; set; }
+        public int MaxSelect { get; set; }
+        public int DisplayOrder { get; set; }
+        public int Status { get; set; } = 1; // 1: Active, 0: Inactive
+        [Required]
+        public string Type { get; set; } = "Topping"; // "Topping", "Size", "Extra"
+        public virtual ICollection<ModifierModel> Modifiers { get; set; }
+        public virtual ICollection<ProModifierGroupModel> ProductModifierMappings { get; set; }
+
+    }
+    public class ModifierModel
+    {
+        public int Id { get; set; }
+        [Required(ErrorMessage = "Tên modifier không được để trống.")]
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public int ModifierGroupId { get; set; }
+        public virtual ModifierGroupModel ModifierGroup { get; set; }
+        public int Status { get; set; } = 1; // 1: Active, 0: Inactive
+
+        public decimal Multiplier { get; set; } = 1;
+        public virtual ICollection<ModifierMaterialModel> ModifierMaterials { get; set; }
+
+    }
+    public class  ModifierMaterialModel
+    {
+        public int Id { get; set; }
+        public int ModifierId { get; set; }
+        public virtual ModifierModel Modifier { get; set; }
+        public int MaterialId { get; set; }
+        public virtual MaterialModel Material { get; set; }
+        public decimal QuantityRequired { get; set; }
+    }
+}
+namespace QuanLyNhaHangDemo.Models
+{
+    public class OrderDetailModifierModel
+    {
+        public int Id { get; set; }
+
+        public int OrderDetailId { get; set; }
+        public OrderDetailsModel OrderDetail { get; set; }
+
+        public int ModifierId { get; set; }
+        public ModifierModel Modifier { get; set; }
+
+        public decimal ModifierPrice { get; set; }
+    }
+}
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class OrderDetailsModel
+    {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+        public DateTime CreateDate { get; set; } = DateTime.Now;
+
+        // Má»›i: tráº¡ng thÃ¡i chi tiáº¿t mÃ³n theo luá»“ng báº¿p mong muá»‘n
+        public StatusProduct Status { get; set; } = StatusProduct.Pending;
+
+        /// <summary>ÄÃ£ gá»­i xuá»‘ng báº¿p (fire) â€” mÃ³n hold chá» quáº£n lÃ½ báº¥m Fire.</summary>
+        public bool IsFired { get; set; }
+
+        /// <summary>Sá»‘ láº§n lÃ m láº¡i (remake).</summary>
+        public int FireCount { get; set; }
+
+        /// <summary>Thá»i Ä‘iá»ƒm fire / lÃ m láº¡i gáº§n nháº¥t (Æ°u tiÃªn trÃªn KDS).</summary>
+        public DateTime? FiredAt { get; set; }
+
+        public decimal UnitPrice { get; set; }
+
+        public string? Note { get; set; }
+
+        [ForeignKey("ProductId")]
+        public virtual ProductModel Product { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+
+        public virtual ICollection<OrderDetailModifierModel> OrderDetailModifiers { get; set; } = new List<OrderDetailModifierModel>();
+
+        // --- Cáº¬P NHáº¬T FOREIGN KEY CHO ORDER ---
+        public int OrderId { get; set; }
+        [ForeignKey("OrderId")]
+        public virtual OrderModel Order { get; set; }
+    }
+
+    public enum StatusProduct
+    {
+        Pending = 0,               // Äang chá» (hold) â€” nhÃ¢n viÃªn/thu ngÃ¢n cÃ³ thá»ƒ fire
+        PreparingIngredient = 1,   // NhÃ¢n viÃªn báº¿p chuáº©n bá»‹ nguyÃªn liá»‡u
+        Cooking = 2,               // Äang náº¥u
+        Done = 3,                  // ÄÃ£ náº¥u xong, chá» phá»¥c vá»¥ báº¥m Served
+        Served = 4,                // ÄÃ£ dá»n ra bÃ n (Ä‘Æ°á»£c báº¥m Served)
+        Cancelled = 5              // ÄÃ£ há»§y
+    }
+}
+using QuanLyNhaHangDemo.Models;
+using System.ComponentModel.DataAnnotations.Schema;
+
+public class OrderModel
+{
+    public int Id { get; set; }
+
+    public string OrderCode { get; set; }
+
+    public string GuestName { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    public OrderStatus Status { get; set; }
+
+    public decimal SubTotal { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
+    public decimal VATRate { get; set; }
+
+    public decimal ServiceRate { get; set; }
+
+    public string? Note { get; set; }
+
+    public int? CouponId { get; set; }
+
+    public CouponModel? Coupon { get; set; }
+
+    public virtual ICollection<OrderDetailsModel> OrderDetails { get; set; }
+        = new List<OrderDetailsModel>();
+
+    [NotMapped]
+    public decimal VATAmount => SubTotal * VATRate;
+
+    [NotMapped]
+    public decimal ServiceAmount => SubTotal * ServiceRate;
+
+    [NotMapped]
+    public decimal GrandTotal =>
+        SubTotal
+        + VATAmount
+        + ServiceAmount
+        - DiscountAmount;
+
+    public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
+    public PaymentStatus PayStatus { get; set; } = PaymentStatus.Unpaid;
+
+    public enum OrderStatus
+    {
+        Pending,   // Má»›i táº¡o Ä‘Æ¡n, chá» nhÃ  báº¿p xÃ¡c nháº­n
+        Serving,   // Äang phá»¥c vá»¥ táº¡i bÃ n
+        Paid,      // ÄÃ£ thanh toÃ¡n xong
+        Completed, // ÄÆ¡n Ä‘Ã£ hoÃ n thÃ nh (Ä‘Ã£ thanh toÃ¡n vÃ  khÃ¡ch Ä‘Ã£ rá»i Ä‘i)
+        Cancelled  // ÄÃ£ há»§y Ä‘Æ¡n
+    }
+}
+
+public enum PaymentMethod
+{
+    Cash = 1,
+    VTCPay = 2
+}
+
+public enum PaymentStatus
+{
+    Unpaid = 0,
+    Success = 1,
+    Failed = 2
+}
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ProductMaterialsModel
+    {
+        public int ProductId { get; set; }
+        public ProductModel Product { get; set; }
+        public int MaterialId { get; set; }
+        public MaterialModel Material { get; set; }
+        public decimal QuantityRequired { get; set; }
+    }
+}
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using QuanLyNhaHangDemo.Repository.Validation;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ProductModel
+    {
+        [Key]
+        public int Id { get; set; }
+        [Required, MinLength(4, ErrorMessage = "Yeu cau nhap ten san pham")]
+        public string Name { get; set; }
+        [Required, MinLength(4, ErrorMessage = "Yeu cau nhap mo ta san pham")]
+        public string Description { get; set; }
+        public string Slug { get; set; }
+        [Required(ErrorMessage = "Yeu cau nhap gia san pham")]
+        [Range(1, double.MaxValue, ErrorMessage = "Gia phai lon hon 0")]
+        public decimal Price { get; set; }
+        public int CategoryId { get; set; }
+        public CategoryModel Category { get; set; }
+        public int Status { get; set; } = 1;
+        public virtual ICollection<ProModifierGroupModel> ProductModifierGroups { get; set; }
+        public virtual ICollection<ProductMaterialsModel> ProductMaterials { get; set; }
+        public int Sold { get; set; }
+        public string Image {  get; set; }
+        [NotMapped]
+        [FileExtension]
+        public IFormFile? ImageUpLoad { get; set; }
+    }
+}
+using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ProductQuantityModel
+    {
+        public int Id { get; set; }
+        [Required(ErrorMessage ="Không được để trống số lượng")]
+        public int Quantity { get; set; }
+        public int ProductId { get; set; }
+        public DateTime DateCreated { get; set; }
+
+    }
+}
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ProModifierGroupModel
+    {
+        public int ProductId { get; set; }
+        public ProductModel Product { get; set; }
+        public int ModifierGroupId { get; set; }
+        public ModifierGroupModel ModifierGroup { get; set; }
+
+    }
+}
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public enum ReservationStatus
+    {
+        Pending = 0,   // Chờ duyệt
+        Approved = 1,  // Đã duyệt
+        Rejected = 2,  // Từ chối
+        Cancelled = 3,  // Khách hủy
+        Completed = 4   // Đã hoàn thành
+
+    }
+
+    public class ReservationModel
+    {
+        public int Id { get; set; }
+
+        [Required]
+        public int TableId { get; set; }
+        public TableModel Table { get; set; }
+
+        [Required, Display(Name = "Tên khách")]
+        public string CustomerName { get; set; }
+
+        [Required, Display(Name = "Số điện thoại")]
+        public string Phone { get; set; }
+
+        [Display(Name = "Số người")]
+        public int PeopleCount { get; set; }
+
+        [Required, Display(Name = "Thời gian đến (dự kiến)")]
+        public DateTime ReserveTime { get; set; }
+
+        [Display(Name = "Ghi chú")]
+        public string? Note { get; set; }
+
+        public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
+
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        public string? CustomerEmail { get; set; }
+    }
+}
+namespace QuanLyNhaHangDemo.Models
+{
+    public class StatisticalModel
+    {
+        public int Id { get; set; }
+        public int Quantity { get; set; }
+        public int Sold { get; set; }
+        public decimal Revenue { get; set; }
+        public decimal Profit { get; set; }
+        public DateTime DateCreated { get; set; }
+
+    }
+}
+using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class SupplierCategoryModel
+    {
+        [Key]
+        public int SupplierCategoryId { get; set; }
+
+        [Required(ErrorMessage = "Vui lÃ²ng nháº­p tÃªn danh má»¥c nhÃ  cung cáº¥p")]
+        [MaxLength(100)]
+        public string Name { get; set; }
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        // Navigation
+        public ICollection<SupplierModel> Suppliers { get; set; }
+    }
+}
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class SupplierModel
+    {
+        [Key]
+        public int SupplierId { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string SupplierName { get; set; }
+
+        [EmailAddress]
+        public string? SupplierEmail { get; set; }
+
+        [MaxLength(500)]
+        public string? SupplierAddress { get; set; }
+
+        public SupplierStatus Status { get; set; } = SupplierStatus.Active;
+
+        public int SupplierCategoryId { get; set; }
+        [ForeignKey("SupplierCategoryId")]
+        public SupplierCategoryModel SupplierCategory { get; set; }
+
+        public ICollection<MaterialModel> Materials { get; set; }
+    }
+
+    public enum SupplierStatus
+    {
+        Active = 1,
+        inactive = 0
+    }
+}
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public enum TableStatus
+    {
+        Empty = 0,
+        Serving = 1,
+        Reserved = 2
+    }
+
+    public class TableModel
+    {
+        public int Id { get; set; }
+
+        public string TableName { get; set; }
+
+        public TableStatus Status { get; set; }
+            = TableStatus.Empty;
+
+        public float PosX { get; set; } = 0;
+
+        public float PosY { get; set; } = 0;
+
+        public float Width { get; set; } = 100;
+
+        public float Height { get; set; } = 100;
+
+        public int Capacity { get; set; }
+
+        [ForeignKey("ZoneId")]
+        public int ZoneId { get; set; }
+
+        public ZoneModel Zone { get; set; }
+
+
+        // ORDER HIá»†N Táº I Cá»¦A BÃ€N
+        public int? CurrentOrderId { get; set; }
+
+        [ForeignKey("CurrentOrderId")]
+        public virtual OrderModel? CurrentOrder { get; set; }
+    }
+
+    public class TableLayoutDto
+    {
+        public int Id { get; set; }
+
+        public float PosX { get; set; }
+
+        public float PosY { get; set; }
+
+        public float Width { get; set; }
+
+        public float Height { get; set; }
+    }
+}
+using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class UserModel
+    {
+        public int Id { get; set; }
+        [Required(ErrorMessage ="Lam on nhap UserName")]
+        public string Username { get; set; }
+        [Required(ErrorMessage = "Lam on nhap Email"),EmailAddress]
+        public string Email { get; set; }
+        [DataType(DataType.Password),Required(ErrorMessage ="Lam on nhap Password")]
+        public string Password { get; set; }
+    }
+}
+using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhaHangDemo.Models
+{
+    public class ZoneModel
+    {
+        [Key]
+        public int ZoneId { get; set; }
+        [Required(ErrorMessage ="Tên khu vực không được để trống")]
+        public string ZoneName { get; set; }
+        public string ZoneDescription { get; set; }
+        public ZoneStatus ZoneStatus { get; set; }
+            = ZoneStatus.Active;
+
+        [Required(ErrorMessage = "Chiều rộng không được để trống")]
+        [Range(100, 5000, ErrorMessage = "Chiều rộng phải từ 100px đến 5000px")]
+        public int Width { get; set; } = 1200; // Giá trị mặc định gợi ý
+
+        [Required(ErrorMessage = "Chiều cao không được để trống")]
+        [Range(100, 5000, ErrorMessage = "Chiều cao phải từ 100px đến 5000px")]
+        public int Height { get; set; } = 800; // Giá trị mặc định gợi ý
+
+        public ICollection<TableModel> Tables { get; set; }
+    }
+    public enum ZoneStatus
+    {
+        Active = 0,
+
+        Maintenance = 1,
+
+        Closed = 2
+    }
+}

@@ -1,0 +1,208 @@
+﻿
+Models\AdminNotificationModel.cs:3:    public class AdminNotificationModel
+Models\AdminNotificationModel.cs:5:        public int Id { get; set; }
+Models\AdminNotificationModel.cs:6:        public int TableId { get; set; }
+Models\AdminNotificationModel.cs:7:        public int OrderId { get; set; }
+Models\AdminNotificationModel.cs:8:        public int OrderDetailId { get; set; }
+Models\AdminNotificationModel.cs:9:        public string Message { get; set; }
+Models\AdminNotificationModel.cs:10:        public string ProductName { get; set; }
+Models\AdminNotificationModel.cs:11:        public bool IsRead { get; set; }
+Models\AdminNotificationModel.cs:12:        public DateTime CreatedAt { get; set; } = DateTime.Now;
+Models\AppUserModel.cs:5:    public class AppUserModel :IdentityUser
+Models\AppUserModel.cs:7:        public string Occupation { get; set; }
+Models\AppUserModel.cs:9:        public string RoleId { get; set; }
+Models\AppUserModel.cs:11:        public DateTime CreatedAt { get; set; } = DateTime.Now;
+Models\CartItemModel.cs:5:    public class CartItemModel
+Models\CartItemModel.cs:7:        public int ProductId {  get; set; }
+Models\CartItemModel.cs:8:        public string ProductName { get; set; }
+Models\CartItemModel.cs:9:        public int Quantity { get; set; }
+Models\CartItemModel.cs:10:        public decimal Price { get; set; }
+Models\CartItemModel.cs:11:        public decimal Total {
+Models\CartItemModel.cs:14:        public string Image {  get; set; }
+Models\CategoryModel.cs:6:    public class CategoryModel
+Models\CategoryModel.cs:9:        public int Id { get; set; }
+Models\CategoryModel.cs:11:        public string Name { get; set; }
+Models\CategoryModel.cs:13:        public string Description { get; set; }
+Models\CategoryModel.cs:15:        public int KitchenId { get; set; }
+Models\CategoryModel.cs:16:        public KitchenModel Kitchen { get; set; }
+Models\CategoryModel.cs:17:        public bool isAutoFire { get; set; } = true;
+Models\CategoryModel.cs:18:        public string Slug { get; set; }
+Models\CategoryModel.cs:19:        public int Status { get; set; }
+Models\CompletedOrderViewModel.cs:5:    public class CompletedOrderViewModel
+Models\CompletedOrderViewModel.cs:7:        public string OrderCode { get; set; }
+Models\CompletedOrderViewModel.cs:8:        public string UserName { get; set; }
+Models\CompletedOrderViewModel.cs:9:        public DateTime CreatedDate { get; set; }
+Models\CompletedOrderViewModel.cs:12:        public string CouponCode { get; set; }
+Models\CompletedOrderViewModel.cs:15:        public decimal CouponDiscount { get; set; }
+Models\CompletedOrderViewModel.cs:18:        public decimal OrderRevenue { get; set; }
+Models\CompletedOrderViewModel.cs:21:        public decimal TotalWithCoupon { get; set; }
+Models\CouponModel.cs:5:    public class CouponModel
+Models\CouponModel.cs:8:        public int Id { get; set; }
+Models\CouponModel.cs:11:        public string Code { get; set; } // Mã bạn tự gõ (Ví dụ: KHUYENMAI10, GIAM20K)
+Models\CouponModel.cs:14:        public decimal DiscountAmount { get; set; } // Số tiền giảm (Ví dụ: 20000)
+Models\CouponModel.cs:16:        public bool IsActive { get; set; } = true; // Trạng thái kích hoạt
+Models\ErrorViewModel.cs:3:    public class ErrorViewModel
+Models\InventoryTransactionModel.cs:6:    public class InventoryTransactionModel
+Models\InventoryTransactionModel.cs:10:        public int Id { get; set; }
+Models\InventoryTransactionModel.cs:13:        public int MaterialId { get; set; }
+Models\InventoryTransactionModel.cs:14:        public MaterialModel Material { get; set; }
+Models\InventoryTransactionModel.cs:16:        public DateTime DateCreated { get; set; }
+Models\InventoryTransactionModel.cs:18:        public decimal Quantity { get; set; }
+Models\InventoryTransactionModel.cs:20:        public decimal UnitPrice { get; set; }
+Models\InventoryTransactionModel.cs:22:        public decimal TotalPrice { get; set; }
+Models\InventoryTransactionModel.cs:25:        public string Type { get; set; }
+Models\KitchenModel.cs:5:    public class KitchenModel
+Models\KitchenModel.cs:7:        public int Id { get; set; }
+Models\KitchenModel.cs:10:        public string Name { get; set; }
+Models\KitchenModel.cs:11:        public bool IsActive { get; set; } = true;
+Models\KitchenModel.cs:12:        public int SortOrder { get; set; }
+Models\KitchenOrderModel.cs:3:    public class KitchenOrderModel
+Models\KitchenOrderModel.cs:5:        public string OrderCode { get; set; }  // Mã đơn hàng
+Models\KitchenOrderModel.cs:6:        public string ProductName { get; set; } // Tên món
+Models\KitchenOrderModel.cs:7:        public int Quantity { get; set; } // Số lượng món
+Models\KitchenOrderModel.cs:8:        public string CategoryName { get; set; } // Danh mục món ăn
+Models\KitchenOrderModel.cs:9:        public int Status { get; set; } // 0: Chưa làm, 1: Đang nấu, 2: Hoàn thành, 3: 
+Đã phục vụ
+Models\MaterialModel.cs:6:    public class MaterialModel
+Models\MaterialModel.cs:10:        public int Id { get; set; }
+Models\MaterialModel.cs:14:        public string Name { get; set; }
+Models\MaterialModel.cs:17:        public string Unit { get; set; }
+Models\MaterialModel.cs:21:        public decimal CurrentQuantity { get; set; }
+Models\MaterialModel.cs:25:        public decimal ReorderLevel { get; set; }
+Models\MaterialModel.cs:28:        public int Status { get; set; } = 1;
+Models\MaterialModel.cs:35:        public int SupplierId { get; set; }
+Models\MaterialModel.cs:37:        public SupplierModel Supplier { get; set; }
+Models\ModifierGroupModel.cs:6:    public class ModifierGroupModel
+Models\ModifierGroupModel.cs:8:        public int Id { get; set; }
+Models\ModifierGroupModel.cs:10:        public string Name { get; set; }
+Models\ModifierGroupModel.cs:11:        public bool IsRequired { get; set; }
+Models\ModifierGroupModel.cs:12:        public int MaxSelect { get; set; }
+Models\ModifierGroupModel.cs:13:        public int DisplayOrder { get; set; }
+Models\ModifierGroupModel.cs:14:        public int Status { get; set; } = 1; // 1: Active, 0: Inactive
+Models\ModifierGroupModel.cs:16:        public string Type { get; set; } = "Topping"; // "Topping", "Size", "Extra"
+Models\ModifierGroupModel.cs:21:    public class ModifierModel
+Models\ModifierGroupModel.cs:23:        public int Id { get; set; }
+Models\ModifierGroupModel.cs:25:        public string Name { get; set; }
+Models\ModifierGroupModel.cs:26:        public decimal Price { get; set; }
+Models\ModifierGroupModel.cs:27:        public int ModifierGroupId { get; set; }
+Models\ModifierGroupModel.cs:29:        public int Status { get; set; } = 1; // 1: Active, 0: Inactive
+Models\ModifierGroupModel.cs:31:        public decimal Multiplier { get; set; } = 1;
+Models\ModifierGroupModel.cs:35:    public class  ModifierMaterialModel
+Models\ModifierGroupModel.cs:37:        public int Id { get; set; }
+Models\ModifierGroupModel.cs:38:        public int ModifierId { get; set; }
+Models\ModifierGroupModel.cs:40:        public int MaterialId { get; set; }
+Models\ModifierGroupModel.cs:42:        public decimal QuantityRequired { get; set; }
+Models\OrderDetailModifierModel.cs:3:    public class OrderDetailModifierModel
+Models\OrderDetailModifierModel.cs:5:        public int Id { get; set; }
+Models\OrderDetailModifierModel.cs:7:        public int OrderDetailId { get; set; }
+Models\OrderDetailModifierModel.cs:8:        public OrderDetailsModel OrderDetail { get; set; }
+Models\OrderDetailModifierModel.cs:10:        public int ModifierId { get; set; }
+Models\OrderDetailModifierModel.cs:11:        public ModifierModel Modifier { get; set; }
+Models\OrderDetailModifierModel.cs:13:        public decimal ModifierPrice { get; set; }
+Models\OrderDetails.cs:6:    public class OrderDetailsModel
+Models\OrderDetails.cs:8:        public int Id { get; set; }
+Models\OrderDetails.cs:9:        public int ProductId { get; set; }
+Models\OrderDetails.cs:10:        public int Quantity { get; set; }
+Models\OrderDetails.cs:11:        public DateTime CreateDate { get; set; } = DateTime.Now;
+Models\OrderDetails.cs:14:        public StatusProduct Status { get; set; } = StatusProduct.Pending;
+Models\OrderDetails.cs:17:        public bool IsFired { get; set; }
+Models\OrderDetails.cs:20:        public int FireCount { get; set; }
+Models\OrderDetails.cs:25:        public decimal UnitPrice { get; set; }
+Models\OrderDetails.cs:36:        public int OrderId { get; set; }
+Models\OrderModel.cs:4:public class OrderModel
+Models\OrderModel.cs:6:    public int Id { get; set; }
+Models\OrderModel.cs:8:    public string OrderCode { get; set; }
+Models\OrderModel.cs:10:    public string GuestName { get; set; }
+Models\OrderModel.cs:12:    public DateTime CreatedDate { get; set; } = DateTime.Now;
+Models\OrderModel.cs:14:    public OrderStatus Status { get; set; }
+Models\OrderModel.cs:16:    public decimal SubTotal { get; set; }
+Models\OrderModel.cs:18:    public decimal DiscountAmount { get; set; }
+Models\OrderModel.cs:20:    public decimal VATRate { get; set; }
+Models\OrderModel.cs:22:    public decimal ServiceRate { get; set; }
+Models\OrderModel.cs:46:    public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
+Models\OrderModel.cs:47:    public PaymentStatus PayStatus { get; set; } = PaymentStatus.Unpaid;
+Models\ProductMaterialsModel.cs:3:    public class ProductMaterialsModel
+Models\ProductMaterialsModel.cs:5:        public int ProductId { get; set; }
+Models\ProductMaterialsModel.cs:6:        public ProductModel Product { get; set; }
+Models\ProductMaterialsModel.cs:7:        public int MaterialId { get; set; }
+Models\ProductMaterialsModel.cs:8:        public MaterialModel Material { get; set; }
+Models\ProductMaterialsModel.cs:9:        public decimal QuantityRequired { get; set; }
+Models\ProductModel.cs:9:    public class ProductModel
+Models\ProductModel.cs:12:        public int Id { get; set; }
+Models\ProductModel.cs:14:        public string Name { get; set; }
+Models\ProductModel.cs:16:        public string Description { get; set; }
+Models\ProductModel.cs:17:        public string Slug { get; set; }
+Models\ProductModel.cs:20:        public decimal Price { get; set; }
+Models\ProductModel.cs:21:        public int CategoryId { get; set; }
+Models\ProductModel.cs:22:        public CategoryModel Category { get; set; }
+Models\ProductModel.cs:23:        public int Status { get; set; } = 1;
+Models\ProductModel.cs:26:        public int Sold { get; set; }
+Models\ProductModel.cs:27:        public string Image {  get; set; }
+Models\ProductQuantityModel.cs:5:    public class ProductQuantityModel
+Models\ProductQuantityModel.cs:7:        public int Id { get; set; }
+Models\ProductQuantityModel.cs:9:        public int Quantity { get; set; }
+Models\ProductQuantityModel.cs:10:        public int ProductId { get; set; }
+Models\ProductQuantityModel.cs:11:        public DateTime DateCreated { get; set; }
+Models\ProModifierGroupModel.cs:3:    public class ProModifierGroupModel
+Models\ProModifierGroupModel.cs:5:        public int ProductId { get; set; }
+Models\ProModifierGroupModel.cs:6:        public ProductModel Product { get; set; }
+Models\ProModifierGroupModel.cs:7:        public int ModifierGroupId { get; set; }
+Models\ProModifierGroupModel.cs:8:        public ModifierGroupModel ModifierGroup { get; set; }
+Models\ReservationModel.cs:16:    public class ReservationModel
+Models\ReservationModel.cs:18:        public int Id { get; set; }
+Models\ReservationModel.cs:21:        public int TableId { get; set; }
+Models\ReservationModel.cs:22:        public TableModel Table { get; set; }
+Models\ReservationModel.cs:25:        public string CustomerName { get; set; }
+Models\ReservationModel.cs:28:        public string Phone { get; set; }
+Models\ReservationModel.cs:31:        public int PeopleCount { get; set; }
+Models\ReservationModel.cs:34:        public DateTime ReserveTime { get; set; }
+Models\ReservationModel.cs:39:        public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
+Models\ReservationModel.cs:41:        public DateTime CreatedAt { get; set; } = DateTime.Now;
+Models\StatisticalModel.cs:3:    public class StatisticalModel
+Models\StatisticalModel.cs:5:        public int Id { get; set; }
+Models\StatisticalModel.cs:6:        public int Quantity { get; set; }
+Models\StatisticalModel.cs:7:        public int Sold { get; set; }
+Models\StatisticalModel.cs:8:        public decimal Revenue { get; set; }
+Models\StatisticalModel.cs:9:        public decimal Profit { get; set; }
+Models\StatisticalModel.cs:10:        public DateTime DateCreated { get; set; }
+Models\SupplierCategoryModel.cs:5:    public class SupplierCategoryModel
+Models\SupplierCategoryModel.cs:8:        public int SupplierCategoryId { get; set; }
+Models\SupplierCategoryModel.cs:12:        public string Name { get; set; }
+Models\SupplierCategoryModel.cs:17:        public bool IsActive { get; set; } = true;
+Models\SupplierModel.cs:7:    public class SupplierModel
+Models\SupplierModel.cs:10:        public int SupplierId { get; set; }
+Models\SupplierModel.cs:14:        public string SupplierName { get; set; }
+Models\SupplierModel.cs:22:        public SupplierStatus Status { get; set; } = SupplierStatus.Active;
+Models\SupplierModel.cs:24:        public int SupplierCategoryId { get; set; }
+Models\SupplierModel.cs:26:        public SupplierCategoryModel SupplierCategory { get; set; }
+Models\TableModel.cs:12:    public class TableModel
+Models\TableModel.cs:14:        public int Id { get; set; }
+Models\TableModel.cs:16:        public string TableName { get; set; }
+Models\TableModel.cs:18:        public TableStatus Status { get; set; }
+Models\TableModel.cs:21:        public float PosX { get; set; } = 0;
+Models\TableModel.cs:23:        public float PosY { get; set; } = 0;
+Models\TableModel.cs:25:        public float Width { get; set; } = 100;
+Models\TableModel.cs:27:        public float Height { get; set; } = 100;
+Models\TableModel.cs:29:        public int Capacity { get; set; }
+Models\TableModel.cs:32:        public int ZoneId { get; set; }
+Models\TableModel.cs:34:        public ZoneModel Zone { get; set; }
+Models\TableModel.cs:44:    public class TableLayoutDto
+Models\TableModel.cs:46:        public int Id { get; set; }
+Models\TableModel.cs:48:        public float PosX { get; set; }
+Models\TableModel.cs:50:        public float PosY { get; set; }
+Models\TableModel.cs:52:        public float Width { get; set; }
+Models\TableModel.cs:54:        public float Height { get; set; }
+Models\UserModel.cs:5:    public class UserModel
+Models\UserModel.cs:7:        public int Id { get; set; }
+Models\UserModel.cs:9:        public string Username { get; set; }
+Models\UserModel.cs:11:        public string Email { get; set; }
+Models\UserModel.cs:13:        public string Password { get; set; }
+Models\ZoneModel.cs:5:    public class ZoneModel
+Models\ZoneModel.cs:8:        public int ZoneId { get; set; }
+Models\ZoneModel.cs:10:        public string ZoneName { get; set; }
+Models\ZoneModel.cs:11:        public string ZoneDescription { get; set; }
+Models\ZoneModel.cs:12:        public ZoneStatus ZoneStatus { get; set; }
+Models\ZoneModel.cs:17:        public int Width { get; set; } = 1200; // Giá trị mặc định gợi ý
+Models\ZoneModel.cs:21:        public int Height { get; set; } = 800; // Giá trị mặc định gợi ý
+
+
