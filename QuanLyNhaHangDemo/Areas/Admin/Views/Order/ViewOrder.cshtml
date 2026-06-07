@@ -152,6 +152,11 @@
                     </tr>
                 }
 
+            }
+        </tbody>
+        @if (Model.Any())
+        {
+            <tfoot>
                 <tr>
                     <td colspan="6"></td>
                     <td><strong>Tổng tiền hàng:</strong></td>
@@ -190,14 +195,8 @@
                         <strong class="text-success fs-5">@grandTotal.ToString("#,##0 VNĐ")</strong>
                     </td>
                 </tr>
-            }
-            else
-            {
-                <tr>
-                    <td colspan="@(canModify ? 9 : 8)" class="text-center">Không có dữ liệu</td>
-                </tr>
-            }
-        </tbody>
+            </tfoot>
+        }
     </table>
 </div>
 
