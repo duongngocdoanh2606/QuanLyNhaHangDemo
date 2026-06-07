@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
@@ -35,6 +35,13 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ModifierGroupModel group)
         {
+            // Xóa validation của các thuộc tính con/navigation properties
+            foreach (var key in ModelState.Keys.Where(k => k.StartsWith("Modifiers")).ToList())
+            {
+                ModelState.Remove(key);
+            }
+            ModelState.Remove("ProductModifierMappings");
+
             if (ModelState.IsValid)
             {
                 if (group.Modifiers != null)
@@ -91,6 +98,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             {
                 ModelState.Remove(key);
             }
+            ModelState.Remove("ProductModifierMappings");
 
             if (!ModelState.IsValid)
             {
