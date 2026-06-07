@@ -4,6 +4,7 @@ using QuanLyNhaHangDemo.Hubs;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
 using QuanLyNhaHangDemo.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,6 +124,11 @@ builder.Services.AddSingleton<VTCPayService>();
 
 
 var app = builder.Build();
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 
 // =====================================================
