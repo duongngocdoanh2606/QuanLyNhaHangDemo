@@ -8,9 +8,29 @@ namespace QuanLyNhaHangDemo.Controllers.Api
     [Route("api/[controller]")]
     public class ProductAPIController : Controller
     {
-        private readonly DataContext _context; // Database của bạn
+        private readonly DataContext _context;
+        private readonly IConfiguration _config;
 
-        public ProductAPIController(DataContext context) { _context = context; }
+        public ProductAPIController(DataContext context, IConfiguration config)
+        {
+            _context = context;
+            _config = config;
+        }
+
+        private string BuildImageUrl(string imageName)
+        {
+            // ưu tiên lấy BaseUrl từ cấu hình (Railway env var hoặc appsettings)
+            var baseUrl = _config["App:BaseUrl"];
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                // Fallback: dùng X-Forwarded-Proto nếu có (railway proxy)
+                var scheme = Request.Headers.ContainsKey("X-Forwarded-Proto")
+                    ? Request.Headers["X-Forwarded-Proto"].ToString()
+                    : Request.Scheme;
+                baseUrl = $"{scheme}://{Request.Host}";
+            }
+            return $"{baseUrl.TrimEnd('/')}/media/products/{imageName}";
+        }
         [HttpGet("all")]
         public IActionResult GetProducts(int? categoryId)
         {
@@ -57,7 +77,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     Price = p.Price,
                     Description = p.Description,
                     CategoryId = p.CategoryId,
-                    ImageUrl = $"{Request.Scheme}://{Request.Host}/media/products/{p.Image}"
+                    ImageUrl = BuildImageUrl(p.Image)
                 })
                 .ToList();
 
@@ -86,7 +106,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 Price = product.Price,
                 Description = product.Description,
                 CategoryId = product.CategoryId,
-                Image = $"{Request.Scheme}://{Request.Host}/media/products/{product.Image}",
+                Image = BuildImageUrl(product.Image),
 
                 ModifierGroups = product.ProductModifierGroups.Select(pmg => new ModifierGroupDto
                 {
