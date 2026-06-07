@@ -105,7 +105,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
                 CreatedDate = DateTime.Now,
 
-                VATRate = 0.08m,
+                VATRate = 0.10m,
 
                 ServiceRate = 0.05m,
 

@@ -7,6 +7,11 @@
     var canModify = ViewBag.CanModifyItems as bool? ?? false;
     decimal total = 0;
     decimal subtotal = 0;
+    var order = Model.FirstOrDefault()?.Order;
+    decimal vatAmount = order?.VATAmount ?? 0;
+    decimal serviceAmount = order?.ServiceAmount ?? 0;
+    decimal discountAmount = order?.DiscountAmount ?? 0;
+    decimal grandTotal = order?.GrandTotal ?? 0;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -149,9 +154,40 @@
 
                 <tr>
                     <td colspan="6"></td>
-                    <td><strong>Tổng:</strong></td>
+                    <td><strong>Tổng tiền hàng:</strong></td>
                     <td colspan="@(canModify ? 2 : 1)">
                         <strong>@total.ToString("#,##0 VNĐ")</strong>
+                    </td>
+                </tr>
+                @if (serviceAmount > 0)
+                {
+                    <tr>
+                        <td colspan="6"></td>
+                        <td>Phí phục vụ (@((order?.ServiceRate * 100)?.ToString("0"))%):</td>
+                        <td colspan="@(canModify ? 2 : 1)">@serviceAmount.ToString("#,##0 VNĐ")</td>
+                    </tr>
+                }
+                @if (vatAmount > 0)
+                {
+                    <tr>
+                        <td colspan="6"></td>
+                        <td>Thuế VAT (@((order?.VATRate * 100)?.ToString("0"))%):</td>
+                        <td colspan="@(canModify ? 2 : 1)">@vatAmount.ToString("#,##0 VNĐ")</td>
+                    </tr>
+                }
+                @if (discountAmount > 0)
+                {
+                    <tr>
+                        <td colspan="6"></td>
+                        <td>Giảm giá:</td>
+                        <td colspan="@(canModify ? 2 : 1)" class="text-danger">-@discountAmount.ToString("#,##0 VNĐ")</td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="6"></td>
+                    <td><strong class="text-success fs-5">TỔNG THANH TOÁN:</strong></td>
+                    <td colspan="@(canModify ? 2 : 1)">
+                        <strong class="text-success fs-5">@grandTotal.ToString("#,##0 VNĐ")</strong>
                     </td>
                 </tr>
             }

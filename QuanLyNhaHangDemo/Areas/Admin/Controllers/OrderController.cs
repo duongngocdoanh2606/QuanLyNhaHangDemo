@@ -322,6 +322,8 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 CreatedDate = o.CreatedDate,
                 CouponCode = o.Coupon?.Code ?? "",
                 CouponDiscount = o.DiscountAmount,
+                VATAmount = o.VATAmount,
+                ServiceAmount = o.ServiceAmount,
                 OrderRevenue = o.SubTotal,
                 TotalWithCoupon = o.GrandTotal
             }).ToList();

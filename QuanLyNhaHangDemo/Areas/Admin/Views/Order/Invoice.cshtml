@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuanLyNhaHangDemo.Models.OrderDetailsModel>
+@model IEnumerable<QuanLyNhaHangDemo.Models.OrderDetailsModel>
 
 @{
     Layout = null;
@@ -9,7 +9,14 @@
 
     var buyer = firstItem?.Order?.GuestName ?? "Khách lẻ";
 
-    decimal total = ViewBag.Total ?? 0;
+    var order = ViewBag.Order as OrderModel;
+    decimal subTotal = order?.SubTotal ?? 0;
+    decimal vatAmount = order?.VATAmount ?? 0;
+    decimal vatRate = order?.VATRate ?? 0;
+    decimal serviceAmount = order?.ServiceAmount ?? 0;
+    decimal serviceRate = order?.ServiceRate ?? 0;
+    decimal discountAmount = order?.DiscountAmount ?? 0;
+    decimal grandTotal = order?.GrandTotal ?? 0;
 }
 
 <!DOCTYPE html>
@@ -166,40 +173,57 @@
                 }
 
                 <tr>
-
-                    <td colspan="3"
-                        class="text-right total-line">
+                    <td colspan="3" class="text-right total-line">
                         Tổng tiền hàng:
                     </td>
-
                     <td class="text-right total-line">
-                        @total.ToString("N0") đ
+                        @subTotal.ToString("N0") đ
                     </td>
-
                 </tr>
 
+                @if (serviceAmount > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-right">
+                            Phí phục vụ (@((serviceRate * 100).ToString("0"))%):
+                        </td>
+                        <td class="text-right">
+                            @serviceAmount.ToString("N0") đ
+                        </td>
+                    </tr>
+                }
+
+                @if (vatAmount > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-right">
+                            Thuế VAT (@((vatRate * 100).ToString("0"))%):
+                        </td>
+                        <td class="text-right">
+                            @vatAmount.ToString("N0") đ
+                        </td>
+                    </tr>
+                }
+
+                @if (discountAmount > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-right">
+                            Giảm giá:
+                        </td>
+                        <td class="text-right text-danger">
+                            -@discountAmount.ToString("N0") đ
+                        </td>
+                    </tr>
+                }
+
                 <tr>
-
-                    <td colspan="3"
-                        class="text-right total-line">
-                        Phí ship:
-                    </td>
-
-                 
-
-                </tr>
-
-                <tr>
-
-                    <td colspan="3"
-                        class="text-right total-line">
+                    <td colspan="3" class="text-right total-line">
                         Tổng thanh toán:
                     </td>
-
-                    <td class="text-right total-line">
-                        @((total).ToString("N0")) đ
+                    <td class="text-right total-line" style="font-size: 1.2em;">
+                        @grandTotal.ToString("N0") đ
                     </td>
-
                 </tr>
 
             </tbody>

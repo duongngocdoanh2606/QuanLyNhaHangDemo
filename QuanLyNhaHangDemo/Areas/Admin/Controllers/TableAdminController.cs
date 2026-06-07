@@ -305,6 +305,10 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     timeIn = activeOrder.CreatedDate
                         .ToString("HH:mm"),
 
+                    subTotal = activeOrder.SubTotal,
+                    vatAmount = activeOrder.VATAmount,
+                    serviceAmount = activeOrder.ServiceAmount,
+                    discountAmount = activeOrder.DiscountAmount,
                     totalAmount = activeOrder.GrandTotal,
 
                     items = orderDetails.Select(d => new

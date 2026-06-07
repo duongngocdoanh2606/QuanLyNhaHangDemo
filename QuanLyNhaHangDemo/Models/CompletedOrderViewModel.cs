@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace QuanLyNhaHangDemo.Models
 {
@@ -13,6 +13,12 @@ namespace QuanLyNhaHangDemo.Models
 
         // Số tiền giảm giá - Ánh xạ từ o.DiscountAmount
         public decimal CouponDiscount { get; set; }
+
+        // Tiền thuế VAT
+        public decimal VATAmount { get; set; }
+
+        // Phí dịch vụ
+        public decimal ServiceAmount { get; set; }
 
         // Doanh thu từ tiền món gốc (SubTotal chưa thuế/giảm giá) - Ánh xạ từ o.SubTotal
         public decimal OrderRevenue { get; set; }

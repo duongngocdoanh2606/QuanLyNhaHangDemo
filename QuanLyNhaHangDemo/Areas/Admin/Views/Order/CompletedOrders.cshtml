@@ -31,6 +31,8 @@
             <th>User Name</th>
             <th>Ngày tạo</th>
             <th>Doanh thu (món gốc)</th>
+            <th>Thuế VAT</th>
+            <th>Phí DV</th>
             <th>Mã Coupon</th>
             <th>Tiền giảm giá</th>
             <th>Thành tiền (Grand Total)</th>
@@ -45,6 +47,8 @@
                 <td>@o.UserName</td>
                 <td>@o.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@o.OrderRevenue.ToString("N0") ₫</td>
+                <td>@o.VATAmount.ToString("N0") ₫</td>
+                <td>@o.ServiceAmount.ToString("N0") ₫</td>
 
                 <td><span class="badge bg-secondary text-white">@o.CouponCode</span></td>
 
