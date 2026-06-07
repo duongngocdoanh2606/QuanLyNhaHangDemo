@@ -27,6 +27,10 @@ namespace QuanLyNhaHangDemo.Models.Dtos
         public string OrderCode { get; set; } = string.Empty;
         public string? GuestName { get; set; }
         public string CheckInTime { get; set; } = string.Empty;
+        public decimal SubTotal { get; set; }
+        public decimal VATAmount { get; set; }
+        public decimal ServiceAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
         public decimal TotalAmount { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
     }

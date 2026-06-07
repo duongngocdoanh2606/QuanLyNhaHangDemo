@@ -19,6 +19,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
         private string BuildImageUrl(string imageName)
         {
+            if (string.IsNullOrWhiteSpace(imageName))
+                return string.Empty;
+
             // ưu tiên lấy BaseUrl từ cấu hình (Railway env var hoặc appsettings)
             var baseUrl = _config["App:BaseUrl"];
             if (string.IsNullOrEmpty(baseUrl))

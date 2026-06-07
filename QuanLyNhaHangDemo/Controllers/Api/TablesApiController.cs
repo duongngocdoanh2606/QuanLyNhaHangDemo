@@ -147,6 +147,10 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     OrderCode = activeOrder.OrderCode,
                     GuestName = activeOrder.GuestName,
                     CheckInTime = activeOrder.CreatedDate.ToString("HH:mm"),
+                    SubTotal = activeOrder.SubTotal,
+                    VATAmount = activeOrder.VATAmount,
+                    ServiceAmount = activeOrder.ServiceAmount,
+                    DiscountAmount = activeOrder.DiscountAmount,
                     TotalAmount = activeOrder.GrandTotal,
                     Items = itemsDto
                 }

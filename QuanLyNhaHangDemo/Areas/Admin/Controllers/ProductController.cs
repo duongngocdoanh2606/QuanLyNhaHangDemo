@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -72,6 +72,10 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 if (product.ImageUpLoad != null)
                 {
                     string upLoadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
+                    if (!Directory.Exists(upLoadsDir))
+                    {
+                        Directory.CreateDirectory(upLoadsDir);
+                    }
                     string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpLoad.FileName;
                     string filePath = Path.Combine(upLoadsDir, imageName);
                     using (var fs = new FileStream(filePath, FileMode.Create))
@@ -129,23 +133,33 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 if (product.ImageUpLoad != null)
                 {
                     string upLoadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
+                    if (!Directory.Exists(upLoadsDir))
+                    {
+                        Directory.CreateDirectory(upLoadsDir);
+                    }
                     string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpLoad.FileName;
                     string filePath = Path.Combine(upLoadsDir, imageName);
-                    string oldfileImage = Path.Combine(upLoadsDir, existed_product.Image);
-                    try
+                    
+                    if (!string.IsNullOrEmpty(existed_product.Image))
                     {
-                        if (System.IO.File.Exists(oldfileImage))
+                        string oldfileImage = Path.Combine(upLoadsDir, existed_product.Image);
+                        try
                         {
-                            System.IO.File.Delete(oldfileImage);
+                            if (System.IO.File.Exists(oldfileImage))
+                            {
+                                System.IO.File.Delete(oldfileImage);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ModelState.AddModelError("", "An error");
                         }
                     }
-                    catch (Exception ex)
+
+                    using (FileStream fs = new FileStream(filePath, FileMode.Create))
                     {
-                        ModelState.AddModelError("", "An error");
+                        await product.ImageUpLoad.CopyToAsync(fs);
                     }
-                    FileStream fs = new FileStream(filePath, FileMode.Create);
-                    await product.ImageUpLoad.CopyToAsync(fs);
-                    fs.Close();
                     existed_product.Image = imageName;
                 }
 
