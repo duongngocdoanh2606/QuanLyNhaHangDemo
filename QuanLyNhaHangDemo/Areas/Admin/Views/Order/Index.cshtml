@@ -13,7 +13,6 @@
 <table class="table table-bordered table-striped" id="myTable">
     <thead>
         <tr>
-            <th>#</th>
             <th>Order Code</th>
             <th>User Name</th>
             <th>Order Date</th>
@@ -29,7 +28,6 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@(stt++)</td>
                 <td class="fw-bold">@item.OrderCode</td>
                 <td>@item.GuestName</td>
                 <td>@item.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>

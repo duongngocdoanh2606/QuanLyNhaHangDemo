@@ -21,7 +21,6 @@
     <table class="table table-bordered table-striped table-hover shadow-sm text-center align-middle" id="myTable">
         <thead class="table-dark">
             <tr>
-                <th>ID</th>
                 <th>Mã Coupon</th>
                 <th>Số tiền giảm</th>
                 <th>Trạng thái</th>
@@ -32,7 +31,7 @@
             @if (!Model.Any())
             {
                 <tr>
-                    <td colspan="5" class="text-center text-muted">Chưa có mã giảm giá nào được tạo.</td>
+                    <td colspan="4" class="text-center text-muted">Chưa có mã giảm giá nào được tạo.</td>
                 </tr>
             }
             else
@@ -40,7 +39,6 @@
                 foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.Id</td>
                         <td><strong class="text-danger">@item.Code</strong></td>
                         <td>@item.DiscountAmount.ToString("#,##0") đ</td>
                         <td>

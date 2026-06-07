@@ -13,7 +13,6 @@
 <table class="table table-bordered" id="myTable">
     <thead class="table-dark">
         <tr>
-            <th>#</th>
             <th>Name</th>
             <th>Sold</th>
             <th>Description</th>
@@ -30,7 +29,6 @@
         {
             <!-- MAIN ROW -->
             <tr>
-                <td>@item.Id</td>
                 <td>@item.Name</td>
                 <td><b>@item.Sold</b></td>
                 <td>@Html.Raw(item.Description)</td>
@@ -43,7 +41,7 @@
                 <!-- MODIFIER -->
                 <td>
                     <button class="btn btn-sm btn-primary mb-1"
-                            onclick="toggle(@item.Id)">
+                            data-bs-toggle="modal" data-bs-target="#modalModifier_@item.Id">
                         Modifier ▼
                     </button>
 
@@ -85,46 +83,50 @@
                 </td>
             </tr>
 
-            <!-- 🔥 EXPAND ROW -->
-            <tr id="row_@item.Id" style="display:none; background:#f8f9fa;">
-                <td colspan="9">
-
-                    <div class="row">
-                        @foreach (var group in ViewBag.AllModifierGroups)
-                        {
-                            var isChecked = item.ProductModifierGroups != null &&
-                            item.ProductModifierGroups.Any(x => x.ModifierGroupId == group.Id);
-
-                            <div class="col-md-3 mb-2">
-                                <label style="cursor:pointer;">
-                                    <input type="checkbox"
-                                           onchange="update(@item.Id, @group.Id, this.checked)"
-                                           @(isChecked ? "checked" : "") />
-
-                                    <b>@group.Name</b>
-                                </label>
-                            </div>
-                        }
-                    </div>
-
-                </td>
-            </tr>
         }
     </tbody>
 </table>
 
+@foreach (var item in Model)
+{
+    <!-- Modal cho Modifier của Product @item.Id -->
+    <div class="modal fade" id="modalModifier_@item.Id" tabindex="-1" aria-labelledby="modalModifierLabel_@item.Id" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalModifierLabel_@item.Id">Cài đặt Modifier - @item.Name</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+             <div class="row">
+                 @foreach (var group in ViewBag.AllModifierGroups)
+                 {
+                     var isChecked = item.ProductModifierGroups != null &&
+                     item.ProductModifierGroups.Any(x => x.ModifierGroupId == group.Id);
+
+                     <div class="col-md-3 mb-2">
+                         <label style="cursor:pointer;">
+                             <input type="checkbox"
+                                    onchange="update(@item.Id, @group.Id, this.checked)"
+                                    @(isChecked ? "checked" : "") />
+
+                             <b>@group.Name</b>
+                         </label>
+                     </div>
+                 }
+             </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+}
+
 @section Scripts {
     <script>
-        function toggle(id) {
-            let row = document.getElementById("row_" + id);
 
-            if (!row) {
-                console.error("Không tìm thấy row_" + id);
-                return;
-            }
-
-            row.style.display = row.style.display === "none" ? "" : "none";
-        }
 
         function update(productId, groupId, isChecked) {
             fetch('/Admin/Product/ToggleModifier', {
@@ -151,8 +153,6 @@
             font-size: 12px;
         }
 
-        tr[id^="row_"] {
-            transition: all 0.2s ease;
-        }
+
     </style>
 }

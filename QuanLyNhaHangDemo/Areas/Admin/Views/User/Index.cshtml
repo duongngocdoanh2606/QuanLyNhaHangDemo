@@ -1,4 +1,4 @@
-﻿﻿@{
+﻿@{
 ViewData["title"] = "List User";
 }
 
@@ -17,7 +17,6 @@ ViewData["title"] = "List User";
         <table class="table table-responsive" id="myTable">
             <thead>
                 <tr>
-                    <th>Id</th>
                     <th>UserName</th>
                     <th>Email</th>
                     <th>Role</th>
@@ -28,7 +27,6 @@ ViewData["title"] = "List User";
                 @foreach (var usersWithRoles in Model)
                 {
                     <tr>
-                        <td>@usersWithRoles.User.Id</td>
                         <td>@usersWithRoles.User.UserName</td>
                         <td>@usersWithRoles.User.Email</td>
                         <td>

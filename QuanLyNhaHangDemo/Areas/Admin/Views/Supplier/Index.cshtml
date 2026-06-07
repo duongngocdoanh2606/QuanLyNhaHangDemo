@@ -29,7 +29,6 @@
 <table class="table table-bordered table-hover" id="myTable">
     <thead class="table-dark">
         <tr>
-            <th>#</th>
             <th>Tên nhà cung cấp</th>
             <th>Email</th>
             <th>Địa chỉ</th>
@@ -43,7 +42,6 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@stt++</td>
                 <td>@item.SupplierName</td>
                 <td>@item.SupplierEmail</td>
                 <td>@item.SupplierAddress</td>

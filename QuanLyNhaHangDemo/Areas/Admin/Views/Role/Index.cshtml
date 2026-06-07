@@ -1,4 +1,4 @@
-﻿﻿@using Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Identity
 @model IEnumerable<IdentityRole>
 
 @{
@@ -21,7 +21,6 @@
     <table class="table" id="myTable">
         <thead>
             <tr>
-                <th>Id</th>
                 <th>Role Name</th>
                 <th>Role</th>
 
@@ -32,7 +31,6 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Id</td>
                     <td>@item.Name</td>
                     <td>@item.NormalizedName</td>
 
