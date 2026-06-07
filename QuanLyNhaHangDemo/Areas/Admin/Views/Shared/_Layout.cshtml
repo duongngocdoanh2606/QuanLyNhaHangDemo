@@ -19,6 +19,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="~/css/admin-layout.css" />
     <link rel="stylesheet" href="~/css/admin-sidebar.css" />
@@ -180,6 +181,9 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script src="~/js/admin-order-sync.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
     <script>
         document.getElementById("toggleSidebar")?.addEventListener("click", () => {
             document.querySelector(".sidebar").classList.toggle("show");
@@ -194,6 +198,15 @@
                     title: message,
                     showConfirmButton: false,
                     timer: 1800
+                });
+            }
+            
+            // Khởi tạo DataTables cho các bảng
+            if ($('#myTable').length) {
+                $('#myTable').DataTable({
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
+                    }
                 });
             }
         });
