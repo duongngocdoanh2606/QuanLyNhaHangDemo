@@ -5,6 +5,16 @@ using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
 using QuanLyNhaHangDemo.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+
+// =====================================================
+// CÀI ĐẶT CULTURE: Luôn dùng InvariantCulture (dấu chấm '.' làm thập phân)
+// Tránh lỗi parse số khi server Windows dùng locale Việt Nam (dấu phẩy ',')
+// =====================================================
+var defaultCulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture   = defaultCulture;
+CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -169,6 +179,14 @@ if (app.Environment.IsDevelopment())
 // =====================================================
 app.UseStatusCodePagesWithRedirects(
     "/Home/Error?statuscode={0}");
+
+// Áp dụng RequestLocalization (InvariantCulture cho toàn bộ request)
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture),
+    SupportedCultures     = new[] { CultureInfo.InvariantCulture },
+    SupportedUICultures   = new[] { CultureInfo.InvariantCulture },
+});
 
 app.UseStaticFiles();
 

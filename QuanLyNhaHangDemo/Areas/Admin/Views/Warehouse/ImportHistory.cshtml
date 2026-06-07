@@ -124,7 +124,7 @@ else
                         </td>
                         <td>@item.Material?.Supplier?.SupplierName</td>
                         <td class="text-center fw-semibold text-success">
-                            +@item.Quantity <small class="text-muted">@item.Material?.Unit</small>
+                            +@item.Quantity.ToString("G29") <small class="text-muted">@item.Material?.Unit</small>
                         </td>
                         <td class="text-end">@item.UnitPrice.ToString("N0") ₫</td>
                         <td class="text-end fw-bold text-success">@item.TotalPrice.ToString("N0") ₫</td>

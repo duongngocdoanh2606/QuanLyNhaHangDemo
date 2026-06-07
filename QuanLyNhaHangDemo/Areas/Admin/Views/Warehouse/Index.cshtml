@@ -39,7 +39,7 @@
             <tr>
                 <td>@item.Name</td>
                 <td>@item.Supplier?.SupplierName</td>
-                <td>@item.CurrentQuantity</td>
+                <td class="text-center fw-semibold">@item.CurrentQuantity.ToString("G29")</td>
                 <td>@item.Unit</td>
                 <td>@price.ToString("N0")</td>
                 <td>
