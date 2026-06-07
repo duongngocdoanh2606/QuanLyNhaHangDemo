@@ -118,6 +118,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-primary" onclick="notifyModifierSaved()">Add</button>
           </div>
         </div>
       </div>
@@ -144,6 +145,23 @@
                 console.log("Updated!");
             })
             .catch(err => console.error(err));
+        }
+
+        function notifyModifierSaved() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công',
+                    text: 'Đã lưu cài đặt Modifier!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                alert('Đã lưu cài đặt Modifier!');
+                location.reload();
+            }
         }
     </script>
 
