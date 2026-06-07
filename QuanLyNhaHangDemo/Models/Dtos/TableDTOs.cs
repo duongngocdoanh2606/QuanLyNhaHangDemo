@@ -94,6 +94,7 @@ namespace QuanLyNhaHangDemo.Models.Dtos
         public string CheckInTime { get; set; } = string.Empty;
         public string CheckOutTime { get; set; } = string.Empty;
         public string PaymentUrl { get; set; } = string.Empty;
+        public string ReferenceNumber { get; set; } = string.Empty;
     }
 
     public class OrderDetailMoveRequest

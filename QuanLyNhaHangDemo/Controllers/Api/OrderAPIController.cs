@@ -13,13 +13,16 @@ namespace QuanLyNhaHangDemo.Controllers.Api
     {
         private readonly DataContext _db;
         private readonly IOrderStateService _orderState;
+        private readonly VTCPayService _vtcPay;
 
         public OrdersApiController(
             DataContext db,
-            IOrderStateService orderState)
+            IOrderStateService orderState,
+            VTCPayService vtcPay)
         {
             _db = db;
             _orderState = orderState;
+            _vtcPay = vtcPay;
         }
 
         [HttpPost("tables/{tableId:int}")]
@@ -408,10 +411,10 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 });
             }
 
+            // ── Áp mã giảm giá (nếu có) ──
             if (!string.IsNullOrEmpty(couponCode))
             {
                 order.CouponId = null;
-
                 order.DiscountAmount = 0;
 
                 var coupon = await _db.Coupons
@@ -423,10 +426,8 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 if (coupon != null)
                 {
                     order.CouponId = coupon.Id;
-
                     order.DiscountAmount =
-                        coupon.DiscountAmount >
-                        order.SubTotal
+                        coupon.DiscountAmount > order.SubTotal
                         ? order.SubTotal
                         : coupon.DiscountAmount;
                 }
@@ -439,8 +440,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 if (coupon != null)
                 {
                     order.DiscountAmount =
-                        coupon.DiscountAmount >
-                        order.SubTotal
+                        coupon.DiscountAmount > order.SubTotal
                         ? order.SubTotal
                         : coupon.DiscountAmount;
                 }
@@ -448,67 +448,69 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             await _db.SaveChangesAsync();
 
-            var (success, message) =
-                await _orderState
-                    .CheckoutTableAsync(tableId);
-
-            if (!success)
-            {
-                return BadRequest(new
-                {
-                    message
-                });
-            }
-
-            var updatedOrder = await _db.Orders
-                .FindAsync(order.Id);
-
-            updatedOrder.Method =
-                paymentMethod == 2
-                ? PaymentMethod.VTCPay
-                : PaymentMethod.Cash;
-
-            await _db.SaveChangesAsync();
+            // ── Xác định phương thức thanh toán ──
+            bool isVtcPay = paymentMethod == 2;
 
             string paymentUrl = "";
+            string referenceNumber = "";
 
-            if (updatedOrder.Method ==
-                PaymentMethod.VTCPay)
+            if (isVtcPay)
             {
-                string websiteId = "55930";
+                // VTCPay: chỉ tạo URL + lưu reference, CHƯA mark Paid
+                // (sẽ mark Paid khi nhận IPN callback)
+                referenceNumber = order.OrderCode + "_" +
+                    DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                string amount =
-                    ((int)updatedOrder.GrandTotal)
-                    .ToString();
+                long amountVnd = (long)Math.Round(order.GrandTotal);
 
-                string referenceNumber =
-                    updatedOrder.OrderCode +
-                    DateTime.Now.Ticks;
+                paymentUrl = _vtcPay.BuildCheckoutUrl(referenceNumber, amountVnd);
 
-                paymentUrl =
-                    $"https://sandbox.vtcpay.vn/portalgateway/checkout.html?amount={amount}&currency=VND&receiverAccount=0987654321&reference_number={referenceNumber}&website_id={websiteId}";
+                // Ghi nhận method và reference để đối chiếu IPN
+                order.Method = PaymentMethod.VTCPay;
+                order.VtcPayReference = referenceNumber;
+                await _db.SaveChangesAsync();
+
+                // Trả về ngay cho Android hiển thị QR (chưa đóng bàn)
+                return Ok(new CheckoutResultDto
+                {
+                    OrderCode = order.OrderCode,
+                    TableName = table.TableName,
+                    TotalAmount = order.GrandTotal,
+                    CheckInTime = order.CreatedDate
+                        .ToString("HH:mm dd/MM/yyyy"),
+                    CheckOutTime = DateTime.Now
+                        .ToString("HH:mm dd/MM/yyyy"),
+                    PaymentUrl = paymentUrl,
+                    ReferenceNumber = referenceNumber
+                });
             }
-
-            return Ok(new CheckoutResultDto
+            else
             {
-                OrderCode = updatedOrder.OrderCode,
+                // Cash: checkout ngay, mark Paid và giải phóng bàn
+                order.Method = PaymentMethod.Cash;
+                await _db.SaveChangesAsync();
 
-                TableName = table.TableName,
+                var (success, message) =
+                    await _orderState.CheckoutTableAsync(tableId);
 
-                TotalAmount =
-                    updatedOrder.GrandTotal,
+                if (!success)
+                {
+                    return BadRequest(new { message });
+                }
 
-                CheckInTime =
-                    updatedOrder.CreatedDate
-                    .ToString("HH:mm dd/MM/yyyy"),
-
-                CheckOutTime =
-                    DateTime.Now
-                    .ToString("HH:mm dd/MM/yyyy"),
-
-                PaymentUrl = paymentUrl
-            });
+                return Ok(new CheckoutResultDto
+                {
+                    OrderCode = order.OrderCode,
+                    TableName = table.TableName,
+                    TotalAmount = order.GrandTotal,
+                    CheckInTime = order.CreatedDate
+                        .ToString("HH:mm dd/MM/yyyy"),
+                    CheckOutTime = DateTime.Now
+                        .ToString("HH:mm dd/MM/yyyy"),
+                    PaymentUrl = "",
+                    ReferenceNumber = ""
+                });
+            }
         }
     }
 }
-

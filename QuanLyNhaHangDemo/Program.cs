@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Hubs;
 using QuanLyNhaHangDemo.Models;
@@ -119,6 +119,7 @@ builder.Services.AddSignalR();
 // SERVICES
 // =====================================================
 builder.Services.AddScoped<IOrderStateService, OrderStateService>();
+builder.Services.AddSingleton<VTCPayService>();
 
 
 var app = builder.Build();

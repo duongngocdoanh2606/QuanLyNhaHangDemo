@@ -46,6 +46,9 @@ public class OrderModel
     public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
     public PaymentStatus PayStatus { get; set; } = PaymentStatus.Unpaid;
 
+    /// <summary>Reference number gửi lên VTCPay, dùng để đối chiếu IPN callback</summary>
+    public string? VtcPayReference { get; set; }
+
     public enum OrderStatus
     {
         Pending,   // Mới tạo đơn, chờ nhà bếp xác nhận

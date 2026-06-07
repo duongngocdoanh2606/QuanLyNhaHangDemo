@@ -25,7 +25,37 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         public async Task<IActionResult> Index(int? selectedKitchenId)
         {
             var kitchen = await _dataContext.Kitchen.OrderBy(k => k.SortOrder).ToListAsync();
-            ViewBag.SelectedKitchenId = selectedKitchenId ?? (kitchen.FirstOrDefault()?.Id ?? 0);
+            
+            int defaultKitchenId = kitchen.FirstOrDefault()?.Id ?? 0;
+
+            if (selectedKitchenId.HasValue)
+            {
+                ViewBag.SelectedKitchenId = selectedKitchenId.Value;
+            }
+            else
+            {
+                var activeKitchenIds = await _dataContext.OrderDetails
+                    .Where(od => od.IsFired
+                                 && od.Status != StatusProduct.Done
+                                 && od.Status != StatusProduct.Served
+                                 && od.Status != StatusProduct.Cancelled
+                                 && od.Product != null
+                                 && od.Product.Category != null)
+                    .Select(od => od.Product.Category.KitchenId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (activeKitchenIds.Any())
+                {
+                    var firstActiveKitchen = kitchen.FirstOrDefault(k => activeKitchenIds.Contains(k.Id));
+                    ViewBag.SelectedKitchenId = firstActiveKitchen?.Id ?? defaultKitchenId;
+                }
+                else
+                {
+                    ViewBag.SelectedKitchenId = defaultKitchenId;
+                }
+            }
+
             return View(kitchen);
         }
 
