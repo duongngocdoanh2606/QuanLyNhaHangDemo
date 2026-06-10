@@ -115,6 +115,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             };
 
             decimal subtotal = 0;
+            bool hasAutoFireItem = false;
 
             foreach (var item in req.Items)
             {
@@ -129,6 +130,8 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
                 bool autoFire =
                     product.Category?.isAutoFire ?? true;
+
+                if (autoFire) hasAutoFireItem = true;
 
                 var orderDetail =
                     new OrderDetailsModel
@@ -183,6 +186,38 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     unitPrice * item.Quantity;
 
                 _db.OrderDetails.Add(orderDetail);
+            }
+
+            if (!hasAutoFireItem)
+            {
+                var nuocLocProduct = await _db.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == "nước lọc");
+                if (nuocLocProduct == null)
+                {
+                    var autoCat = await _db.Categories.FirstOrDefaultAsync(c => c.Name.ToLower() == "nước lọc");
+                    if (autoCat == null)
+                    {
+                        var firstKitchen = await _db.Kitchen.FirstOrDefaultAsync();
+                        autoCat = new CategoryModel { Name = "Nước lọc", Description = "Auto trigger", isAutoFire = true, Priority = 0, Status = 1, KitchenId = firstKitchen?.Id ?? 0, Slug = "nuoc-loc" };
+                        _db.Categories.Add(autoCat);
+                        await _db.SaveChangesAsync();
+                    }
+                    nuocLocProduct = new ProductModel { Name = "Nước lọc", Price = 0, CategoryId = autoCat.Id, Status = 1, Image = "default.jpg", Description = "Auto trigger" };
+                    _db.Products.Add(nuocLocProduct);
+                    await _db.SaveChangesAsync();
+                }
+
+                _db.OrderDetails.Add(new OrderDetailsModel
+                {
+                    Order = order,
+                    ProductId = nuocLocProduct.Id,
+                    Quantity = 1,
+                    CreateDate = DateTime.Now,
+                    Status = StatusProduct.Pending,
+                    IsFired = true,
+                    FiredAt = DateTime.Now,
+                    UnitPrice = 0,
+                    Note = "Auto Trigger"
+                });
             }
 
             order.SubTotal = subtotal;

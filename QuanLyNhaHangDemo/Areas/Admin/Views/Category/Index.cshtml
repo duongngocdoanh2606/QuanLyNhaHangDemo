@@ -10,6 +10,7 @@
             <th scope="col">Category Name</th>
             <th scope="col">Category Description</th> 
             <th scope="col">Kitchen</th>
+            <th scope="col">Priority</th>
             <th scope="col">Category Status</th>
             <th scope="col">Chế độ bếp</th>
             <th scope="col">Action</th>
@@ -23,6 +24,7 @@
                 <td>@item.Name</td>
                 <td>@Html.Raw(item.Description)</td>
                 <td>@item.Kitchen.Name</td>
+                <td>@item.Priority</td>
                 <td>
                     @if (item.Status == 1)
                     {

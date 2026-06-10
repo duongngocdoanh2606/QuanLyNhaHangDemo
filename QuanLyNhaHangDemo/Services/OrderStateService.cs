@@ -52,6 +52,15 @@ namespace QuanLyNhaHangDemo.Services
                 await NotifyDishReadyAsync(detail);
             }
 
+            if (oldStatus != StatusProduct.Served &&
+                newStatus == StatusProduct.Served)
+            {
+                // Call trigger next sequence logic before saving the DB context.
+                // Wait, it is better to save changes first, then trigger, or just trigger.
+                // It's safe to trigger here since TriggerNextSequenceAsync has its own SaveChangesAsync.
+                await TriggerNextSequenceAsync(order.Id);
+            }
+
             await _db.SaveChangesAsync();
 
             await BroadcastFloorPlanUpdateAsync();
@@ -125,6 +134,8 @@ namespace QuanLyNhaHangDemo.Services
             await _db.SaveChangesAsync();
 
             await BroadcastFloorPlanUpdateAsync();
+
+            await TriggerNextSequenceAsync(orderId.Value);
         }
 
         private async Task SyncOrderStatusFromDetailsAsync(
@@ -491,6 +502,62 @@ namespace QuanLyNhaHangDemo.Services
             foreach (var n in unread)
             {
                 n.IsRead = true;
+            }
+        }
+
+        private async Task TriggerNextSequenceAsync(int orderId)
+        {
+            var unfiredItems = await _db.OrderDetails
+                .Include(od => od.Product)
+                    .ThenInclude(p => p.Category)
+                        .ThenInclude(c => c.Kitchen)
+                .Where(od => od.OrderId == orderId && 
+                             !od.IsFired && 
+                             od.Status != StatusProduct.Cancelled)
+                .ToListAsync();
+
+            if (!unfiredItems.Any())
+                return;
+
+            var nextGroup = unfiredItems
+                .Where(od => od.Product?.Category?.Kitchen != null)
+                .OrderBy(od => od.Product.Category.Kitchen.SortOrder)
+                .ThenBy(od => od.Product.Category.Priority)
+                .GroupBy(od => new 
+                { 
+                    SortOrder = od.Product.Category.Kitchen.SortOrder, 
+                    Priority = od.Product.Category.Priority 
+                })
+                .FirstOrDefault();
+
+            if (nextGroup == null)
+                return;
+
+            bool isAnyFired = false;
+
+            foreach (var detail in nextGroup)
+            {
+                detail.IsFired = true;
+                detail.FiredAt = DateTime.Now;
+                detail.Status = StatusProduct.Pending;
+                isAnyFired = true;
+            }
+
+            if (isAnyFired)
+            {
+                await _db.SaveChangesAsync();
+                await BroadcastKitchenRefreshAsync();
+
+                foreach (var detail in nextGroup)
+                {
+                    await _hub.Clients.Group(OrderHub.AdminGroup).SendAsync("DishFired", new
+                    {
+                        orderDetailId = detail.Id,
+                        productName = detail.Product?.Name,
+                        isRemake = false,
+                        message = $"Fire tự động: {detail.Product?.Name}"
+                    });
+                }
             }
         }
     }

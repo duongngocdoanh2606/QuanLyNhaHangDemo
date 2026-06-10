@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyNhaHangDemo.Models
@@ -17,6 +17,7 @@ namespace QuanLyNhaHangDemo.Models
         public bool isAutoFire { get; set; } = true;
         public string Slug { get; set; }
         public int Status { get; set; }
+        public int Priority { get; set; } = 0;
 
         public virtual ICollection<ProductModel> Products { get; set; }
     }
