@@ -71,7 +71,7 @@
                     @item.CurrentQuantity.ToString("G29")
                     @if (isLowStock)
                     {
-                        <br /><span class="badge bg-danger mt-1">Sắp hết (<= @item.ReorderLevel.ToString("G29"))</span>
+                        <br /><span class="badge bg-danger mt-1">Sắp hết (&lt;= @item.ReorderLevel.ToString("G29"))</span>
                     }
                 </td>
                 <td>@item.Unit</td>
