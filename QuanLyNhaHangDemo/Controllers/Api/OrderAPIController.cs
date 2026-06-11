@@ -13,16 +13,16 @@ namespace QuanLyNhaHangDemo.Controllers.Api
     {
         private readonly DataContext _db;
         private readonly IOrderStateService _orderState;
-        private readonly VTCPayService _vtcPay;
+        private readonly VNPayService _vnpPay;
 
         public OrdersApiController(
             DataContext db,
             IOrderStateService orderState,
-            VTCPayService vtcPay)
+            VNPayService vnpPay)
         {
             _db = db;
             _orderState = orderState;
-            _vtcPay = vtcPay;
+            _vnpPay = vnpPay;
         }
 
         [HttpPost("tables/{tableId:int}")]
@@ -484,25 +484,26 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             await _db.SaveChangesAsync();
 
             // ── Xác định phương thức thanh toán ──
-            bool isVtcPay = paymentMethod == 2;
+            bool isVnPay = paymentMethod == 2;
 
             string paymentUrl = "";
             string referenceNumber = "";
 
-            if (isVtcPay)
+            if (isVnPay)
             {
-                // VTCPay: chỉ tạo URL + lưu reference, CHƯA mark Paid
+                // VNPay: chỉ tạo URL + lưu reference, CHƯA mark Paid
                 // (sẽ mark Paid khi nhận IPN callback)
                 referenceNumber = order.OrderCode + "_" +
                     DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 long amountVnd = (long)Math.Round(order.GrandTotal);
 
-                paymentUrl = _vtcPay.BuildCheckoutUrl(referenceNumber, amountVnd);
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                paymentUrl = _vnpPay.CreatePaymentUrl(ipAddress, referenceNumber, amountVnd);
 
                 // Ghi nhận method và reference để đối chiếu IPN
-                order.Method = PaymentMethod.VTCPay;
-                order.VtcPayReference = referenceNumber;
+                order.Method = PaymentMethod.VNPay;
+                order.VnPayReference = referenceNumber;
                 await _db.SaveChangesAsync();
 
                 // Trả về ngay cho Android hiển thị QR (chưa đóng bàn)

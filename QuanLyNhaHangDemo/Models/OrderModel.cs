@@ -46,8 +46,9 @@ public class OrderModel
     public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
     public PaymentStatus PayStatus { get; set; } = PaymentStatus.Unpaid;
 
-    /// <summary>Reference number gửi lên VTCPay, dùng để đối chiếu IPN callback</summary>
-    public string? VtcPayReference { get; set; }
+    /// <summary>Reference number gửi lên VNPay, dùng để đối chiếu IPN callback</summary>
+    [Column("VtcPayReference")] // Giữ nguyên tên cột database để không cần migration
+    public string? VnPayReference { get; set; }
 
     public enum OrderStatus
     {
@@ -62,7 +63,7 @@ public class OrderModel
 public enum PaymentMethod
 {
     Cash = 1,
-    VTCPay = 2
+    VNPay = 2
 }
 
 public enum PaymentStatus
