@@ -498,7 +498,14 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
                 long amountVnd = (long)Math.Round(order.GrandTotal);
 
-                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                // VNPay chỉ chấp nhận IPv4. Railway có thể trả về IPv6-mapped (::ffff:x.x.x.x)
+                var rawIp = HttpContext.Connection.RemoteIpAddress;
+                string ipAddress = "127.0.0.1";
+                if (rawIp != null)
+                    ipAddress = rawIp.IsIPv4MappedToIPv6
+                        ? rawIp.MapToIPv4().ToString()
+                        : rawIp.ToString();
+
                 paymentUrl = _vnpPay.CreatePaymentUrl(ipAddress, referenceNumber, amountVnd);
 
                 // Ghi nhận method và reference để đối chiếu IPN

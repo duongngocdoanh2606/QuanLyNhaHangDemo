@@ -130,7 +130,7 @@ builder.Services.AddSignalR();
 // SERVICES
 // =====================================================
 builder.Services.AddScoped<IOrderStateService, OrderStateService>();
-builder.Services.AddSingleton<VNPayService>();
+builder.Services.AddScoped<VNPayService>();
 
 
 var app = builder.Build();
