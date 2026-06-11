@@ -1,4 +1,4 @@
-﻿
+
 @{
     ViewData["Title"] = "Định mức nguyên liệu";
     var product = ViewBag.Product as QuanLyNhaHangDemo.Models.ProductModel;
@@ -36,7 +36,7 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" name="quantities" class="form-control" step="0.01" value="@item.QuantityRequired" required />
+                                            <input type="text" name="quantities" class="form-control" value="@item.QuantityRequired.ToString("0.###")" required />
                                         </td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-danger btn-sm btn-remove-row">❌ Xóa</button>
@@ -77,7 +77,7 @@
                 </select>
             </td>
             <td>
-                <input type="number" name="quantities" class="form-control" step="0.01" placeholder="Ví dụ: 0.15 (kg)" required />
+                <input type="text" name="quantities" class="form-control" placeholder="Ví dụ: 0.15 (kg)" required />
             </td>
             <td class="text-center">
                 <button type="button" class="btn btn-danger btn-sm btn-remove-row">❌ Xóa</button>
