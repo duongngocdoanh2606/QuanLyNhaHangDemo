@@ -37,9 +37,17 @@
         height: calc(100vh - 180px);
     }
 
-    .zone-sidebar,
-    .floor-wrapper,
     .live-panel {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 5px 16px rgba(0,0,0,.06);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .zone-sidebar,
+    .floor-wrapper {
         background: white;
         border-radius: 18px;
         overflow: hidden;
@@ -229,6 +237,7 @@
 
     .live-content {
         padding: 16px;
+        flex: 1;
         overflow-y: auto;
     }
 

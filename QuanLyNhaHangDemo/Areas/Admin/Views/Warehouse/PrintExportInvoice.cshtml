@@ -92,7 +92,7 @@
                             <td class="text-center">@(stt++)</td>
                             <td>@item.Material?.Name</td>
                             <td class="text-center">@item.Material?.Unit</td>
-                            <td class="text-center">@item.Quantity</td>
+                            <td class="text-center">@item.Quantity.ToString("G29")</td>
                             <td class="text-end">@item.UnitPrice.ToString("N0")</td>
                             <td class="text-end fw-bold">@item.TotalPrice.ToString("N0")</td>
                         </tr>
@@ -104,7 +104,7 @@
                         <td class="text-center">1</td>
                         <td>@Model.Material?.Name</td>
                         <td class="text-center">@Model.Material?.Unit</td>
-                        <td class="text-center">@Model.Quantity</td>
+                        <td class="text-center">@Model.Quantity.ToString("G29")</td>
                         <td class="text-end">@Model.UnitPrice.ToString("N0")</td>
                         <td class="text-end fw-bold">@Model.TotalPrice.ToString("N0")</td>
                     </tr>

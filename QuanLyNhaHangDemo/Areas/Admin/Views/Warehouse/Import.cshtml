@@ -39,7 +39,7 @@
                     Số lượng nhập <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <input asp-for="Quantity" type="number" step="any" min="0.001"
+                    <input asp-for="Quantity" type="text" asp-format="{0:0.###}"
                            class="form-control" required
                            placeholder="Ví dụ: 10 hoặc 5.5" />
                     <span class="input-group-text">@material?.Unit</span>
@@ -53,7 +53,7 @@
                     <i class="fas fa-dollar-sign me-1 text-secondary"></i>
                     Đơn giá (VNĐ)
                 </label>
-                <input asp-for="UnitPrice" type="number" step="1" min="0"
+                <input asp-for="UnitPrice" type="text" asp-format="{0:0.###}"
                        class="form-control"
                        placeholder="Đơn giá nhập kho" />
                 <span asp-validation-for="UnitPrice" class="text-danger"></span>
