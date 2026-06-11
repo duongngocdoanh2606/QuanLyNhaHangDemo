@@ -5,6 +5,18 @@
     var prices = ViewBag.LatestPriceByMaterial as Dictionary<int, decimal>;
 }
 
+<style>
+    /* Ép buộc DataTables/Bootstrap đổi màu toàn bộ ô (cả khung) của dòng */
+    #myTable tr.expired-row td {
+        background-color: #ffe6e6 !important; /* Đỏ nhạt */
+        color: #b30000 !important;
+    }
+    #myTable tr.warning-row td {
+        background-color: #fff8e6 !important; /* Vàng nhạt */
+        color: #8a6d3b !important;
+    }
+</style>
+
 <h2 class="mb-3">Danh sách nguyên liệu</h2>
 
 <a asp-action="CreateMaterial" class="btn btn-primary mb-3">
@@ -45,11 +57,11 @@
             var rowClass = "";
             if (isExpired)
             {
-                rowClass = "table-danger";
+                rowClass = "expired-row";
             }
             else if (isAboutToExpire || isLowStock)
             {
-                rowClass = "table-warning";
+                rowClass = "warning-row";
             }
 
             <tr class="@rowClass">
