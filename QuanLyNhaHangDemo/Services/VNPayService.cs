@@ -57,9 +57,9 @@ namespace QuanLyNhaHangDemo.Services
             // Bước 2: Tính HMAC-SHA512 trên chuỗi raw
             var secureHash = ComputeHmacSha512(rawData, _opts.HashSecret);
 
-            // Bước 3: Build URL cuối – value cần encode (dùng WebUtility để encode dấu cách thành %20)
+            // Bước 3: Build URL cuối – value cần encode (chuẩn RFC 3986 %20)
             var queryString = string.Join("&", vnpayData
-                .Select(kv => $"{kv.Key}={System.Net.WebUtility.UrlEncode(kv.Value)}"));
+                .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
 
             return $"{_opts.Url}?{queryString}&vnp_SecureHash={secureHash}";
         }
