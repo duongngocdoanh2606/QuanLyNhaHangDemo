@@ -36,27 +36,48 @@
             ? prices[item.Id]
             : 0;
 
-            <tr>
+            var daysToExpire = item.ExpiryDate.HasValue ? (item.ExpiryDate.Value - DateTime.Now).TotalDays : (double?)null;
+            
+            var isExpired = daysToExpire.HasValue && daysToExpire.Value < 0;
+            var isAboutToExpire = daysToExpire.HasValue && daysToExpire.Value >= 0 && daysToExpire.Value <= 7;
+            var isLowStock = item.CurrentQuantity <= item.ReorderLevel;
+
+            var rowClass = "";
+            if (isExpired)
+            {
+                rowClass = "table-danger";
+            }
+            else if (isAboutToExpire || isLowStock)
+            {
+                rowClass = "table-warning";
+            }
+
+            <tr class="@rowClass">
                 <td>@item.Name</td>
                 <td>@item.Supplier?.SupplierName</td>
-                <td class="text-center fw-semibold">@item.CurrentQuantity.ToString("G29")</td>
+                <td class="text-center fw-semibold">
+                    @item.CurrentQuantity.ToString("G29")
+                    @if (isLowStock)
+                    {
+                        <br /><span class="badge bg-danger mt-1">Sắp hết (<= @item.ReorderLevel.ToString("G29"))</span>
+                    }
+                </td>
                 <td>@item.Unit</td>
                 <td>@price.ToString("N0")</td>
                 <td>
-                    @if(item.ExpiryDate.HasValue)
+                    @if(daysToExpire.HasValue)
                     {
-                        var daysToExpire = (item.ExpiryDate.Value - DateTime.Now).TotalDays;
-                        if (daysToExpire < 0)
+                        if (isExpired)
                         {
                             <span class="badge bg-danger">Đã hết hạn</span>
                         }
-                        else if (daysToExpire <= 7)
+                        else if (isAboutToExpire)
                         {
-                            <span class="badge bg-warning text-dark">Sắp hết hạn (@Math.Ceiling(daysToExpire) ngày)</span>
+                            <span class="badge bg-warning text-dark">Sắp hết hạn (@Math.Ceiling(daysToExpire.Value) ngày)</span>
                         }
                         else
                         {
-                            <span class="badge bg-success">Còn @Math.Ceiling(daysToExpire) ngày</span>
+                            <span class="badge bg-success">Còn @Math.Ceiling(daysToExpire.Value) ngày</span>
                         }
                     }
                     else
