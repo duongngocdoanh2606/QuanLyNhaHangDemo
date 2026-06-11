@@ -33,7 +33,7 @@ namespace QuanLyNhaHangDemo.Services
         public string CreatePaymentUrl(string ipAddress, string referenceNumber, long amountVnd)
         {
             // Đảm bảo thời gian đúng múi giờ Việt Nam UTC+7
-            var vnNow = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "SE Asia Standard Time");
+            var vnNow = DateTime.UtcNow.AddHours(7);
 
             var vnpayData = new SortedDictionary<string, string>
             {
