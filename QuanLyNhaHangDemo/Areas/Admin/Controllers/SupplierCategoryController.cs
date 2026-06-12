@@ -16,7 +16,9 @@ public class SupplierCategoryController : Controller
     // ================== INDEX ==================
     public async Task<IActionResult> Index()
     {
-        var categories = await _context.SupplierCategories.ToListAsync();
+        var categories = await _context.SupplierCategories
+            .Include(c => c.Suppliers)
+            .ToListAsync();
         return View(categories);
     }
 
