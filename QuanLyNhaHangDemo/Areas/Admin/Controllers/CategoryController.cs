@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -47,6 +47,9 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     Text = k.Name
                 })
                 .ToListAsync();
+            ModelState.Remove("Kitchen");
+            ModelState.Remove("Products");
+
             if (ModelState.IsValid)
             {
 
@@ -94,6 +97,9 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CategoryModel category)
         {
+            ModelState.Remove("Kitchen");
+            ModelState.Remove("Products");
+
             if (ModelState.IsValid)
             {
                 category.Slug = category.Name.Replace(" ", "-");
@@ -112,6 +118,8 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 existingCategory.Slug = category.Slug;
                 existingCategory.Description = category.Description;
                 existingCategory.Status = category.Status;
+                existingCategory.Priority = category.Priority;
+                existingCategory.KitchenId = category.KitchenId;
                 await _dataContext.SaveChangesAsync();
                 TempData["success"] = "Cập nhật danh mục thành công";
                 return RedirectToAction("Index");

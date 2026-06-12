@@ -507,18 +507,20 @@ namespace QuanLyNhaHangDemo.Services
 
         private async Task TriggerNextSequenceAsync(int orderId)
         {
-            var unfiredItems = await _db.OrderDetails
+            // Lấy TẤT CẢ các món trong đơn hàng
+            var allItems = await _db.OrderDetails
                 .Include(od => od.Product)
                     .ThenInclude(p => p.Category)
                         .ThenInclude(c => c.Kitchen)
-                .Where(od => od.OrderId == orderId && 
-                             !od.IsFired && 
-                             od.Status != StatusProduct.Cancelled)
+                .Where(od => od.OrderId == orderId && od.Status != StatusProduct.Cancelled)
                 .ToListAsync();
+
+            var unfiredItems = allItems.Where(od => !od.IsFired).ToList();
 
             if (!unfiredItems.Any())
                 return;
 
+            // 1. Xác định nhóm tiếp theo sẽ được Fire
             var nextGroup = unfiredItems
                 .Where(od => od.Product?.Category?.Kitchen != null)
                 .OrderBy(od => od.Product.Category.Kitchen.SortOrder)
@@ -532,6 +534,33 @@ namespace QuanLyNhaHangDemo.Services
 
             if (nextGroup == null)
                 return;
+
+            // 2. Tìm nhóm ĐÃ FIRE đứng ngay TRƯỚC nhóm nextGroup này (dựa vào SortOrder và Priority nhỏ hơn)
+            var firedItems = allItems.Where(od => od.IsFired && od.Product?.Category?.Kitchen != null).ToList();
+            
+            var precedingFiredGroup = firedItems
+                .Where(od => od.Product.Category.Kitchen.SortOrder < nextGroup.Key.SortOrder || 
+                            (od.Product.Category.Kitchen.SortOrder == nextGroup.Key.SortOrder && od.Product.Category.Priority < nextGroup.Key.Priority))
+                .OrderByDescending(od => od.Product.Category.Kitchen.SortOrder)
+                .ThenByDescending(od => od.Product.Category.Priority)
+                .GroupBy(od => new 
+                { 
+                    SortOrder = od.Product.Category.Kitchen.SortOrder, 
+                    Priority = od.Product.Category.Priority 
+                })
+                .FirstOrDefault();
+
+            // 3. Nếu tồn tại nhóm đi trước, kiểm tra xem nó đã có MÓN NÀO ĐƯỢC SERVED chưa?
+            if (precedingFiredGroup != null)
+            {
+                bool hasAnyServedInPrecedingGroup = precedingFiredGroup.Any(od => od.Status == StatusProduct.Served);
+                
+                if (!hasAnyServedInPrecedingGroup)
+                {
+                    // Nếu nhóm đi trước chưa có món nào lên bàn -> KHÔNG Fire nhóm tiếp theo
+                    return;
+                }
+            }
 
             bool isAnyFired = false;
 
