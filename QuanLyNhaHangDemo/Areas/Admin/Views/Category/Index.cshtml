@@ -23,7 +23,7 @@
             <tr>
                 <td>@item.Name</td>
                 <td>@Html.Raw(item.Description)</td>
-                <td>@item.Kitchen.Name</td>
+                <td>@(item.Kitchen?.Name ?? "Chưa phân bếp")</td>
                 <td>@item.Priority</td>
                 <td>
                     @if (item.Status == 1)
