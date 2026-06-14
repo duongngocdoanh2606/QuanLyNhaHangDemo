@@ -50,6 +50,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                                 .ThenInclude(mm => mm.Material)
                 .AsQueryable();
 
+            // Chỉ lấy món đang active (Status = 1)
+            query = query.Where(p => p.Status == 1);
+
             if (categoryId.HasValue && categoryId.Value > 0)
             {
                 query = query.Where(p => p.CategoryId == categoryId.Value);
@@ -62,21 +65,26 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 {
                     bool isAvailable = true;
 
-                    // Check if base materials are sufficient
-                    bool isBaseAvailable = !p.ProductMaterials.Any(pm => (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < pm.QuantityRequired);
-                    if (!isBaseAvailable) 
+                    // Kiểm tra nguyên liệu gốc của món (null-safe: bỏ qua link nguyên liệu đã xóa)
+                    bool isBaseAvailable = !p.ProductMaterials.Any(pm =>
+                        pm.Material != null &&
+                        (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < pm.QuantityRequired);
+                    if (!isBaseAvailable)
                     {
                         isAvailable = false;
                     }
-                    else 
+                    else
                     {
-                        // Check if it has a Size modifier group
-                        var sizeGroup = p.ProductModifierGroups.FirstOrDefault(pmg => pmg.ModifierGroup.Type == "Size");
+                        // Kiểm tra nhóm Size (case-insensitive để tránh lỗi "Size" vs "SIZE")
+                        var sizeGroup = p.ProductModifierGroups.FirstOrDefault(pmg =>
+                            string.Equals(pmg.ModifierGroup.Type, "Size", StringComparison.OrdinalIgnoreCase));
                         if (sizeGroup != null)
                         {
-                            // Check if AT LEAST ONE size is available
-                            bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m => 
-                                !m.ModifierMaterials.Any(mm => (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
+                            // Ít nhất 1 size phải còn nguyên liệu (null-safe)
+                            bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m =>
+                                !m.ModifierMaterials.Any(mm =>
+                                    mm.Material != null &&
+                                    (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
                             if (!hasAvailableSize) isAvailable = false;
                         }
                     }
@@ -116,18 +124,24 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             }
 
             bool isAvailable = true;
-            bool isBaseAvailable = !product.ProductMaterials.Any(pm => (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < pm.QuantityRequired);
-            if (!isBaseAvailable) 
+            // null-safe: bỏ qua pm.Material == null
+            bool isBaseAvailable = !product.ProductMaterials.Any(pm =>
+                pm.Material != null &&
+                (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < pm.QuantityRequired);
+            if (!isBaseAvailable)
             {
                 isAvailable = false;
             }
-            else 
+            else
             {
-                var sizeGroup = product.ProductModifierGroups.FirstOrDefault(pmg => pmg.ModifierGroup.Type == "Size");
+                var sizeGroup = product.ProductModifierGroups.FirstOrDefault(pmg =>
+                    string.Equals(pmg.ModifierGroup.Type, "Size", StringComparison.OrdinalIgnoreCase));
                 if (sizeGroup != null)
                 {
-                    bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m => 
-                        !m.ModifierMaterials.Any(mm => (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
+                    bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m =>
+                        !m.ModifierMaterials.Any(mm =>
+                            mm.Material != null &&
+                            (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
                     if (!hasAvailableSize) isAvailable = false;
                 }
             }
@@ -155,7 +169,10 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                         Id = m.Id,
                         Name = m.Name,
                         ExtraPrice = m.Price,
-                        IsAvailable = !m.ModifierMaterials.Any(mm => (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired)
+                        // null-safe: Size modifier không có ModifierMaterials, luôn IsAvailable = true
+                        IsAvailable = !m.ModifierMaterials.Any(mm =>
+                            mm.Material != null &&
+                            (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired)
                     }).ToList()
                 }).ToList()
             };
