@@ -33,7 +33,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
         // GET /payment/vnpay-return  (VNPay redirect user về sau khi quét)
         // ──────────────────────────────────────────────────────────
         [HttpGet("vnpay-return")]
-        public IActionResult VNPayReturn()
+        public async Task<IActionResult> VNPayReturn()
         {
             var vnp_ResponseCode = Request.Query["vnp_ResponseCode"].ToString();
             var vnp_TxnRef = Request.Query["vnp_TxnRef"].ToString();
@@ -46,10 +46,13 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             if (checkSignature && vnp_ResponseCode == "00")
             {
-                return Content("<html><body><h2>Thanh toán thành công! Vui lòng quay lại ứng dụng.</h2></body></html>", "text/html");
+                // Fallback: Xử lý thanh toán ngay trên ReturnUrl nếu IPN chưa kịp chạy (hoặc chưa được cấu hình)
+                await ProcessPaymentSuccess(vnp_TxnRef, Request.Query["vnp_Amount"].ToString());
+
+                return Content("<html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body style=\"text-align:center; padding:20px; font-family:sans-serif;\"><h2 style=\"color:green;\">Thanh toán thành công!</h2><p>Giao dịch đã hoàn tất. Vui lòng quay lại ứng dụng.</p></body></html>", "text/html");
             }
 
-            return Content("<html><body><h2>Thanh toán chưa hoàn tất hoặc lỗi chữ ký. Vui lòng thử lại.</h2></body></html>", "text/html");
+            return Content("<html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body style=\"text-align:center; padding:20px; font-family:sans-serif;\"><h2 style=\"color:red;\">Thanh toán thất bại!</h2><p>Giao dịch chưa hoàn tất hoặc lỗi chữ ký.</p></body></html>", "text/html");
         }
 
         // ──────────────────────────────────────────────────────────
@@ -73,41 +76,35 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 return Ok(new { RspCode = "97", Message = "Invalid signature" });
             }
 
-            // 3. Tìm order theo VnPayReference
-            var order = await _db.Orders
-                .FirstOrDefaultAsync(o => o.VnPayReference == vnp_TxnRef);
-
-            if (order == null)
-            {
-                _logger.LogWarning("[VNPay IPN] Không tìm thấy order với ref={Ref}", vnp_TxnRef);
-                return Ok(new { RspCode = "01", Message = "Order not found" });
-            }
-
-            // 4. Tránh xử lý lặp
-            if (order.PayStatus == PaymentStatus.Success)
-            {
-                _logger.LogInformation("[VNPay IPN] Order đã được thanh toán. ref={Ref}", vnp_TxnRef);
-                return Ok(new { RspCode = "02", Message = "Order already confirmed" });
-            }
-
-            // 2. Chỉ xử lý nếu giao dịch thành công (status == "00")
+            // 2. Chỉ xử lý nếu giao dịch thành công
             if (vnp_ResponseCode != "00")
             {
                 _logger.LogInformation("[VNPay IPN] Giao dịch không thành công. status={St}", vnp_ResponseCode);
                 return Ok(new { RspCode = "00", Message = "Confirm Success (but transaction failed)" });
             }
 
-            // 2b. Kiểm tra số tiền giao dịch khớp với order để chống gian lận
-            var vnp_Amount = Request.Query["vnp_Amount"].ToString();
+            // 3. Gọi hàm xử lý chung
+            var result = await ProcessPaymentSuccess(vnp_TxnRef, Request.Query["vnp_Amount"].ToString());
+
+            if (result == "OrderNotFound") return Ok(new { RspCode = "01", Message = "Order not found" });
+            if (result == "AlreadyConfirmed") return Ok(new { RspCode = "02", Message = "Order already confirmed" });
+            if (result == "InvalidAmount") return Ok(new { RspCode = "04", Message = "Invalid amount" });
+
+            // 8. Trả "00" theo chuẩn VNPay
+            return Ok(new { RspCode = "00", Message = "Confirm Success" });
+        }
+
+        private async Task<string> ProcessPaymentSuccess(string vnp_TxnRef, string vnp_Amount)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.VnPayReference == vnp_TxnRef);
+            if (order == null) return "OrderNotFound";
+
+            if (order.PayStatus == PaymentStatus.Success) return "AlreadyConfirmed";
+
             long expectedAmount = (long)Math.Round(order.GrandTotal) * 100;
             if (!string.IsNullOrEmpty(vnp_Amount) && long.TryParse(vnp_Amount, out long paidAmount))
             {
-                if (paidAmount != expectedAmount)
-                {
-                    _logger.LogWarning("[VNPay IPN] Số tiền không khớp. Expected={Exp} Got={Got} ref={Ref}",
-                        expectedAmount, paidAmount, vnp_TxnRef);
-                    return Ok(new { RspCode = "04", Message = "Invalid amount" });
-                }
+                if (paidAmount != expectedAmount) return "InvalidAmount";
             }
 
             // 5. Cập nhật trạng thái order
@@ -115,10 +112,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             order.Status = OrderModel.OrderStatus.Paid;
 
             // 6. Giải phóng bàn
-            var tables = await _db.Table
-                .Where(t => t.CurrentOrderId == order.Id)
-                .ToListAsync();
-
+            var tables = await _db.Table.Where(t => t.CurrentOrderId == order.Id).ToListAsync();
             int? tableId = null;
             foreach (var table in tables)
             {
@@ -129,9 +123,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "[VNPay IPN] Thanh toán thành công. OrderId={Id} TableId={TId}",
-                order.Id, tableId);
+            _logger.LogInformation("[ProcessPaymentSuccess] Thanh toán thành công. OrderId={Id} TableId={TId}", order.Id, tableId);
 
             // 7. Gửi SignalR event đến Android đang chờ
             if (tableId.HasValue)
@@ -147,13 +139,10 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 });
 
                 // Broadcast cập nhật sơ đồ bàn
-                await _hub.Clients
-                    .Group(OrderHub.FloorPlanGroup)
-                    .SendAsync("FloorPlanRefresh", new { });
+                await _hub.Clients.Group(OrderHub.FloorPlanGroup).SendAsync("FloorPlanRefresh", new { });
             }
 
-            // 8. Trả "00" theo chuẩn VNPay
-            return Ok(new { RspCode = "00", Message = "Confirm Success" });
+            return "Success";
         }
     }
 }
