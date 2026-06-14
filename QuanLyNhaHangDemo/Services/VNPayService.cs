@@ -35,7 +35,7 @@ namespace QuanLyNhaHangDemo.Services
             // Đảm bảo thời gian đúng múi giờ Việt Nam UTC+7
             var vnNow = DateTime.UtcNow.AddHours(7);
 
-            var vnpayData = new SortedDictionary<string, string>
+            var vnpayData = new SortedDictionary<string, string>(StringComparer.Ordinal)
             {
                 { "vnp_Version",    "2.1.0" },
                 { "vnp_Command",    "pay" },
@@ -52,17 +52,17 @@ namespace QuanLyNhaHangDemo.Services
                 { "vnp_TxnRef",     referenceNumber }
             };
 
-            // Bước 1: Chuỗi ký RAW – key=value&key=value (KHÔNG encode)
-            var rawData = string.Join("&", vnpayData.Select(kv => $"{kv.Key}={kv.Value}"));
+            // VNPay yêu cầu encode URL cả chuỗi trước khi băm (WebUtility.UrlEncode hoặc Uri.EscapeDataString)
+            // Khuyến nghị dùng Uri.EscapeDataString để khoảng trắng thành %20 thay vì dấu +
+            var queryStringElements = vnpayData.Select(kv => 
+                $"{kv.Key}={Uri.EscapeDataString(kv.Value)}");
 
-            // Bước 2: Tính HMAC-SHA512 trên chuỗi raw
-            var secureHash = ComputeHmacSha512(rawData, _opts.HashSecret);
+            var signData = string.Join("&", queryStringElements);
 
-            // Bước 3: Build URL cuối – value cần encode (chuẩn RFC 3986 %20)
-            var queryString = string.Join("&", vnpayData
-                .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
+            // Tính HMAC-SHA512 trên chuỗi đã được encode
+            var secureHash = ComputeHmacSha512(signData, _opts.HashSecret);
 
-            return $"{_opts.Url}?{queryString}&vnp_SecureHash={secureHash}";
+            return $"{_opts.Url}?{signData}&vnp_SecureHash={secureHash}";
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace QuanLyNhaHangDemo.Services
         /// </summary>
         public bool ValidateSignature(IQueryCollection query)
         {
-            var vnpayData = new SortedDictionary<string, string>();
+            var vnpayData = new SortedDictionary<string, string>(StringComparer.Ordinal);
             string vnpSecureHash = "";
 
             foreach (var key in query.Keys)
@@ -87,9 +87,12 @@ namespace QuanLyNhaHangDemo.Services
                     vnpayData[key] = query[key].ToString();
             }
 
-            // Chuỗi ký RAW – KHÔNG encode (giống bên tạo URL)
-            var rawData = string.Join("&", vnpayData.Select(kv => $"{kv.Key}={kv.Value}"));
-            var calculatedHash = ComputeHmacSha512(rawData, _opts.HashSecret);
+            // Chuỗi dữ liệu để kiểm tra chữ ký cũng phải encode giống lúc tạo URL
+            var queryStringElements = vnpayData.Select(kv => 
+                $"{kv.Key}={Uri.EscapeDataString(kv.Value)}");
+
+            var signData = string.Join("&", queryStringElements);
+            var calculatedHash = ComputeHmacSha512(signData, _opts.HashSecret);
 
             return calculatedHash.Equals(vnpSecureHash, StringComparison.OrdinalIgnoreCase);
         }
