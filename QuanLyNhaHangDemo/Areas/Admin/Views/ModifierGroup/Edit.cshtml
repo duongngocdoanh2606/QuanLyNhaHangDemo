@@ -69,10 +69,10 @@
                                     <input type="text" name="Modifiers[@i].Name" value="@currentModifier.Name" class="form-control" placeholder="Tên kích cỡ/đồ kèm" required />
                                 </td>
                                 <td>
-                                    <input type="number" name="Modifiers[@i].Price" value="@currentModifier.Price" class="form-control" placeholder="Giá cộng thêm" />
+                                    <input type="number" name="Modifiers[@i].Price" value="@(currentModifier.Price.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" class="form-control" placeholder="Giá cộng thêm" />
                                 </td>
                                 <td class="multiplier-cell">
-                                    <input type="number" name="Modifiers[@i].Multiplier" value="@currentModifier.Multiplier" class="form-control dynamic-multiplier" step="0.1" placeholder="Hệ số" />
+                                    <input type="number" name="Modifiers[@i].Multiplier" value="@(currentModifier.Multiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" class="form-control dynamic-multiplier" step="0.1" placeholder="Hệ số" />
                                     <small class="text-muted">Gấp X lần món gốc</small>
                                 </td>
                                 <td class="material-cell">
