@@ -97,6 +97,14 @@
         }
     });
 
+    // Khi có đơn hàng mới hoặc thêm món từ điện thoại → auto refresh trang Order
+    connection.on('OrderListRefresh', function () {
+        // Nếu đang ở trang danh sách Order hoặc chi tiết Order → reload
+        if (document.getElementById('myTable') || document.getElementById('detail_order')) {
+            location.reload();
+        }
+    });
+
     connection.start()
         .then(() => connection.invoke('JoinAdmin'))
         .then(loadNotifications)

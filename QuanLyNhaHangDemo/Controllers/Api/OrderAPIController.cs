@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using QuanLyNhaHangDemo.Hubs;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Models.Dtos;
 using QuanLyNhaHangDemo.Repository;
@@ -14,15 +16,18 @@ namespace QuanLyNhaHangDemo.Controllers.Api
         private readonly DataContext _db;
         private readonly IOrderStateService _orderState;
         private readonly VNPayService _vnpPay;
+        private readonly IHubContext<OrderHub> _hub;
 
         public OrdersApiController(
             DataContext db,
             IOrderStateService orderState,
-            VNPayService vnpPay)
+            VNPayService vnpPay,
+            IHubContext<OrderHub> hub)
         {
             _db = db;
             _orderState = orderState;
             _vnpPay = vnpPay;
+            _hub = hub;
         }
 
         [HttpPost("tables/{tableId:int}")]
@@ -234,6 +239,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             await _db.SaveChangesAsync();
 
+            // Thông báo realtime đến màn hình web quản trị (Order list + Kitchen + Floor Plan)
+            await BroadcastOrderUpdate();
+
             return Ok(new
             {
                 order.Id,
@@ -242,6 +250,17 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 order.DiscountAmount,
                 order.GrandTotal
             });
+        }
+
+        // Gửi thông báo realtime đến trang web quản trị
+        private async Task BroadcastOrderUpdate()
+        {
+            await _hub.Clients.Group(OrderHub.AdminGroup)
+                .SendAsync("OrderListRefresh");
+            await _hub.Clients.Group(OrderHub.AdminGroup)
+                .SendAsync("KitchenRefresh");
+            await _hub.Clients.Group(OrderHub.FloorPlanGroup)
+                .SendAsync("FloorPlanRefresh", new { });
         }
 
         [HttpPost("tables/{tableId:int}/orders/{orderCode}/items")]
@@ -396,6 +415,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             // Nếu thêm món không tự động Fire, gọi Trigger để hệ thống kiểm tra xem
             // có thể Fire ngay lập tức dựa trên nhóm món trước đó đã Served hay chưa.
             await _orderState.TriggerNextSequenceAsync(order.Id);
+
+            // Thông báo realtime đến màn hình web quản trị
+            await BroadcastOrderUpdate();
 
             return Ok(new
             {
