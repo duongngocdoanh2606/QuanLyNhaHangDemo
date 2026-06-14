@@ -132,6 +132,18 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IOrderStateService, OrderStateService>();
 builder.Services.AddScoped<VNPayService>();
 
+// =====================================================
+// CLOUDINARY
+// =====================================================
+var cloudinarySettings = builder.Configuration.GetSection("CloudinarySettings").Get<CloudinarySettings>();
+CloudinaryDotNet.Account account = new CloudinaryDotNet.Account(
+    cloudinarySettings.CloudName,
+    cloudinarySettings.ApiKey,
+    cloudinarySettings.ApiSecret
+);
+CloudinaryDotNet.Cloudinary cloudinary = new CloudinaryDotNet.Cloudinary(account);
+builder.Services.AddSingleton(cloudinary);
+
 
 var app = builder.Build();
 

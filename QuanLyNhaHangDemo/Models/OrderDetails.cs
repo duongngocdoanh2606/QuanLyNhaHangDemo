@@ -16,6 +16,9 @@ namespace QuanLyNhaHangDemo.Models
         /// <summary>Đã gửi xuống bếp (fire) — món hold chờ quản lý bấm Fire.</summary>
         public bool IsFired { get; set; }
 
+        /// <summary>Cờ đánh dấu món này được Fire thủ công, tách biệt khỏi luồng trigger tự động.</summary>
+        public bool IsManuallyFired { get; set; } = false;
+
         /// <summary>Số lần làm lại (remake).</summary>
         public int FireCount { get; set; }
 

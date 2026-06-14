@@ -17,7 +17,6 @@ public class KitchenScreenViewComponent : ViewComponent
 
     public async Task<IViewComponentResult> InvokeAsync(int kitchenId)
     {
-        // ĐỒNG BỘ: Chỉ lấy các món ăn từ ngày hôm nay để tránh rác tồn đọng
         var filterDate = DateTime.Today;
 
         var items = await _context.OrderDetails
@@ -26,12 +25,14 @@ public class KitchenScreenViewComponent : ViewComponent
             .Where(o =>
                 o.Product.Category.KitchenId == kitchenId &&
                 o.IsFired &&
-                o.CreateDate >= filterDate && // <-- THÊM DÒNG NÀY ĐỂ ĐỒNG BỘ CHẶN RÁC
+                o.CreateDate >= filterDate &&
                 o.Status != StatusProduct.Done &&
                 o.Status != StatusProduct.Served &&
                 o.Status != StatusProduct.Cancelled)
-            .OrderByDescending(o => o.FiredAt)
-            .ThenBy(o => o.Id)
+            // --- SỬA ĐOẠN SẮP XẾP THEO LUỒNG CŨ TẠI ĐÂY ---
+            .OrderByDescending(o => o.FireCount > 1)       // 1. Món nào có FireCount > 1 (đang nấu lại) nhảy lên đầu
+            .ThenByDescending(o => o.IsManuallyFired)     // 2. Món bấm tay ép làm trước đứng thứ hai
+            .ThenBy(o => o.FiredAt)                        // 3. Món nào được Fire xuống trước làm trước
             .ToListAsync();
 
         return View(items);

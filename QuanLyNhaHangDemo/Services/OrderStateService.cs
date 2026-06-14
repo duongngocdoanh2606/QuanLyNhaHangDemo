@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Hubs;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
+using System.Collections.Concurrent;
 
 namespace QuanLyNhaHangDemo.Services
 {
@@ -10,7 +11,7 @@ namespace QuanLyNhaHangDemo.Services
     {
         private readonly DataContext _db;
         private readonly IHubContext<OrderHub> _hub;
-
+        private static readonly ConcurrentDictionary<int, SemaphoreSlim> _orderLocks = new();
         public OrderStateService(
             DataContext db,
             IHubContext<OrderHub> hub)
@@ -327,8 +328,8 @@ namespace QuanLyNhaHangDemo.Services
             }
 
             detail.IsFired = true;
-
             detail.FiredAt = DateTime.Now;
+            detail.IsManuallyFired = true;
 
             if (!isRemake &&
                 detail.Status == StatusProduct.Pending)
@@ -505,88 +506,114 @@ namespace QuanLyNhaHangDemo.Services
             }
         }
 
-        private async Task TriggerNextSequenceAsync(int orderId)
+        public async Task TriggerNextSequenceAsync(int orderId)
         {
-            // Lấy TẤT CẢ các món trong đơn hàng
-            var allItems = await _db.OrderDetails
-                .Include(od => od.Product)
-                    .ThenInclude(p => p.Category)
-                        .ThenInclude(c => c.Kitchen)
-                .Where(od => od.OrderId == orderId && od.Status != StatusProduct.Cancelled)
-                .ToListAsync();
+            // 1. CHỐNG XUNG ĐỘT (Race Condition): Đảm bảo tại một thời điểm chỉ có 1 luồng xử lý đơn hàng này
+            var myLock = _orderLocks.GetOrAdd(orderId, _ => new System.Threading.SemaphoreSlim(1, 1));
+            await myLock.WaitAsync();
 
-            var unfiredItems = allItems.Where(od => !od.IsFired).ToList();
-
-            if (!unfiredItems.Any())
-                return;
-
-            // 1. Xác định nhóm tiếp theo sẽ được Fire
-            var nextGroup = unfiredItems
-                .Where(od => od.Product?.Category?.Kitchen != null)
-                .OrderBy(od => od.Product.Category.Kitchen.SortOrder)
-                .ThenBy(od => od.Product.Category.Priority)
-                .GroupBy(od => new 
-                { 
-                    SortOrder = od.Product.Category.Kitchen.SortOrder, 
-                    Priority = od.Product.Category.Priority 
-                })
-                .FirstOrDefault();
-
-            if (nextGroup == null)
-                return;
-
-            // 2. Tìm nhóm ĐÃ FIRE đứng ngay TRƯỚC nhóm nextGroup này (dựa vào SortOrder và Priority nhỏ hơn)
-            var firedItems = allItems.Where(od => od.IsFired && od.Product?.Category?.Kitchen != null).ToList();
-            
-            var precedingFiredGroup = firedItems
-                .Where(od => od.Product.Category.Kitchen.SortOrder < nextGroup.Key.SortOrder || 
-                            (od.Product.Category.Kitchen.SortOrder == nextGroup.Key.SortOrder && od.Product.Category.Priority < nextGroup.Key.Priority))
-                .OrderByDescending(od => od.Product.Category.Kitchen.SortOrder)
-                .ThenByDescending(od => od.Product.Category.Priority)
-                .GroupBy(od => new 
-                { 
-                    SortOrder = od.Product.Category.Kitchen.SortOrder, 
-                    Priority = od.Product.Category.Priority 
-                })
-                .FirstOrDefault();
-
-            // 3. Nếu tồn tại nhóm đi trước, kiểm tra xem nó đã có MÓN NÀO ĐƯỢC SERVED chưa?
-            if (precedingFiredGroup != null)
+            try
             {
-                bool hasAnyServedInPrecedingGroup = precedingFiredGroup.Any(od => od.Status == StatusProduct.Served);
-                
-                if (!hasAnyServedInPrecedingGroup)
+                // 2. TỐI ƯU HIỆU NĂNG: Chỉ Select các trường cần thiết, tránh Include lồng nhau gây nặng RAM
+                // Đồng thời LỌC BỎ các món thuộc danh mục tự động nấu lâu (IsAutoFire) ra khỏi chuỗi cuốn chiếu này
+                var allItemsInSequence = await _db.OrderDetails
+                    .Where(od => od.OrderId == orderId
+                              && od.Status != StatusProduct.Cancelled
+                              && od.Product.Category.isAutoFire == false) // Món Auto-Fire chạy mạch riêng lúc đặt đơn, không tính vào chuỗi
+                    .Select(od => new
+                    {
+                        od.Id,
+                        od.IsFired,
+                        od.Status,
+                        SortOrder = od.Product.Category.Kitchen.SortOrder,
+                        Priority = od.Product.Category.Priority,
+                        ProductName = od.Product.Name,
+                        RawEntity = od // Giữ lại reference để cập nhật trạng thái xuống DB
+                    })
+                    .ToListAsync();
+
+                var unfiredItems = allItemsInSequence.Where(od => !od.IsFired).ToList();
+
+                // Nếu không còn món nào chưa nấu thuộc chuỗi cuốn chiếu -> Thoát
+                if (!unfiredItems.Any())
+                    return;
+
+                // 3. XÁC ĐỊNH NHÓM TIẾP THEO sẽ được tự động Fire dựa theo độ ưu tiên
+                var nextGroup = unfiredItems
+                    .OrderBy(od => od.SortOrder)
+                    .ThenBy(od => od.Priority)
+                    .GroupBy(od => new { od.SortOrder, od.Priority })
+                    .FirstOrDefault();
+
+                if (nextGroup == null)
+                    return;
+
+                // 4. SỬA LỖI LOGIC NHẢY CÓC: Tìm nhóm thực tế đứng ngay phía trước dựa theo cấu trúc thực đơn
+                // Không loại bỏ IsManuallyFired ở đây để tính chính xác nhóm liền kề
+                var precedingFiredGroup = allItemsInSequence
+                    .Where(od => od.IsFired &&
+                                (od.SortOrder < nextGroup.Key.SortOrder ||
+                                (od.SortOrder == nextGroup.Key.SortOrder && od.Priority < nextGroup.Key.Priority)))
+                    .GroupBy(od => new { od.SortOrder, od.Priority })
+                    .OrderByDescending(g => g.Key.SortOrder)
+                    .ThenByDescending(g => g.Key.Priority)
+                    .FirstOrDefault();
+
+                if (precedingFiredGroup == null)
                 {
-                    // Nếu nhóm đi trước chưa có món nào lên bàn -> KHÔNG Fire nhóm tiếp theo
+                    // Nếu không có nhóm nào đi trước đã fire, đây là nhóm đầu chuỗi cuốn chiếu.
+                    // Tùy theo vận hành: Nếu bạn muốn nhóm đầu tiên (Khai vị) tự chạy khi đặt đơn thì xử lý ở API đặt đơn.
+                    // Ở đây giữ nguyên logic của bạn: Phải đợi kích hoạt đầu tiên.
                     return;
                 }
-            }
 
-            bool isAnyFired = false;
+                // 5. KIỂM TRA ĐIỀU KIỆN PHỤC VỤ (Served): Nhóm sát sườn phải có ít nhất 1 món đã lên bàn
+                bool hasAnyServedInPrecedingGroup = precedingFiredGroup.Any(od => od.Status == StatusProduct.Served);
 
-            foreach (var detail in nextGroup)
-            {
-                detail.IsFired = true;
-                detail.FiredAt = DateTime.Now;
-                detail.Status = StatusProduct.Pending;
-                isAnyFired = true;
-            }
-
-            if (isAnyFired)
-            {
-                await _db.SaveChangesAsync();
-                await BroadcastKitchenRefreshAsync();
-
-                foreach (var detail in nextGroup)
+                if (!hasAnyServedInPrecedingGroup)
                 {
-                    await _hub.Clients.Group(OrderHub.AdminGroup).SendAsync("DishFired", new
-                    {
-                        orderDetailId = detail.Id,
-                        productName = detail.Product?.Name,
-                        isRemake = false,
-                        message = $"Fire tự động: {detail.Product?.Name}"
-                    });
+                    // Nhóm đi trước chưa được phục vụ món nào -> Giữ phanh, chưa tự động Fire nhóm tiếp theo
+                    return;
                 }
+
+                // 6. TIẾN HÀNH TỰ ĐỘNG FIRE CÁC MÓN TRONG NHÓM HIỆN TẠI
+                bool isAnyFired = false;
+                var now = DateTime.UtcNow; // Khuyên dùng UtcNow để tránh lệch múi giờ hệ thống Server
+
+                foreach (var item in nextGroup)
+                {
+                    item.RawEntity.IsFired = true;
+                    item.RawEntity.FiredAt = now;
+                    item.RawEntity.Status = StatusProduct.Pending;
+                    isAnyFired = true;
+                }
+
+                if (isAnyFired)
+                {
+                    // Lưu thay đổi vào Database
+                    await _db.SaveChangesAsync();
+
+                    // Làm mới màn hình hiển thị của toàn bộ nhà bếp
+                    await BroadcastKitchenRefreshAsync();
+
+                    // TỐI ƯU MẠNG: Gom tất cả các tác vụ gửi SignalR chạy đồng thời thay vì await từng vòng lặp lẻ
+                    var notifyTasks = nextGroup.Select(item =>
+                        _hub.Clients.Group(OrderHub.AdminGroup).SendAsync("DishFired", new
+                        {
+                            orderDetailId = item.Id,
+                            productName = item.ProductName,
+                            isRemake = false,
+                            message = $"Fire tự động: {item.ProductName}"
+                        })
+                    );
+
+                    await Task.WhenAll(notifyTasks);
+                }
+            }
+            finally
+            {
+                // Giải phóng lock để các request khác của đơn hàng này đi vào
+                myLock.Release();
             }
         }
     }

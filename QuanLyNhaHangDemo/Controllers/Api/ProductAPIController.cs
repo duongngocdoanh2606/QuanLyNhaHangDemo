@@ -22,6 +22,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             if (string.IsNullOrWhiteSpace(imageName))
                 return string.Empty;
 
+            if (imageName.StartsWith("http://") || imageName.StartsWith("https://"))
+                return imageName;
+
             // ưu tiên lấy BaseUrl từ cấu hình (Railway env var hoặc appsettings)
             var baseUrl = _config["App:BaseUrl"];
             if (string.IsNullOrEmpty(baseUrl))
@@ -55,32 +58,40 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             var productEntities = query.ToList();
 
             var products = productEntities
-                .Where(p => 
+                .Select(p => 
                 {
+                    bool isAvailable = true;
+
                     // Check if base materials are sufficient
                     bool isBaseAvailable = !p.ProductMaterials.Any(pm => (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < pm.QuantityRequired);
-                    if (!isBaseAvailable) return false;
-
-                    // Check if it has a Size modifier group
-                    var sizeGroup = p.ProductModifierGroups.FirstOrDefault(pmg => pmg.ModifierGroup.Type == "Size");
-                    if (sizeGroup != null)
+                    if (!isBaseAvailable) 
                     {
-                        // Check if AT LEAST ONE size is available
-                        bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m => 
-                            !m.ModifierMaterials.Any(mm => (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
-                        if (!hasAvailableSize) return false;
+                        isAvailable = false;
+                    }
+                    else 
+                    {
+                        // Check if it has a Size modifier group
+                        var sizeGroup = p.ProductModifierGroups.FirstOrDefault(pmg => pmg.ModifierGroup.Type == "Size");
+                        if (sizeGroup != null)
+                        {
+                            // Check if AT LEAST ONE size is available
+                            bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m => 
+                                !m.ModifierMaterials.Any(mm => (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
+                            if (!hasAvailableSize) isAvailable = false;
+                        }
                     }
 
-                    return true;
-                })
-                .Select(p => new
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Price = p.Price,
-                    Description = p.Description,
-                    CategoryId = p.CategoryId,
-                    ImageUrl = BuildImageUrl(p.Image)
+                    return new ProductDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Price = p.Price,
+                        Description = p.Description,
+                        CategoryId = p.CategoryId,
+                        Image = p.Image,
+                        ImageUrl = BuildImageUrl(p.Image),
+                        IsAvailable = isAvailable
+                    };
                 })
                 .ToList();
 
@@ -90,6 +101,8 @@ namespace QuanLyNhaHangDemo.Controllers.Api
         public IActionResult GetProductDetail(int id)
         {
             var product = _context.Products
+                .Include(p => p.ProductMaterials)
+                    .ThenInclude(pm => pm.Material)
                 .Include(p => p.ProductModifierGroups)
                     .ThenInclude(pmg => pmg.ModifierGroup)
                         .ThenInclude(mg => mg.Modifiers)
@@ -102,6 +115,23 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 return NotFound(new { success = false, message = "Sản phẩm không tồn tại" });
             }
 
+            bool isAvailable = true;
+            bool isBaseAvailable = !product.ProductMaterials.Any(pm => (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < pm.QuantityRequired);
+            if (!isBaseAvailable) 
+            {
+                isAvailable = false;
+            }
+            else 
+            {
+                var sizeGroup = product.ProductModifierGroups.FirstOrDefault(pmg => pmg.ModifierGroup.Type == "Size");
+                if (sizeGroup != null)
+                {
+                    bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m => 
+                        !m.ModifierMaterials.Any(mm => (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
+                    if (!hasAvailableSize) isAvailable = false;
+                }
+            }
+
             var result = new ProductDetailDto
             {
                 Id = product.Id,
@@ -110,6 +140,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 Description = product.Description,
                 CategoryId = product.CategoryId,
                 Image = BuildImageUrl(product.Image),
+                IsAvailable = isAvailable,
 
                 ModifierGroups = product.ProductModifierGroups.Select(pmg => new ModifierGroupDto
                 {

@@ -1,4 +1,4 @@
-﻿namespace QuanLyNhaHangDemo.Models.Dtos
+namespace QuanLyNhaHangDemo.Models.Dtos
 {
     public class ProductDto
     {
@@ -8,10 +8,12 @@
         public int Sold { get; set; }
         public String Image { get; set; }
         public int CategoryId { get; set; }
+        public bool IsAvailable { get; set; }
+        public String ImageUrl { get; set; }
+        public String Description { get; set; }
     }
     public class ProductDetailDto : ProductDto
     {
-        public String Description { get; set; }
         public List<ModifierGroupDto> ModifierGroups { get; set; }
     }
 

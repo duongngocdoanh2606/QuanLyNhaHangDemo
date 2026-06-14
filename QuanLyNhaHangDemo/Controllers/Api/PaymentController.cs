@@ -97,6 +97,19 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 return Ok(new { RspCode = "00", Message = "Confirm Success (but transaction failed)" });
             }
 
+            // 2b. Kiểm tra số tiền giao dịch khớp với order để chống gian lận
+            var vnp_Amount = Request.Query["vnp_Amount"].ToString();
+            long expectedAmount = (long)Math.Round(order.GrandTotal) * 100;
+            if (!string.IsNullOrEmpty(vnp_Amount) && long.TryParse(vnp_Amount, out long paidAmount))
+            {
+                if (paidAmount != expectedAmount)
+                {
+                    _logger.LogWarning("[VNPay IPN] Số tiền không khớp. Expected={Exp} Got={Got} ref={Ref}",
+                        expectedAmount, paidAmount, vnp_TxnRef);
+                    return Ok(new { RspCode = "04", Message = "Invalid amount" });
+                }
+            }
+
             // 5. Cập nhật trạng thái order
             order.PayStatus = PaymentStatus.Success;
             order.Status = OrderModel.OrderStatus.Paid;

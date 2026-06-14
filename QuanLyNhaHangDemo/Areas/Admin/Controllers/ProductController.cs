@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Models.Dtos;
 using QuanLyNhaHangDemo.Repository;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
@@ -17,12 +19,13 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
         private readonly DataContext _dataContext;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly Cloudinary _cloudinary;
 
-
-        public ProductController(DataContext context, IWebHostEnvironment webHostEnvironment)
+        public ProductController(DataContext context, IWebHostEnvironment webHostEnvironment, Cloudinary cloudinary)
         {
             _dataContext = context;
             _webHostEnvironment = webHostEnvironment;
+            _cloudinary = cloudinary;
         }
         public async Task<IActionResult> Index()
         {
@@ -68,21 +71,23 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     return View(product);
                 }
 
-                // Logic Image (Giữ nguyên của bạn)
+                // Logic Image (Sử dụng Cloudinary)
                 if (product.ImageUpLoad != null)
                 {
-                    string upLoadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
-                    if (!Directory.Exists(upLoadsDir))
+                    var uploadResult = new ImageUploadResult();
+                    if (product.ImageUpLoad.Length > 0)
                     {
-                        Directory.CreateDirectory(upLoadsDir);
+                        using (var stream = product.ImageUpLoad.OpenReadStream())
+                        {
+                            var uploadParams = new ImageUploadParams()
+                            {
+                                File = new FileDescription(product.ImageUpLoad.FileName, stream),
+                                Folder = "products"
+                            };
+                            uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                        }
                     }
-                    string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpLoad.FileName;
-                    string filePath = Path.Combine(upLoadsDir, imageName);
-                    using (var fs = new FileStream(filePath, FileMode.Create))
-                    {
-                        await product.ImageUpLoad.CopyToAsync(fs);
-                    }
-                    product.Image = imageName;
+                    product.Image = uploadResult.SecureUrl.ToString();
                 }
 
                 _dataContext.Add(product);
@@ -132,35 +137,24 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 product.Slug = product.Name.Replace(" ", "-");
                 if (product.ImageUpLoad != null)
                 {
-                    string upLoadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
-                    if (!Directory.Exists(upLoadsDir))
+                    // Upload ảnh mới lên Cloudinary
+                    var uploadResult = new ImageUploadResult();
+                    if (product.ImageUpLoad.Length > 0)
                     {
-                        Directory.CreateDirectory(upLoadsDir);
-                    }
-                    string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpLoad.FileName;
-                    string filePath = Path.Combine(upLoadsDir, imageName);
-                    
-                    if (!string.IsNullOrEmpty(existed_product.Image))
-                    {
-                        string oldfileImage = Path.Combine(upLoadsDir, existed_product.Image);
-                        try
+                        using (var stream = product.ImageUpLoad.OpenReadStream())
                         {
-                            if (System.IO.File.Exists(oldfileImage))
+                            var uploadParams = new ImageUploadParams()
                             {
-                                System.IO.File.Delete(oldfileImage);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            ModelState.AddModelError("", "An error");
+                                File = new FileDescription(product.ImageUpLoad.FileName, stream),
+                                Folder = "products"
+                            };
+                            uploadResult = await _cloudinary.UploadAsync(uploadParams);
                         }
                     }
-
-                    using (FileStream fs = new FileStream(filePath, FileMode.Create))
-                    {
-                        await product.ImageUpLoad.CopyToAsync(fs);
-                    }
-                    existed_product.Image = imageName;
+                    existed_product.Image = uploadResult.SecureUrl.ToString();
+                    
+                    // Ghi chú: Để đơn giản, ta bỏ qua bước xóa ảnh cũ trên Cloudinary 
+                    // vì url đang lưu đầy đủ.
                 }
 
                 existed_product.Name = product.Name;
@@ -195,18 +189,23 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             ProductModel product = await _dataContext.Products.FindAsync(Id);
             if (!string.Equals(product.Image, "noname.jpg"))
             {
-                string upLoadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
-                string oldfileImage = Path.Combine(upLoadsDir, product.Image);
-                try
+                // Note: Image is stored as a Cloudinary URL, not deleting from Cloudinary here to keep it simple.
+                // Local deletion is bypassed for Cloudinary images.
+                if (!product.Image.StartsWith("http")) 
                 {
-                    if (System.IO.File.Exists(oldfileImage))
+                    string upLoadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
+                    string oldfileImage = Path.Combine(upLoadsDir, product.Image);
+                    try
                     {
-                        System.IO.File.Delete(oldfileImage);
+                        if (System.IO.File.Exists(oldfileImage))
+                        {
+                            System.IO.File.Delete(oldfileImage);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "An error");
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", "An error");
+                    }
                 }
             }
             _dataContext.Products.Remove(product);

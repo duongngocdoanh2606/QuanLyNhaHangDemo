@@ -24,8 +24,9 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index(int? selectedKitchenId)
         {
+            var filterDate = DateTime.Today; // Thêm ngày hôm nay để hệ thống không định vị nhầm vào các món rác ngày cũ
             var kitchen = await _dataContext.Kitchen.OrderBy(k => k.SortOrder).ToListAsync();
-            
+
             int defaultKitchenId = kitchen.FirstOrDefault()?.Id ?? 0;
 
             if (selectedKitchenId.HasValue)
@@ -36,6 +37,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             {
                 var activeKitchenIds = await _dataContext.OrderDetails
                     .Where(od => od.IsFired
+                                 && od.CreateDate >= filterDate // <-- THÊM DÒNG NÀY để lọc chính xác đơn trong ngày
                                  && od.Status != StatusProduct.Done
                                  && od.Status != StatusProduct.Served
                                  && od.Status != StatusProduct.Cancelled
@@ -114,11 +116,15 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     .ThenInclude(odm => odm.Modifier)
                 .Where(od => od.Product.Category.KitchenId == kitchenId
                              && od.IsFired
+                             && od.CreateDate >= filterDate
                              && od.Status != StatusProduct.Done
                              && od.Status != StatusProduct.Served
                              && od.Status != StatusProduct.Cancelled)
-                .OrderByDescending(od => od.FiredAt)
-                .ThenBy(od => od.CreateDate)
+                // 🚀 SỬA ĐOẠN NÀY:
+                .OrderByDescending(od => od.FireCount > 1 && (od.Status == StatusProduct.Pending || od.Status == StatusProduct.PreparingIngredient || od.Status == StatusProduct.Cooking))
+                .ThenByDescending(od => od.IsManuallyFired)
+                .ThenBy(od => od.FiredAt)
+                // ────────────────
                 .ToListAsync();
 
             ViewBag.Kitchen = await _dataContext.Kitchen.FindAsync(kitchenId);

@@ -56,6 +56,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             var products = await _db.Products
                 .Include(x => x.Category)
+                    .ThenInclude(c => c.Kitchen)
                 .Where(x => productIds.Contains(x.Id))
                 .ToDictionaryAsync(x => x.Id);
 
@@ -116,6 +117,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             decimal subtotal = 0;
             bool hasAutoFireItem = false;
+            var orderDetailsList = new List<OrderDetailsModel>();
 
             foreach (var item in req.Items)
             {
@@ -186,38 +188,29 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     unitPrice * item.Quantity;
 
                 _db.OrderDetails.Add(orderDetail);
+                orderDetailsList.Add(orderDetail);
             }
 
-            if (!hasAutoFireItem)
+            if (!hasAutoFireItem && orderDetailsList.Any())
             {
-                var nuocLocProduct = await _db.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == "nước lọc");
-                if (nuocLocProduct == null)
-                {
-                    var autoCat = await _db.Categories.FirstOrDefaultAsync(c => c.Name.ToLower() == "nước lọc");
-                    if (autoCat == null)
-                    {
-                        var firstKitchen = await _db.Kitchen.FirstOrDefaultAsync();
-                        autoCat = new CategoryModel { Name = "Nước lọc", Description = "Auto trigger", isAutoFire = true, Priority = 0, Status = 1, KitchenId = firstKitchen?.Id ?? 0, Slug = "nuoc-loc" };
-                        _db.Categories.Add(autoCat);
-                        await _db.SaveChangesAsync();
-                    }
-                    nuocLocProduct = new ProductModel { Name = "Nước lọc", Price = 0, CategoryId = autoCat.Id, Status = 1, Image = "default.jpg", Description = "Auto trigger" };
-                    _db.Products.Add(nuocLocProduct);
-                    await _db.SaveChangesAsync();
-                }
+                var firstGroup = orderDetailsList
+                    .Where(od => products.ContainsKey(od.ProductId))
+                    .OrderBy(od => products[od.ProductId].Category?.Kitchen?.SortOrder ?? 0)
+                    .ThenBy(od => products[od.ProductId].Category?.Priority ?? 0)
+                    .GroupBy(od => new { 
+                        SortOrder = products[od.ProductId].Category?.Kitchen?.SortOrder ?? 0, 
+                        Priority = products[od.ProductId].Category?.Priority ?? 0 
+                    })
+                    .FirstOrDefault();
 
-                _db.OrderDetails.Add(new OrderDetailsModel
+                if (firstGroup != null)
                 {
-                    Order = order,
-                    ProductId = nuocLocProduct.Id,
-                    Quantity = 1,
-                    CreateDate = DateTime.Now,
-                    Status = StatusProduct.Pending,
-                    IsFired = true,
-                    FiredAt = DateTime.Now,
-                    UnitPrice = 0,
-                    Note = "Auto Trigger"
-                });
+                    foreach (var od in firstGroup)
+                    {
+                        od.IsFired = true;
+                        od.FiredAt = DateTime.Now;
+                    }
+                }
             }
 
             order.SubTotal = subtotal;
@@ -298,6 +291,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
             var products = await _db.Products
                 .Include(p => p.Category)
+                    .ThenInclude(c => c.Kitchen)
                 .Where(p => productIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id);
 
@@ -398,6 +392,10 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             }
 
             await _db.SaveChangesAsync();
+
+            // Nếu thêm món không tự động Fire, gọi Trigger để hệ thống kiểm tra xem
+            // có thể Fire ngay lập tức dựa trên nhóm món trước đó đã Served hay chưa.
+            await _orderState.TriggerNextSequenceAsync(order.Id);
 
             return Ok(new
             {
@@ -531,6 +529,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             {
                 // Cash: checkout ngay, mark Paid và giải phóng bàn
                 order.Method = PaymentMethod.Cash;
+                order.PayStatus = PaymentStatus.Success;
                 await _db.SaveChangesAsync();
 
                 var (success, message) =

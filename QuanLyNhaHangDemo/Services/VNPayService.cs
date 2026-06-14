@@ -42,6 +42,7 @@ namespace QuanLyNhaHangDemo.Services
                 { "vnp_TmnCode",    _opts.TmnCode },
                 { "vnp_Amount",     (amountVnd * 100).ToString() },
                 { "vnp_CreateDate", vnNow.ToString("yyyyMMddHHmmss") },
+                { "vnp_ExpireDate", vnNow.AddMinutes(15).ToString("yyyyMMddHHmmss") },
                 { "vnp_CurrCode",   "VND" },
                 { "vnp_IpAddr",     ipAddress },
                 { "vnp_Locale",     "vn" },
