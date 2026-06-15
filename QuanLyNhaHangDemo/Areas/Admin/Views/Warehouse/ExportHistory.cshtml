@@ -11,7 +11,6 @@
     decimal totalSale   = ViewBag.TotalSale ?? 0;
     decimal totalReturn = ViewBag.TotalReturn ?? 0;
     decimal totalManual = ViewBag.TotalManual ?? 0;
-    decimal totalDefect = ViewBag.TotalDefect ?? 0;
     decimal totalRemake = ViewBag.TotalRemake ?? 0;
 }
 
@@ -38,7 +37,6 @@
                     <option value="OUT_SALE" selected="@(selectedReason == "OUT_SALE")">Xuất bán hàng</option>
                     <option value="OUT_RETURN" selected="@(selectedReason == "OUT_RETURN")">Trả hàng lỗi NCC</option>
                     <option value="OUT_MANUAL" selected="@(selectedReason == "OUT_MANUAL")">Xuất thủ công khác</option>
-                    <option value="OUT_DEFECT" selected="@(selectedReason == "OUT_DEFECT")">Hàng lỗi khi chế biến</option>
                     <option value="OUT_REMAKE" selected="@(selectedReason == "OUT_REMAKE")">Xuất làm lại món</option>
                 </select>
             </div>
@@ -131,19 +129,7 @@
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card border-danger border-opacity-75 shadow-sm h-100" style="border-left: 4px solid #dc3545 !important;">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle p-3" style="background: rgba(220,53,69,0.12);">
-                    <i class="fas fa-exclamation-triangle fa-lg" style="color:#dc3545;"></i>
-                </div>
-                <div>
-                    <div class="small text-muted">Hàng lỗi khi chế biến</div>
-                    <div class="fw-bold fs-5" style="color:#dc3545;">@totalDefect.ToString("N0") ₫</div>
-                </div>
-            </div>
-        </div>
-    </div>
+
     <div class="col-md-6">
         <div class="card border-warning border-opacity-75 shadow-sm h-100" style="border-left: 4px solid #fd7e14 !important;">
             <div class="card-body d-flex align-items-center gap-3">
@@ -220,16 +206,7 @@ else
                                     </div>
                                 }
                             }
-                            else if (item.Reason == "OUT_DEFECT")
-                            {
-                                <span class="badge mb-1" style="background:#dc3545;">Hàng lỗi chế biến</span>
-                                @if (item.Order != null)
-                                {
-                                    <div class="small text-muted">
-                                        <i class="fas fa-receipt me-1"></i> @item.Order.OrderCode
-                                    </div>
-                                }
-                            }
+
                             else if (item.Reason == "OUT_REMAKE")
                             {
                                 <span class="badge mb-1" style="background:#fd7e14;">Làm lại món</span>

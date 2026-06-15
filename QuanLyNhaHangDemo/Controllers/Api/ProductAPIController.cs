@@ -168,7 +168,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     {
                         Id = m.Id,
                         Name = m.Name,
-                        ExtraPrice = m.Price,
+                        ExtraPrice = (string.Equals(pmg.ModifierGroup.Type, "Size", StringComparison.OrdinalIgnoreCase) && m.Price == 0 && m.Multiplier != 1)
+                            ? (m.Multiplier - 1) * product.Price
+                            : m.Price,
                         // null-safe: Size modifier không có ModifierMaterials, luôn IsAvailable = true
                         IsAvailable = !m.ModifierMaterials.Any(mm =>
                             mm.Material != null &&

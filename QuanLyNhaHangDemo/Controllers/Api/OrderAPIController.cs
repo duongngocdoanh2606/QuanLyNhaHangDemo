@@ -72,6 +72,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 .ToList();
 
             var modifiers = await _db.Modifiers
+                .Include(x => x.ModifierGroup)
                 .Where(x => modifierIds.Contains(x.Id))
                 .ToDictionaryAsync(x => x.Id);
 
@@ -174,7 +175,11 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                             continue;
                         }
 
-                        unitPrice += mod.Price;
+                        decimal calcModPrice = (string.Equals(mod.ModifierGroup?.Type, "Size", StringComparison.OrdinalIgnoreCase) && mod.Price == 0 && mod.Multiplier != 1)
+                            ? (mod.Multiplier - 1) * product.Price
+                            : mod.Price;
+
+                        unitPrice += calcModPrice;
 
                         orderDetail
                             .OrderDetailModifiers
@@ -182,7 +187,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                                 new OrderDetailModifierModel
                                 {
                                     ModifierId = mod.Id,
-                                    ModifierPrice = mod.Price
+                                    ModifierPrice = calcModPrice
                                 });
                     }
                 }
@@ -324,6 +329,7 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 .ToList();
 
             var modifiers = await _db.Modifiers
+                .Include(x => x.ModifierGroup)
                 .Where(x => modifierIds.Contains(x.Id))
                 .ToDictionaryAsync(x => x.Id);
 
@@ -377,13 +383,17 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                             continue;
                         }
 
-                        unitPrice += mod.Price;
+                        decimal calcModPrice = (string.Equals(mod.ModifierGroup?.Type, "Size", StringComparison.OrdinalIgnoreCase) && mod.Price == 0 && mod.Multiplier != 1)
+                            ? (mod.Multiplier - 1) * prod.Price
+                            : mod.Price;
+
+                        unitPrice += calcModPrice;
 
                         newOd.OrderDetailModifiers.Add(
                             new OrderDetailModifierModel
                             {
                                 ModifierId = mod.Id,
-                                ModifierPrice = mod.Price
+                                ModifierPrice = calcModPrice
                             });
                     }
                 }

@@ -30,7 +30,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             public const string Sale = "OUT_SALE";
             public const string Return = "OUT_RETURN";
             public const string Manual = "OUT_MANUAL";
-            public const string Defect = "OUT_DEFECT";   // Hàng lỗi khi chế biến
             public const string Remake = "OUT_REMAKE";   // Xuất nguyên liệu làm lại món
 
             public static string GetLabel(string? reason) => reason switch
@@ -38,7 +37,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 Sale => "Xuất bán hàng",
                 Return => "Trả hàng lỗi NCC",
                 Manual => "Xuất thủ công",
-                Defect => "Hàng lỗi khi chế biến",
                 Remake => "Xuất làm lại món",
                 _ => reason ?? "Không rõ"
             };
@@ -594,7 +592,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             ViewBag.TotalSale = list.Where(x => x.Reason == ExportReason.Sale).Sum(x => x.TotalPrice);
             ViewBag.TotalReturn = list.Where(x => x.Reason == ExportReason.Return).Sum(x => x.TotalPrice);
             ViewBag.TotalManual = list.Where(x => x.Reason == ExportReason.Manual).Sum(x => x.TotalPrice);
-            ViewBag.TotalDefect = list.Where(x => x.Reason == ExportReason.Defect).Sum(x => x.TotalPrice);
             ViewBag.TotalRemake = list.Where(x => x.Reason == ExportReason.Remake).Sum(x => x.TotalPrice);
             ViewBag.SelectedReason = reason;
             ViewBag.SelectedMaterial = materialId;
