@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Dashboard";
 }
 
@@ -30,17 +30,115 @@
 
 <hr />
 
-<div class="row mb-4 text-center">
-    <div class="col-md-6 mb-3 mb-md-0">
-        <div class="card bg-light p-4 border-primary shadow-sm">
-            <h5 class="text-muted text-uppercase small fw-bold">Tổng doanh thu (Total Amount)</h5>
-            <h2 id="totalRevenue" class="text-primary fw-bold mt-2">0 đ</h2>
+<!-- Hàng 1: Doanh thu -->
+<div class="row mb-3 text-center g-3">
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-secondary shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Doanh thu món gốc (SubTotal)</h6>
+            <h4 id="totalSubRevenue" class="text-secondary fw-bold mt-1">0 đ</h4>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card bg-light p-4 border-success shadow-sm">
-            <h5 class="text-muted text-uppercase small fw-bold">Tổng lợi nhuận thực tế</h5>
-            <h2 id="totalProfit" class="text-success fw-bold mt-2">0 đ</h2>
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-warning shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Thuế VAT</h6>
+            <h4 id="totalVAT" class="text-warning fw-bold mt-1">0 đ</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-warning shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Phí dịch vụ</h6>
+            <h4 id="totalService" class="text-warning fw-bold mt-1">0 đ</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-primary shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Doanh thu thực tế (Grand Total)</h6>
+            <h4 id="totalRevenue" class="text-primary fw-bold mt-1">0 đ</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Hàng 2: Chi phí & Lợi nhuận -->
+<div class="row mb-4 text-center g-3">
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-danger shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Chi phí NVL (OUT_SALE)</h6>
+            <h4 id="totalSaleCost" class="text-danger fw-bold mt-1">0 đ</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light p-3 h-100 shadow-sm" style="border-color:#fd7e14 !important; border: 1px solid;">
+            <h6 class="text-muted text-uppercase small fw-bold">Chi phí làm lại (Remake)</h6>
+            <h4 id="totalRemakeCost" class="fw-bold mt-1" style="color:#fd7e14;">0 đ</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-danger shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Tổng giảm giá (Coupon)</h6>
+            <h4 id="totalDiscount" class="text-danger fw-bold mt-1">0 đ</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light p-3 border-success shadow-sm h-100">
+            <h6 class="text-muted text-uppercase small fw-bold">Lợi nhuận thực tế</h6>
+            <h4 id="totalProfit" class="text-success fw-bold mt-1">0 đ</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Hàng 3: Thống kê mở rộng -->
+<div class="row mb-4">
+    <!-- Cột bên trái: Thống kê món ăn -->
+    <div class="col-md-8">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-arrow-trend-up me-2"></i>Top 5 Món Bán Chạy</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tên món</th>
+                                    <th class="text-end">Đã bán</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topSellingBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0"><i class="fas fa-arrow-trend-down me-2"></i>Top 5 Món Bán Ít Nhất</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tên món</th>
+                                    <th class="text-end">Đã bán</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leastSellingBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Cột bên phải: Giờ cao điểm -->
+    <div class="col-md-4">
+        <div class="card bg-info text-white shadow-sm h-100 text-center">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                <h6 class="text-uppercase fw-bold mb-3"><i class="fas fa-clock me-2"></i>Giờ Cao Điểm</h6>
+                <div class="display-4 fw-bold" id="peakHourText">--:--</div>
+                <p class="mt-2 mb-0" id="peakHourOrders">0 đơn hàng</p>
+            </div>
         </div>
     </div>
 </div>
@@ -49,7 +147,7 @@
     <div class="col-md-12">
         <div class="card p-4 shadow-sm">
             <h4 class="card-title mb-4 fw-bold text-secondary">
-                <i class="fas fa-chart-area me-2"></i>Xu hướng doanh thu & Lợi nhuận
+                <i class="fas fa-chart-area me-2"></i>Xu hướng doanh thu &amp; Lợi nhuận
             </h4>
             <div style="position: relative; height:420px; width:100%">
                 <canvas id="salesChart"></canvas>
@@ -64,13 +162,11 @@
     <script>
         let salesChartInstance = null;
 
-        // Hàm định dạng tiền tệ VNĐ trực quan
         function formatMoney(value) {
             if (value == null) value = 0;
             return value.toLocaleString('vi-VN') + ' đ';
         }
 
-        // Bật/tắt các ô nhập ngày dựa theo lựa chọn bộ lọc
         $('#filterType').on('change', function () {
             if ($(this).val() === 'custom') {
                 $('#fromDate, #toDate').prop('disabled', false);
@@ -79,7 +175,6 @@
             }
         });
 
-        // Hàm chính Ajax kết nối tới DashboardController
         function loadDashboardData(type, from, to) {
             $.post("/Admin/Dashboard/GetChartData", {
                 type: type,
@@ -89,24 +184,63 @@
             .done(function (response) {
                 if (!response) return;
 
-                // 1. Gán số liệu tổng quan vào các thẻ đầu trang
+                // Gán số liệu tổng quan vào các thẻ đầu trang
                 if (response.summary) {
-                    $('#totalRevenue').text(formatMoney(response.summary.totalRevenue));
-                    $('#totalProfit').text(formatMoney(response.summary.totalProfit));
+                    var s = response.summary;
+                    $('#totalSubRevenue').text(formatMoney(s.totalSubRevenue));
+                    $('#totalVAT').text('+' + formatMoney(s.totalVAT));
+                    $('#totalService').text('+' + formatMoney(s.totalService));
+                    $('#totalDiscount').text('-' + formatMoney(s.totalDiscount));
+                    $('#totalRevenue').text(formatMoney(s.totalRevenue));
+                    $('#totalSaleCost').text(formatMoney(s.totalSaleCost));
+                    $('#totalRemakeCost').text(formatMoney(s.totalRemakeCost));
+                    $('#totalProfit').text(formatMoney(s.totalProfit));
                 }
 
-                // 2. Phân tách mảng chartData để đưa vào Chart.js
+                if (response.insights) {
+                    var insights = response.insights;
+                    
+                    // Top bán chạy
+                    var topHtml = '';
+                    if (insights.topSelling && insights.topSelling.length > 0) {
+                        insights.topSelling.forEach(item => {
+                            topHtml += `<tr><td>${item.productName}</td><td class="text-end fw-bold">${item.quantity}</td></tr>`;
+                        });
+                    } else {
+                        topHtml = '<tr><td colspan="2" class="text-center text-muted">Chưa có dữ liệu</td></tr>';
+                    }
+                    $('#topSellingBody').html(topHtml);
+
+                    // Top bán ế
+                    var leastHtml = '';
+                    if (insights.leastSelling && insights.leastSelling.length > 0) {
+                        insights.leastSelling.forEach(item => {
+                            leastHtml += `<tr><td>${item.productName}</td><td class="text-end fw-bold text-danger">${item.quantity}</td></tr>`;
+                        });
+                    } else {
+                        leastHtml = '<tr><td colspan="2" class="text-center text-muted">Chưa có dữ liệu</td></tr>';
+                    }
+                    $('#leastSellingBody').html(leastHtml);
+
+                    // Khung giờ cao điểm
+                    if (insights.peakHour) {
+                        $('#peakHourText').text(`${insights.peakHour.hour}h - ${insights.peakHour.hour + 1}h`);
+                        $('#peakHourOrders').text(`${insights.peakHour.orderCount} đơn hàng`);
+                    } else {
+                        $('#peakHourText').text('--:--');
+                        $('#peakHourOrders').text('0 đơn hàng');
+                    }
+                }
+
                 var chartData = response.chartData || [];
                 var labels = chartData.map(x => x.date);
-                var revenueData = chartData.map(x => x.revenue); // Map chuẩn theo thuộc tính 'revenue' mới
+                var revenueData = chartData.map(x => x.revenue);
                 var profitData = chartData.map(x => x.profit);
 
-                // Hủy instance cũ nếu có để tránh lỗi hiển thị đè nét khi render lại
                 if (salesChartInstance) {
                     salesChartInstance.destroy();
                 }
 
-                // Vẽ biểu đồ dạng đường (Line Chart) vùng phủ
                 var ctx = document.getElementById("salesChart").getContext("2d");
                 salesChartInstance = new Chart(ctx, {
                     data: {
@@ -114,7 +248,7 @@
                         datasets: [
                             {
                                 type: 'line',
-                                label: 'Doanh thu (Hóa đơn)',
+                                label: 'Doanh thu thực tế (GrandTotal)',
                                 data: revenueData,
                                 borderColor: '#3c8dbc',
                                 backgroundColor: 'rgba(60, 141, 188, 0.1)',
@@ -124,7 +258,7 @@
                             },
                             {
                                 type: 'line',
-                                label: 'Lợi nhuận ròng',
+                                label: 'Lợi nhuận ròng (sau chi phí NVL & làm lại)',
                                 data: profitData,
                                 borderColor: '#00a65a',
                                 backgroundColor: 'rgba(0, 166, 90, 0.1)',
@@ -166,7 +300,6 @@
             });
         }
 
-        // Click áp dụng bộ lọc
         $('#btnFilter').on('click', function () {
             var type = $('#filterType').val();
             var from = $('#fromDate').val();
@@ -185,7 +318,64 @@
             loadDashboardData(type, from, to);
         });
 
-        // Tự động tải toàn bộ dữ liệu ngay khi khởi chạy trang
+        // ─── SignalR: Nhận thông báo đơn mới, thanh toán và làm lại ───
+        if (typeof signalRConnection !== 'undefined' && signalRConnection) {
+            signalRConnection.on("NewOrderCreated", function (data) {
+                showDashboardAlert(
+                    'info',
+                    '<i class="fas fa-receipt me-2"></i>' +
+                    '<strong>Đơn mới!</strong> ' + data.message,
+                    8000
+                );
+            });
+
+            signalRConnection.on("OrderPaid", function (data) {
+                showDashboardAlert(
+                    'success',
+                    '<i class="fas fa-check-circle me-2"></i>' +
+                    '<strong>Thanh toán!</strong> ' + data.message,
+                    8000
+                );
+            });
+
+            signalRConnection.on("DishRemade", function (data) {
+                showDashboardAlert(
+                    'danger',
+                    '<i class="fas fa-exclamation-triangle me-2"></i>' +
+                    '<strong>Làm lại món!</strong> ' + data.message,
+                    12000
+                );
+            });
+        }
+
+        function showDashboardAlert(type, html, duration) {
+            var colors = {
+                info:    { bg: '#d1ecf1', border: '#bee5eb', text: '#0c5460' },
+                warning: { bg: '#fff3cd', border: '#ffeeba', text: '#856404' },
+                success: { bg: '#d4edda', border: '#c3e6cb', text: '#155724' },
+                danger:  { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' }
+            };
+            var c = colors[type] || colors['info'];
+
+            var $alert = $('<div>')
+                .css({
+                    position: 'fixed', top: '80px', right: '20px', zIndex: 9999,
+                    minWidth: '340px', maxWidth: '460px', padding: '14px 18px',
+                    borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,.15)',
+                    background: c.bg, border: '1px solid ' + c.border, color: c.text,
+                    fontSize: '0.92rem', opacity: 0
+                })
+                .html(html + ' <button type="button" style="float:right;background:none;border:none;font-size:1.1rem;cursor:pointer;color:' + c.text + '">×</button>')
+                .appendTo('body')
+                .animate({ opacity: 1 }, 300);
+
+            $alert.find('button').on('click', function () { $alert.fadeOut(200, function () { $(this).remove(); }); });
+
+            if (duration) {
+                setTimeout(function () { $alert.fadeOut(400, function () { $(this).remove(); }); }, duration);
+            }
+        }
+
         $(document).ready(function () {
             loadDashboardData('all', null, null);
         });

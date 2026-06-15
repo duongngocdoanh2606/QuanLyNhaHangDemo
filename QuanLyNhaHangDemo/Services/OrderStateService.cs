@@ -94,6 +94,12 @@ namespace QuanLyNhaHangDemo.Services
                 }
             }
 
+            // Thông báo khi đơn được thanh toán
+            if (newStatus == OrderModel.OrderStatus.Paid)
+            {
+                await NotifyOrderPaidAsync(order);
+            }
+
             await _db.SaveChangesAsync();
 
             await BroadcastFloorPlanUpdateAsync();
@@ -264,6 +270,95 @@ namespace QuanLyNhaHangDemo.Services
             }
         }
 
+        /// <summary>
+        /// Thông báo khi có đơn hàng mới được tạo (Android đặt đơn)
+        /// </summary>
+        public async Task NotifyNewOrderAsync(int orderId)
+        {
+            var order = await _db.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) return;
+
+            var tables = await _db.Table
+                .Include(t => t.Zone)
+                .Where(t => t.CurrentOrderId == orderId)
+                .ToListAsync();
+
+            string tableInfo = tables.Any()
+                ? string.Join(", ", tables.Select(t => $"Bàn {t.TableName}"))
+                : "Chưa xác định";
+
+            string message = $"Đơn mới: {order.OrderCode} — {tableInfo}";
+
+            await _hub.Clients
+                .Group(OrderHub.AdminGroup)
+                .SendAsync("NewOrderCreated", new
+                {
+                    orderId = order.Id,
+                    orderCode = order.OrderCode,
+                    tableInfo,
+                    message,
+                    createdAt = order.CreatedDate.ToString("HH:mm")
+                });
+        }
+
+        /// <summary>
+        /// Thông báo khi đơn đã thanh toán
+        /// </summary>
+        private async Task NotifyOrderPaidAsync(OrderModel order)
+        {
+            var tables = await _db.Table
+                .Include(t => t.Zone)
+                .Where(t => t.CurrentOrderId == order.Id)
+                .ToListAsync();
+
+            string tableInfo = tables.Any()
+                ? string.Join(", ", tables.Select(t => $"Bàn {t.TableName}"))
+                : "";
+
+            string message = $"Đơn {order.OrderCode} ({tableInfo}) đã thanh toán thành công.";
+
+            await _hub.Clients
+                .Group(OrderHub.AdminGroup)
+                .SendAsync("OrderPaid", new
+                {
+                    orderId = order.Id,
+                    orderCode = order.OrderCode,
+                    tableInfo,
+                    message
+                });
+        }
+
+        /// <summary>
+        /// Thông báo khi có món phải làm lại
+        /// </summary>
+        private async Task NotifyDishRemakeAsync(OrderDetailsModel detail)
+        {
+            var tables = await _db.Table
+                .Include(t => t.Zone)
+                .Where(t => t.CurrentOrderId == detail.OrderId)
+                .ToListAsync();
+
+            string tableInfo = tables.Any()
+                ? string.Join(", ", tables.Select(t => $"Bàn {t.TableName}"))
+                : "";
+
+            string productName = detail.Product?.Name ?? "Món";
+
+            string message = $"Yêu cầu làm lại món: {productName} — {tableInfo}";
+
+            await _hub.Clients
+                .Group(OrderHub.AdminGroup)
+                .SendAsync("DishRemade", new
+                {
+                    orderDetailId = detail.Id,
+                    productName,
+                    tableInfo,
+                    message
+                });
+        }
+
         private async Task BroadcastFloorPlanUpdateAsync()
         {
             var statuses =
@@ -360,6 +455,11 @@ namespace QuanLyNhaHangDemo.Services
                             ? $"Làm lại: {detail.Product?.Name}"
                             : $"Fire ưu tiên: {detail.Product?.Name}"
                     });
+
+            if (isRemake)
+            {
+                await NotifyDishRemakeAsync(detail);
+            }
 
             return (
                 true,

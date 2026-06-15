@@ -215,7 +215,7 @@
         $(document).ready(function () {
 
             // XỬ LÝ SỰ KIỆN NÚT FIRE / LÀM LẠI
-            $('.btn-fire-item').on('click', function () {
+            $(document).on('click', '.btn-fire-item', function () {
                 var btn = $(this);
                 var id = btn.data('id');
                 var remake = btn.data('remake') === true || btn.data('remake') === 'true';
@@ -236,7 +236,7 @@
             });
 
             // XỬ LÝ SỰ KIỆN NÚT HỦY MÓN
-            $('.btn-cancel-item').on('click', function () {
+            $(document).on('click', '.btn-cancel-item', function () {
                 var id = $(this).data('id');
 
                 Swal.fire({

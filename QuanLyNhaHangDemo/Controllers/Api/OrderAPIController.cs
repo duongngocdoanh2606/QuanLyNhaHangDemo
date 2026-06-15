@@ -242,6 +242,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             // Thông báo realtime đến màn hình web quản trị (Order list + Kitchen + Floor Plan)
             await BroadcastOrderUpdate();
 
+            // Thông báo đơn mới đến admin
+            await _orderState.NotifyNewOrderAsync(order.Id);
+
             return Ok(new
             {
                 order.Id,

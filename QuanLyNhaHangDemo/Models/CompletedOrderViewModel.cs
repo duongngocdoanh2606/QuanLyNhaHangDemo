@@ -25,5 +25,20 @@ namespace QuanLyNhaHangDemo.Models
 
         // Tổng tiền thực tế thu từ khách sau khi tính toán - Ánh xạ từ o.GrandTotal
         public decimal TotalWithCoupon { get; set; }
+
+        // Phương thức thanh toán
+        public PaymentMethod Method { get; set; }
+
+        public string PaymentMethodLabel => Method switch
+        {
+            PaymentMethod.VNPay => "VNPay",
+            _ => "Tiền mặt"
+        };
+
+        public string PaymentMethodIcon => Method switch
+        {
+            PaymentMethod.VNPay => "fas fa-qrcode text-primary",
+            _ => "fas fa-money-bill-wave text-success"
+        };
     }
 }

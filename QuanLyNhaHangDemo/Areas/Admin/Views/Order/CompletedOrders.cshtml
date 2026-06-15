@@ -2,6 +2,11 @@
 
 @{
     ViewData["Title"] = "Đơn hàng hoàn thành";
+    decimal totalRevenue        = ViewBag.TotalRevenue ?? 0;
+    decimal totalGrand          = ViewBag.TotalRevenueWithCoupon ?? 0;
+    decimal totalVAT            = ViewBag.TotalVAT ?? 0;
+    decimal totalService        = ViewBag.TotalService ?? 0;
+    decimal totalDiscount       = ViewBag.TotalDiscount ?? 0;
 }
 
 <h3>Đơn hàng hoàn thành</h3>
@@ -36,6 +41,7 @@
             <th>Mã Coupon</th>
             <th>Tiền giảm giá</th>
             <th>Thành tiền (Grand Total)</th>
+            <th>Thanh toán</th>
             <th>In hóa đơn</th>
         </tr>
     </thead>
@@ -55,6 +61,13 @@
                 <td class="text-danger">-@o.CouponDiscount.ToString("N0") ₫</td>
 
                 <td class="fw-bold text-success">@o.TotalWithCoupon.ToString("N0") ₫</td>
+
+                <td>
+                    <span class="badge @(o.Method == PaymentMethod.VNPay ? "bg-primary" : "bg-success")">
+                        <i class="@o.PaymentMethodIcon me-1"></i>@o.PaymentMethodLabel
+                    </span>
+                </td>
+
                 <td>
                     <a class="btn btn-secondary btn-sm"
                        href="/Admin/Order/Invoice?ordercode=@o.OrderCode"
@@ -76,6 +89,28 @@
 <div class="mt-3 p-3 bg-light border rounded">
     <h5>BÁO CÁO THU NHẬP</h5>
     <hr />
-    <h6>Tổng doanh thu món gốc (SubTotal): @(ViewBag.TotalRevenue != null ? ((decimal)ViewBag.TotalRevenue).ToString("N0") : "0") ₫</h6>
-    <h5 class="text-success">Tổng doanh thu thực tế nhận về (GrandTotal): @(ViewBag.TotalRevenueWithCoupon != null ? ((decimal)ViewBag.TotalRevenueWithCoupon).ToString("N0") : "0") ₫</h5>
+    <div class="row">
+        <div class="col-md-4">
+            <p class="mb-1"><strong>Doanh thu món gốc (SubTotal):</strong></p>
+            <h6 class="text-secondary">@totalRevenue.ToString("N0") ₫</h6>
+        </div>
+        <div class="col-md-4">
+            <p class="mb-1"><strong>Thuế VAT:</strong></p>
+            <h6 class="text-warning">+@totalVAT.ToString("N0") ₫</h6>
+        </div>
+        <div class="col-md-4">
+            <p class="mb-1"><strong>Phí dịch vụ:</strong></p>
+            <h6 class="text-warning">+@totalService.ToString("N0") ₫</h6>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-md-4">
+            <p class="mb-1"><strong>Tổng giảm giá (Coupon):</strong></p>
+            <h6 class="text-danger">-@totalDiscount.ToString("N0") ₫</h6>
+        </div>
+        <div class="col-md-8">
+            <p class="mb-1"><strong>Tổng doanh thu thực tế (GrandTotal):</strong></p>
+            <h5 class="text-success">@totalGrand.ToString("N0") ₫</h5>
+        </div>
+    </div>
 </div>

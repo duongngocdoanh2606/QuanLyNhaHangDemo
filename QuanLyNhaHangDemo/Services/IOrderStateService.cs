@@ -12,5 +12,6 @@ namespace QuanLyNhaHangDemo.Services
         Task<(bool Success, string Message)> FireOrderDetailAsync(int orderDetailId, bool isRemake);
         Task<(bool Success, string Message)> CheckoutTableAsync(int tableId);
         Task TriggerNextSequenceAsync(int orderId);
+        Task NotifyNewOrderAsync(int orderId);
     }
 }

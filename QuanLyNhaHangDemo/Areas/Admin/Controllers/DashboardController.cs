@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Thêm nếu chưa có
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
 using System;
 using System.Collections.Generic;
-using System.Linq; // Thêm nếu chưa có
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
@@ -56,7 +57,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                     break;
             }
 
-            // 2. Lấy danh sách hóa đơn đã thanh toán (Android bấm)
+            // 2. Lấy danh sách hóa đơn đã thanh toán
             var ordersQuery = _dataContext.Orders
                 .Where(o => o.Status == OrderModel.OrderStatus.Paid);
 
@@ -68,28 +69,37 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             var ordersList = await ordersQuery.ToListAsync();
             var orderIds = ordersList.Select(o => o.Id).ToList();
 
-            // 3. Lấy chi phí xuất kho tương ứng (Bếp bấm hoàn thành món)
+            // 3. Lấy chi phí xuất kho theo đơn — tách riêng OUT_SALE và OUT_REMAKE
             var outTransactions = await _dataContext.InventoryTransactions
                 .Where(t => t.Type == "OUT" && t.OrderId.HasValue && orderIds.Contains(t.OrderId.Value))
                 .ToListAsync();
 
-            // Gom tổng chi phí gốc theo từng OrderId
-            var orderCostsDict = outTransactions
+            // Chi phí nguyên liệu gốc (lần đầu chế biến)
+            var saleCostsDict = outTransactions
+                .Where(t => t.Reason == "OUT_SALE")
                 .GroupBy(t => t.OrderId.Value)
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.TotalPrice));
 
-            // 4. Gom nhóm dữ liệu theo Ngày để vẽ biểu đồ đường/cột (Đã sửa lỗi Lambda)
+            // Chi phí làm lại món (remake)
+            var remakeCostsDict = outTransactions
+                .Where(t => t.Reason == "OUT_REMAKE")
+                .GroupBy(t => t.OrderId.Value)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.TotalPrice));
+
+            // 4. Gom nhóm dữ liệu theo ngày để vẽ biểu đồ
             var chartDataQuery = ordersList
                 .GroupBy(o => o.CreatedDate.Date)
-                .Select(g => {
+                .Select(g =>
+                {
                     decimal dayRevenue = g.Sum(o => o.GrandTotal);
 
-                    // Sửa lỗi: Tính toán tường minh chi phí trong ngày của nhóm bàn/đơn này
-                    decimal dayCost = g.Sum(o => {
-                        return orderCostsDict.ContainsKey(o.Id) ? orderCostsDict[o.Id] : 0m;
-                    });
+                    decimal daySaleCost = g.Sum(o =>
+                        saleCostsDict.ContainsKey(o.Id) ? saleCostsDict[o.Id] : 0m);
 
-                    decimal dayProfit = dayRevenue - dayCost;
+                    decimal dayRemakeCost = g.Sum(o =>
+                        remakeCostsDict.ContainsKey(o.Id) ? remakeCostsDict[o.Id] : 0m);
+
+                    decimal dayProfit = dayRevenue - daySaleCost - dayRemakeCost;
 
                     return new
                     {
@@ -101,19 +111,70 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 .OrderBy(x => x.date)
                 .ToList();
 
-            // 5. Tính toán Tổng cộng cho các thẻ hiển thị trên đầu Dashboard
-            decimal totalRevenue = ordersList.Sum(o => o.GrandTotal);
-            decimal totalCost = outTransactions.Sum(t => t.TotalPrice);
-            decimal totalProfit = totalRevenue - totalCost;
+            // 5. Tính toán tổng cộng cho các thẻ hiển thị trên Dashboard
+            decimal totalSubRevenue  = ordersList.Sum(o => o.SubTotal);
+            decimal totalVAT         = ordersList.Sum(o => o.VATAmount);
+            decimal totalService     = ordersList.Sum(o => o.ServiceAmount);
+            decimal totalDiscount    = ordersList.Sum(o => o.DiscountAmount);
+            decimal totalRevenue     = ordersList.Sum(o => o.GrandTotal);   // Thực tế thu từ khách
 
-            // 6. Trả về đúng dữ liệu cốt lõi cho Frontend của bạn
+            decimal totalSaleCost    = outTransactions.Where(t => t.Reason == "OUT_SALE").Sum(t => t.TotalPrice);
+            decimal totalRemakeCost  = outTransactions.Where(t => t.Reason == "OUT_REMAKE").Sum(t => t.TotalPrice);
+            decimal totalProfit      = totalRevenue - totalSaleCost - totalRemakeCost;
+
+            // 6. Tính toán Top bán chạy, Top bán ế, Khung giờ cao điểm
+            var orderDetailsQuery = _dataContext.OrderDetails
+                .Include(od => od.Product)
+                .Where(od => orderIds.Contains(od.OrderId) && od.Status != StatusProduct.Cancelled);
+
+            var productSales = await orderDetailsQuery
+                .GroupBy(od => new { od.ProductId, od.Product.Name })
+                .Select(g => new
+                {
+                    productName = g.Key.Name,
+                    quantity = g.Sum(x => x.Quantity)
+                })
+                .ToListAsync();
+
+            var topSelling = productSales
+                .OrderByDescending(x => x.quantity)
+                .Take(5)
+                .ToList();
+
+            var leastSelling = productSales
+                .OrderBy(x => x.quantity)
+                .Take(5)
+                .ToList();
+
+            var peakHourGroup = ordersList
+                .GroupBy(o => o.CreatedDate.Hour)
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault();
+
+            var peakHour = peakHourGroup != null 
+                ? new { hour = peakHourGroup.Key, orderCount = peakHourGroup.Count() } 
+                : null;
+
+            // 7. Trả về dữ liệu cho Frontend
             return Json(new
             {
                 chartData = chartDataQuery,
                 summary = new
                 {
-                    totalRevenue = totalRevenue,
-                    totalProfit = totalProfit
+                    totalSubRevenue,        // Doanh thu món gốc (SubTotal)
+                    totalVAT,               // Thuế VAT
+                    totalService,           // Phí dịch vụ
+                    totalDiscount,          // Tổng giảm giá
+                    totalRevenue,           // Doanh thu thực tế (GrandTotal)
+                    totalSaleCost,          // Chi phí nguyên liệu (OUT_SALE)
+                    totalRemakeCost,        // Chi phí làm lại (OUT_REMAKE)
+                    totalProfit             // Lợi nhuận thực = GrandTotal − OUT_SALE − OUT_REMAKE
+                },
+                insights = new
+                {
+                    topSelling,
+                    leastSelling,
+                    peakHour
                 }
             });
         }

@@ -99,9 +99,34 @@
 
     // Khi có đơn hàng mới hoặc thêm món từ điện thoại → auto refresh trang Order
     connection.on('OrderListRefresh', function () {
-        // Nếu đang ở trang danh sách Order hoặc chi tiết Order → reload
-        if (document.getElementById('myTable') || document.getElementById('detail_order')) {
-            location.reload();
+        if (document.getElementById('myTable')) {
+            $.get(location.href, function (data) {
+                var newDoc = new DOMParser().parseFromString(data, 'text/html');
+                var newTableHTML = $(newDoc).find('#myTable').html();
+                var dt = $('#myTable').DataTable();
+                if (dt) dt.destroy();
+                $('#myTable').html(newTableHTML);
+                $('#myTable').DataTable({
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
+                    }
+                });
+            });
+        } else if (document.getElementById('detail_order')) {
+            $.get(location.href, function (data) {
+                var newDoc = new DOMParser().parseFromString(data, 'text/html');
+                var newTableHTML = $(newDoc).find('#detail_order').html();
+                var dt = $('#detail_order').DataTable();
+                if (dt) dt.destroy();
+                $('#detail_order').html(newTableHTML);
+                new DataTable('#detail_order', {
+                    layout: {
+                        topStart: {
+                            buttons: ['pdf', 'print']
+                        }
+                    }
+                });
+            });
         }
     });
 

@@ -235,6 +235,9 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 
                     lastImports.TryGetValue(pm.MaterialId, out decimal unitCost);
 
+                    // Nếu FireCount >= 1 → đây là lần làm lại → đánh dấu OUT_REMAKE
+                    string exportReason = orderDetail.FireCount >= 1 ? "OUT_REMAKE" : "OUT_SALE";
+
                     _dataContext.InventoryTransactions.Add(new InventoryTransactionModel
                     {
                         MaterialId = pm.MaterialId,
@@ -243,9 +246,11 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                         UnitPrice = unitCost,
                         TotalPrice = usedBaseQuantity * unitCost,
                         Type = "OUT",
-                        Reason = "OUT_SALE",
+                        Reason = exportReason,
                         OrderId = orderDetail.OrderId,
-                        Note = $"Xuất bán (Bếp) — Đơn {orderDetail.Order?.OrderCode}"
+                        Note = exportReason == "OUT_REMAKE"
+                            ? $"Xuất làm lại (Bếp) — Đơn {orderDetail.Order?.OrderCode} (lần {orderDetail.FireCount})"
+                            : $"Xuất bán (Bếp) — Đơn {orderDetail.Order?.OrderCode}"
                     });
                 }
 

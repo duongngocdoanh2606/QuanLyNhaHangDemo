@@ -325,11 +325,15 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 VATAmount = o.VATAmount,
                 ServiceAmount = o.ServiceAmount,
                 OrderRevenue = o.SubTotal,
-                TotalWithCoupon = o.GrandTotal
+                TotalWithCoupon = o.GrandTotal,
+                Method = o.Method
             }).ToList();
 
             ViewBag.TotalRevenue = list.Sum(x => x.OrderRevenue);
             ViewBag.TotalRevenueWithCoupon = list.Sum(x => x.TotalWithCoupon);
+            ViewBag.TotalVAT = list.Sum(x => x.VATAmount);
+            ViewBag.TotalService = list.Sum(x => x.ServiceAmount);
+            ViewBag.TotalDiscount = list.Sum(x => x.CouponDiscount);
 
             return View(list);
         }
