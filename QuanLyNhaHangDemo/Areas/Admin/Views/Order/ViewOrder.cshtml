@@ -141,10 +141,16 @@
                                 @if (canCancel)
                                 {
                                     <button type="button"
-                                            class="btn btn-sm btn-outline-danger btn-cancel-item ms-1"
+                                            class="btn btn-sm btn-outline-warning btn-cancel-item ms-1"
                                             data-id="@item.Id"
-                                            title="Hủy món này khỏi hóa đơn">
-                                        <i class="fas fa-trash-alt"></i> Hủy
+                                            title="Hủy món này khỏi hóa đơn (đánh dấu hủy)">
+                                        <i class="fas fa-ban"></i> Hủy
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger btn-delete-item ms-1"
+                                            data-id="@item.Id"
+                                            title="Xóa món này khỏi hệ thống">
+                                        <i class="fas fa-trash-alt"></i> Xóa
                                     </button>
                                 }
                             </td>
@@ -241,10 +247,10 @@
 
                 Swal.fire({
                     title: 'Xác nhận hủy món?',
-                    text: "Món ăn này sẽ bị hủy và ẩn khỏi danh sách chi tiết!",
+                    text: "Món ăn này sẽ bị hủy (đánh dấu hủy) khỏi danh sách chi tiết!",
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
+                    confirmButtonColor: '#f0ad4e',
                     cancelButtonColor: '#3085d6',
                     confirmButtonText: 'Đồng ý hủy',
                     cancelButtonText: 'Bỏ qua'
@@ -255,6 +261,37 @@
                         }).done(function (res) {
                             if (res.success) {
                                 Swal.fire({ icon: 'success', title: ' Đã hủy món', text: res.message })
+                                    .then(function () { location.reload(); });
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message });
+                            }
+                        }).fail(function () {
+                            Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối đến máy chủ' });
+                        });
+                    }
+                });
+            });
+
+            // XỬ LÝ SỰ KIỆN NÚT XÓA MÓN
+            $(document).on('click', '.btn-delete-item', function () {
+                var id = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Xác nhận xóa món?',
+                    text: "Món ăn này sẽ bị XÓA HOÀN TOÀN khỏi hóa đơn!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Đồng ý xóa',
+                    cancelButtonText: 'Bỏ qua'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("DeleteItem", "Order", new { area = "Admin" })', {
+                            orderDetailId: id
+                        }).done(function (res) {
+                            if (res.success) {
+                                Swal.fire({ icon: 'success', title: ' Đã xóa món', text: res.message })
                                     .then(function () { location.reload(); });
                             } else {
                                 Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message });

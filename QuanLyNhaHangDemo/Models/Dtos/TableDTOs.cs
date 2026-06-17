@@ -54,6 +54,7 @@ namespace QuanLyNhaHangDemo.Models.Dtos
         public int TableId { get; set; }
         public List<OrderItemRequest> Items { get; set; } = new List<OrderItemRequest>();
         public string Note { get; set; }
+        public bool IsConfirmed { get; set; } = true;
     }
 
     // --- ĐÃ ĐỒNG BỘ CHI TIẾT MÓN ĂN GỬI KÈM SIZE/TOPPING ---

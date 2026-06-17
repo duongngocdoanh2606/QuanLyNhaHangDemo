@@ -61,7 +61,31 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                               .FirstOrDefault())
                 .ToDictionaryAsync(x => x.MaterialId, x => x.UnitPrice);
 
+            // Tính định lượng yêu cầu tối đa cho mỗi nguyên liệu (để cảnh báo Low Stock)
+            var maxReqMod = await _dataContext.ModifierMaterials
+                .GroupBy(mm => mm.MaterialId)
+                .Select(g => new { MaterialId = g.Key, MaxReq = g.Max(x => x.QuantityRequired) })
+                .ToListAsync();
+            var maxReqProd = await _dataContext.productMaterials
+                .GroupBy(pm => pm.MaterialId)
+                .Select(g => new { MaterialId = g.Key, MaxReq = g.Max(x => x.QuantityRequired) })
+                .ToListAsync();
+
+            var maxRequiredDict = new Dictionary<int, decimal>();
+            foreach (var item in maxReqMod)
+            {
+                maxRequiredDict[item.MaterialId] = item.MaxReq;
+            }
+            foreach (var item in maxReqProd)
+            {
+                if (maxRequiredDict.ContainsKey(item.MaterialId))
+                    maxRequiredDict[item.MaterialId] = Math.Max(maxRequiredDict[item.MaterialId], item.MaxReq);
+                else
+                    maxRequiredDict[item.MaterialId] = item.MaxReq;
+            }
+
             ViewBag.LatestPriceByMaterial = latestPriceByMaterial;
+            ViewBag.MaxRequiredByMaterial = maxRequiredDict;
 
             return View(materials);
         }

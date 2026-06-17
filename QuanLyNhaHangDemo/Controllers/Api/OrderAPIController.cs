@@ -110,6 +110,10 @@ namespace QuanLyNhaHangDemo.Controllers.Api
 
                 Status = OrderModel.OrderStatus.Pending,
 
+                // Giữ logic gốc: luôn Pending, fire bếp bình thường
+                // IsConfirmed = false → hiển thị badge "Chờ xác nhận" phía admin
+                IsConfirmed = req.IsConfirmed,
+
                 CreatedDate = DateTime.Now,
 
                 VATRate = 0.10m,
@@ -588,6 +592,43 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     ReferenceNumber = ""
                 });
             }
+        }
+
+        // ======================================================
+        // XÁC NHẬN ĐƠN "CHỜ XÁC NHẬN" (flip IsConfirmed flag)
+        // ======================================================
+        [HttpPost("{orderId:int}/confirm")]
+        public async Task<ActionResult> ConfirmOrder(int orderId)
+        {
+            var order = await _db.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+            if (order.IsConfirmed)
+                return BadRequest(new { message = "Đơn đã được xác nhận trước đó." });
+
+            order.IsConfirmed = true;
+            await _db.SaveChangesAsync();
+
+            // Broadcast để web admin refresh danh sách đơn
+            await BroadcastOrderUpdate();
+
+            // Thông báo SignalR riêng cho sự kiện xác nhận
+            await _hub.Clients.Group(OrderHub.AdminGroup)
+                .SendAsync("OrderConfirmed", new
+                {
+                    orderId = order.Id,
+                    orderCode = order.OrderCode,
+                    message = $"Đơn {order.OrderCode} đã được xác nhận."
+                });
+
+            return Ok(new
+            {
+                message = $"Xác nhận đơn {order.OrderCode} thành công.",
+                orderId = order.Id
+            });
         }
     }
 }

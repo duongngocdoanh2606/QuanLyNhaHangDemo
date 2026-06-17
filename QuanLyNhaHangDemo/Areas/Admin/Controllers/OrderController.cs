@@ -114,7 +114,10 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
         public async Task<IActionResult> CancelItem(int orderDetailId)
         {
             var detail = await _dataContext.OrderDetails
-                .FindAsync(orderDetailId);
+                .Include(d => d.Order)
+                .ThenInclude(o => o.OrderDetails)
+                .Include(d => d.Order.Coupon)
+                .FirstOrDefaultAsync(d => d.Id == orderDetailId);
 
             if (detail == null)
             {
@@ -140,6 +143,16 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             detail.Status = StatusProduct.Cancelled;
             detail.UpdatedAt = DateTime.Now;
 
+            // Recalculate SubTotal
+            var order = detail.Order;
+            var remainingItems = order.OrderDetails.Where(x => x.Status != StatusProduct.Cancelled).ToList();
+            order.SubTotal = remainingItems.Sum(x => x.UnitPrice * x.Quantity);
+
+            if (order.CouponId.HasValue && order.Coupon != null)
+            {
+                order.DiscountAmount = order.Coupon.DiscountAmount > order.SubTotal ? order.SubTotal : order.Coupon.DiscountAmount;
+            }
+
             await _dataContext.SaveChangesAsync();
 
             await _orderState.SyncAfterOrderDetailStatusChangeAsync(
@@ -152,6 +165,44 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
                 success = true,
                 message = "Đã hủy món thành công."
             });
+        }
+
+        [HttpPost]
+        [Route("DeleteItem")]
+        public async Task<IActionResult> DeleteItem(int orderDetailId)
+        {
+            var detail = await _dataContext.OrderDetails
+                .Include(d => d.Order)
+                .ThenInclude(o => o.OrderDetails)
+                .Include(d => d.Order.Coupon)
+                .FirstOrDefaultAsync(d => d.Id == orderDetailId);
+
+            if (detail == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy món." });
+            }
+
+            if (detail.Status != StatusProduct.Pending && detail.Status != StatusProduct.PreparingIngredient)
+            {
+                return Json(new { success = false, message = "Chỉ có thể xóa món khi đang chờ hoặc chuẩn bị nguyên liệu." });
+            }
+
+            var order = detail.Order;
+            
+            _dataContext.OrderDetails.Remove(detail);
+            
+            // Recalculate SubTotal
+            var remainingItems = order.OrderDetails.Where(x => x.Id != orderDetailId && x.Status != StatusProduct.Cancelled).ToList();
+            order.SubTotal = remainingItems.Sum(x => x.UnitPrice * x.Quantity);
+
+            if (order.CouponId.HasValue && order.Coupon != null)
+            {
+                order.DiscountAmount = order.Coupon.DiscountAmount > order.SubTotal ? order.SubTotal : order.Coupon.DiscountAmount;
+            }
+
+            await _dataContext.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã xóa món thành công." });
         }
 
         [HttpPost]

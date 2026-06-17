@@ -52,7 +52,11 @@
             
             var isExpired = daysToExpire.HasValue && daysToExpire.Value < 0;
             var isAboutToExpire = daysToExpire.HasValue && daysToExpire.Value >= 0 && daysToExpire.Value <= 7;
-            var isLowStock = item.CurrentQuantity <= item.ReorderLevel;
+            var maxReqDict = ViewBag.MaxRequiredByMaterial as Dictionary<int, decimal>;
+            var maxReq = maxReqDict != null && maxReqDict.ContainsKey(item.Id) ? maxReqDict[item.Id] : 0;
+            
+            var A = item.CurrentQuantity - item.ReorderLevel;
+            var isLowStock = maxReq > 0 ? (A < maxReq) : (item.CurrentQuantity <= item.ReorderLevel);
 
             var rowClass = "";
             if (isExpired)

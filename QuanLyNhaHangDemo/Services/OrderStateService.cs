@@ -78,12 +78,18 @@ namespace QuanLyNhaHangDemo.Services
             if (order == null)
                 return;
 
+            string tableInfo = "";
             if (newStatus == OrderModel.OrderStatus.Paid ||
                 newStatus == OrderModel.OrderStatus.Cancelled)
             {
                 var tables = await _db.Table
                     .Where(t => t.CurrentOrderId == order.Id)
                     .ToListAsync();
+
+                if (tables.Any())
+                {
+                    tableInfo = string.Join(", ", tables.Select(t => $"Bàn {t.TableName}"));
+                }
 
                 foreach (var table in tables)
                 {
@@ -97,7 +103,7 @@ namespace QuanLyNhaHangDemo.Services
             // Thông báo khi đơn được thanh toán
             if (newStatus == OrderModel.OrderStatus.Paid)
             {
-                await NotifyOrderPaidAsync(order);
+                await NotifyOrderPaidAsync(order, tableInfo);
             }
 
             await _db.SaveChangesAsync();
@@ -273,7 +279,7 @@ namespace QuanLyNhaHangDemo.Services
         /// <summary>
         /// Thông báo khi có đơn hàng mới được tạo (Android đặt đơn)
         /// </summary>
-        public async Task NotifyNewOrderAsync(int orderId)
+        public async Task NotifyNewOrderAsync(int orderId, bool isDraft = false)
         {
             var order = await _db.Orders
                 .FirstOrDefaultAsync(o => o.Id == orderId);
@@ -289,7 +295,8 @@ namespace QuanLyNhaHangDemo.Services
                 ? string.Join(", ", tables.Select(t => $"Bàn {t.TableName}"))
                 : "Chưa xác định";
 
-            string message = $"Đơn mới: {order.OrderCode} — {tableInfo}";
+            string statusText = isDraft ? "ĐƠN CHỜ XÁC NHẬN" : "Đơn mới";
+            string message = $"{statusText}: {order.OrderCode} — {tableInfo}";
 
             await _hub.Clients
                 .Group(OrderHub.AdminGroup)
@@ -299,25 +306,19 @@ namespace QuanLyNhaHangDemo.Services
                     orderCode = order.OrderCode,
                     tableInfo,
                     message,
-                    createdAt = order.CreatedDate.ToString("HH:mm")
+                    createdAt = order.CreatedDate.ToString("HH:mm"),
+                    isDraft
                 });
         }
 
         /// <summary>
         /// Thông báo khi đơn đã thanh toán
         /// </summary>
-        private async Task NotifyOrderPaidAsync(OrderModel order)
+        private async Task NotifyOrderPaidAsync(OrderModel order, string tableInfo)
         {
-            var tables = await _db.Table
-                .Include(t => t.Zone)
-                .Where(t => t.CurrentOrderId == order.Id)
-                .ToListAsync();
-
-            string tableInfo = tables.Any()
-                ? string.Join(", ", tables.Select(t => $"Bàn {t.TableName}"))
-                : "";
-
-            string message = $"Đơn {order.OrderCode} ({tableInfo}) đã thanh toán thành công.";
+            string message = string.IsNullOrEmpty(tableInfo) 
+                ? $"Đơn {order.OrderCode} đã thanh toán thành công."
+                : $"Đơn {order.OrderCode} ({tableInfo}) đã thanh toán thành công.";
 
             await _hub.Clients
                 .Group(OrderHub.AdminGroup)

@@ -6,6 +6,8 @@
         .withAutomaticReconnect()
         .build();
 
+    window.signalRConnection = connection;
+
     let notificationCount = 0;
 
     function updateBadge(count) {

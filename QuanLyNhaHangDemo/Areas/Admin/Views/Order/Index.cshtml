@@ -37,23 +37,30 @@
                     </span>
                 </td>
                 <td>
-                    @switch (item.Status)
+                    @if (!item.IsConfirmed)
                     {
-                        case OrderModel.OrderStatus.Pending:
-                            <span class="badge bg-secondary">Chờ bếp</span>
-                            break;
-                        case OrderModel.OrderStatus.Serving:
-                            <span class="badge bg-primary">Đang phục vụ</span>
-                            break;
-                        case OrderModel.OrderStatus.Paid:
-                            <span class="badge bg-success">Đã thanh toán</span>
-                            break;
-                        case OrderModel.OrderStatus.Completed:
-                            <span class="badge bg-info">Hoàn thành</span>
-                            break;
-                        case OrderModel.OrderStatus.Cancelled:
-                            <span class="badge bg-danger">Đã hủy</span>
-                            break;
+                        <span class="badge bg-warning text-dark"><i class="fa fa-bell"></i> Chờ xác nhận</span>
+                    }
+                    else
+                    {
+                        switch (item.Status)
+                        {
+                            case OrderModel.OrderStatus.Pending:
+                                <span class="badge bg-secondary">Chờ bếp</span>
+                                break;
+                            case OrderModel.OrderStatus.Serving:
+                                <span class="badge bg-primary">Đang phục vụ</span>
+                                break;
+                            case OrderModel.OrderStatus.Paid:
+                                <span class="badge bg-success">Đã thanh toán</span>
+                                break;
+                            case OrderModel.OrderStatus.Completed:
+                                <span class="badge bg-info">Hoàn thành</span>
+                                break;
+                            case OrderModel.OrderStatus.Cancelled:
+                                <span class="badge bg-danger">Đã hủy</span>
+                                break;
+                        }
                     }
                 </td>
                 <td class="text-center">
@@ -63,6 +70,11 @@
                        class="btn btn-danger btn-sm confirmDeletion">
                         Delete
                     </a>
+
+                    @if (!item.IsConfirmed && item.Status != OrderModel.OrderStatus.Cancelled && item.Status != OrderModel.OrderStatus.Completed)
+                    {
+                        <button class="btn btn-info btn-sm btn-confirm-order" data-order-id="@item.Id">Xác nhận đơn</button>
+                    }
 
                     @if (item.Status != OrderModel.OrderStatus.Cancelled && item.Status != OrderModel.OrderStatus.Completed)
                     {
@@ -98,5 +110,43 @@
                 else if (m >= 10) el.style.color = "orange";
             });
         }, 1000);
+
+        // Xử lý nút Xác nhận đơn
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-confirm-order')) {
+                const btn = e.target;
+                const orderId = btn.getAttribute('data-order-id');
+                
+                if(confirm('Bạn có chắc muốn xác nhận đơn này? Bếp sẽ bắt đầu làm món.')) {
+                    btn.disabled = true;
+                    btn.innerText = "Đang xử lý...";
+                    
+                    fetch(`/api/orders/${orderId}/confirm`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                    .then(res => {
+                        if (res.status === 200) {
+                            alert(res.body.message);
+                            location.reload(); // Tải lại trang sau khi xác nhận thành công
+                        } else {
+                            alert(res.body.message || "Có lỗi xảy ra");
+                            btn.disabled = false;
+                            btn.innerText = "Xác nhận đơn";
+                        }
+                    })
+                    .catch(err => {
+                        alert("Lỗi kết nối mạng");
+                        console.error(err);
+                        btn.disabled = false;
+                        btn.innerText = "Xác nhận đơn";
+                    });
+                }
+            }
+        });
     </script>
 }

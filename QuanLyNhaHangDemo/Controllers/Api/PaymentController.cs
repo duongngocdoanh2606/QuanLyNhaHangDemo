@@ -16,17 +16,20 @@ namespace QuanLyNhaHangDemo.Controllers.Api
         private readonly VNPayService _vnPay;
         private readonly IHubContext<OrderHub> _hub;
         private readonly ILogger<PaymentController> _logger;
+        private readonly IOrderStateService _orderState;
 
         public PaymentController(
             DataContext db,
             VNPayService vnPay,
             IHubContext<OrderHub> hub,
-            ILogger<PaymentController> logger)
+            ILogger<PaymentController> logger,
+            IOrderStateService orderState)
         {
             _db = db;
             _vnPay = vnPay;
             _hub = hub;
             _logger = logger;
+            _orderState = orderState;
         }
 
         // ──────────────────────────────────────────────────────────
@@ -107,21 +110,20 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 if (paidAmount != expectedAmount) return "InvalidAmount";
             }
 
+            var oldStatus = order.Status;
+
             // 5. Cập nhật trạng thái order
             order.PayStatus = PaymentStatus.Success;
             order.Status = OrderModel.OrderStatus.Paid;
 
-            // 6. Giải phóng bàn
+            // Get tableId for Android notification before saving
             var tables = await _db.Table.Where(t => t.CurrentOrderId == order.Id).ToListAsync();
-            int? tableId = null;
-            foreach (var table in tables)
-            {
-                tableId = table.Id;
-                table.Status = TableStatus.Empty;
-                table.CurrentOrderId = null;
-            }
+            int? tableId = tables.FirstOrDefault()?.Id;
 
             await _db.SaveChangesAsync();
+
+            // Gọi SyncAfterOrderStatusChangeAsync để dọn dẹp bàn, gửi SignalR OrderPaid cho Admin và cập nhật FloorPlan
+            await _orderState.SyncAfterOrderStatusChangeAsync(order.Id, oldStatus, order.Status);
 
             _logger.LogInformation("[ProcessPaymentSuccess] Thanh toán thành công. OrderId={Id} TableId={TId}", order.Id, tableId);
 
@@ -137,9 +139,6 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                     amount = order.GrandTotal,
                     message = "Thanh toán VNPay thành công!"
                 });
-
-                // Broadcast cập nhật sơ đồ bàn
-                await _hub.Clients.Group(OrderHub.FloorPlanGroup).SendAsync("FloorPlanRefresh", new { });
             }
 
             return "Success";

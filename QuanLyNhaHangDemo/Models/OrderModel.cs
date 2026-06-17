@@ -58,6 +58,8 @@ public class OrderModel
         Completed, // Đơn đã hoàn thành (đã thanh toán và khách đã rời đi)
         Cancelled  // Đã hủy đơn
     }
+
+    public bool IsConfirmed { get; set; } = true;
 }
 
 public enum PaymentMethod
