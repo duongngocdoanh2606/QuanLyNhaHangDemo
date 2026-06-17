@@ -222,7 +222,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
             var table = await _context.Table
                 .AsNoTracking()
                 .Include(t => t.CurrentOrder)
-                .ThenInclude(o => o.OrderDetails)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (table == null)

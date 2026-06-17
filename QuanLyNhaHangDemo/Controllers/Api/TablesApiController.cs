@@ -68,8 +68,6 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             var table = await _db.Table
                 .Include(t => t.Zone)
                 .Include(t => t.CurrentOrder)
-                    .ThenInclude(o => o.OrderDetails.Where(od => od.Status != StatusProduct.Cancelled))
-                    .ThenInclude(od => od.Product)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -119,7 +117,14 @@ namespace QuanLyNhaHangDemo.Controllers.Api
             }
 
             // 4. Map danh sách món ăn từ dữ liệu đã Include ở Bước 1
-            var itemsDto = activeOrder.OrderDetails.Select(i => new OrderItemDto
+            var orderDetailsList = await _db.OrderDetails
+                .AsNoTracking()
+                .Include(od => od.Product)
+                .Where(od => od.OrderId == activeOrder.Id && od.Status != StatusProduct.Cancelled)
+                .ToListAsync();
+
+            var itemsDto = orderDetailsList
+                .Select(i => new OrderItemDto
             {
                 ProductId = i.ProductId,
                 Name = i.Product?.Name ?? "N/A",
