@@ -80,11 +80,11 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                             string.Equals(pmg.ModifierGroup.Type, "Size", StringComparison.OrdinalIgnoreCase));
                         if (sizeGroup != null)
                         {
-                            // Ít nhất 1 size phải còn nguyên liệu (null-safe)
+                            // Ít nhất 1 size phải còn nguyên liệu (null-safe) dựa vào Multiplier của size
                             bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m =>
-                                !m.ModifierMaterials.Any(mm =>
-                                    mm.Material != null &&
-                                    (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
+                                !p.ProductMaterials.Any(pm =>
+                                    pm.Material != null &&
+                                    (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < (pm.QuantityRequired * m.Multiplier)));
                             if (!hasAvailableSize) isAvailable = false;
                         }
                     }
@@ -139,9 +139,9 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                 if (sizeGroup != null)
                 {
                     bool hasAvailableSize = sizeGroup.ModifierGroup.Modifiers.Any(m =>
-                        !m.ModifierMaterials.Any(mm =>
-                            mm.Material != null &&
-                            (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired));
+                        !product.ProductMaterials.Any(pm =>
+                            pm.Material != null &&
+                            (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < (pm.QuantityRequired * m.Multiplier)));
                     if (!hasAvailableSize) isAvailable = false;
                 }
             }
@@ -171,10 +171,13 @@ namespace QuanLyNhaHangDemo.Controllers.Api
                         ExtraPrice = (string.Equals(pmg.ModifierGroup.Type, "Size", StringComparison.OrdinalIgnoreCase) && m.Price == 0 && m.Multiplier != 1)
                             ? (m.Multiplier - 1) * product.Price
                             : m.Price,
-                        // null-safe: Size modifier không có ModifierMaterials, luôn IsAvailable = true
-                        IsAvailable = !m.ModifierMaterials.Any(mm =>
-                            mm.Material != null &&
-                            (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired)
+                        IsAvailable = string.Equals(pmg.ModifierGroup.Type, "Size", StringComparison.OrdinalIgnoreCase)
+                            ? !product.ProductMaterials.Any(pm =>
+                                pm.Material != null &&
+                                (pm.Material.CurrentQuantity - pm.Material.ReorderLevel) < (pm.QuantityRequired * m.Multiplier))
+                            : !m.ModifierMaterials.Any(mm =>
+                                mm.Material != null &&
+                                (mm.Material.CurrentQuantity - mm.Material.ReorderLevel) < mm.QuantityRequired)
                     }).ToList()
                 }).ToList()
             };

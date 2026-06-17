@@ -609,38 +609,49 @@ namespace QuanLyNhaHangDemo.Services
 
         public async Task TriggerNextSequenceAsync(int orderId)
         {
-            // 1. CHỐNG XUNG ĐỘT (Race Condition): Đảm bảo tại một thời điểm chỉ có 1 luồng xử lý đơn hàng này
+            // 1. CHỐNG XUNG ĐỘT (Race Condition): Khóa độc lập theo từng đơn hàng
             var myLock = _orderLocks.GetOrAdd(orderId, _ => new System.Threading.SemaphoreSlim(1, 1));
             await myLock.WaitAsync();
 
             try
             {
-                // 2. TỐI ƯU HIỆU NĂNG: Chỉ Select các trường cần thiết, tránh Include lồng nhau gây nặng RAM
-                // Đồng thời LỌC BỎ các món thuộc danh mục tự động nấu lâu (IsAutoFire) ra khỏi chuỗi cuốn chiếu này
-                var allItemsInSequence = await _db.OrderDetails
-                    .Where(od => od.OrderId == orderId
-                              && od.Status != StatusProduct.Cancelled
-                              && od.Product.Category.isAutoFire == false) // Món Auto-Fire chạy mạch riêng lúc đặt đơn, không tính vào chuỗi
+                // 2. TỐI ƯU HIỆU NĂNG: Lấy dữ liệu ẩn danh, kết hợp Join sang Product -> Category -> Kitchen
+                var allItems = await _db.OrderDetails
+                    .Where(od => od.OrderId == orderId && od.Status != StatusProduct.Cancelled)
                     .Select(od => new
                     {
                         od.Id,
                         od.IsFired,
                         od.Status,
+                        od.FireCount,
+                        IsAutoFire = od.Product.Category.isAutoFire, // Hệ thống tự động kích hoạt
                         SortOrder = od.Product.Category.Kitchen.SortOrder,
                         Priority = od.Product.Category.Priority,
                         ProductName = od.Product.Name,
-                        RawEntity = od // Giữ lại reference để cập nhật trạng thái xuống DB
+                        RawEntity = od // Giữ reference để cập nhật trực tiếp xuống DB
                     })
                     .ToListAsync();
 
-                var unfiredItems = allItemsInSequence.Where(od => !od.IsFired).ToList();
+                // 3. XỬ LÝ NHÓM ĐẶC QUYỀN (Món tự động AutoFire hoặc món được bấm nút Remake/Làm lại)
+                // Món Làm Lại được nhận diện khi FireCount > 0 nhưng trạng thái bị reset về Pending/PreparingIngredient
+                var privilegedItems = allItems.Where(od => !od.IsFired &&
+                    (od.IsAutoFire || od.FireCount > 0)
+                ).ToList();
 
-                // Nếu không còn món nào chưa nấu thuộc chuỗi cuốn chiếu -> Thoát
-                if (!unfiredItems.Any())
-                    return;
+                if (privilegedItems.Any())
+                {
+                    await ExecuteFireGroupAsync(privilegedItems, "Hệ thống Auto-Fire / Đồ làm lại");
+                }
 
-                // 3. XÁC ĐỊNH NHÓM TIẾP THEO sẽ được tự động Fire dựa theo độ ưu tiên
-                var nextGroup = unfiredItems
+                // 4. XỬ LÝ CHUỖI CUỐN CHIẾU (Các món bình thường còn lại - IsAutoFire == false)
+                var sequenceItems = allItems.Where(od => !od.IsAutoFire).ToList();
+                var unfiredSequenceItems = sequenceItems.Where(od => !od.IsFired).ToList();
+
+                if (!unfiredSequenceItems.Any())
+                    return; // Toàn bộ món thường đã được kích hoạt xuống bếp
+
+                // Xác định nhóm tiếp theo có độ ưu tiên thấp nhất đang chờ duyệt
+                var nextGroup = unfiredSequenceItems
                     .OrderBy(od => od.SortOrder)
                     .ThenBy(od => od.Priority)
                     .GroupBy(od => new { od.SortOrder, od.Priority })
@@ -649,72 +660,85 @@ namespace QuanLyNhaHangDemo.Services
                 if (nextGroup == null)
                     return;
 
-                // 4. SỬA LỖI LOGIC NHẢY CÓC: Tìm nhóm thực tế đứng ngay phía trước dựa theo cấu trúc thực đơn
-                // Không loại bỏ IsManuallyFired ở đây để tính chính xác nhóm liền kề
-                var precedingFiredGroup = allItemsInSequence
-                    .Where(od => od.IsFired &&
-                                (od.SortOrder < nextGroup.Key.SortOrder ||
-                                (od.SortOrder == nextGroup.Key.SortOrder && od.Priority < nextGroup.Key.Priority)))
-                    .GroupBy(od => new { od.SortOrder, od.Priority })
-                    .OrderByDescending(g => g.Key.SortOrder)
-                    .ThenByDescending(g => g.Key.Priority)
-                    .FirstOrDefault();
+                // 5. THUẬT TOÁN QUÉT ĐIỀU KIỆN "MỞ XÍCH" XUỐNG BẾP
+                // Tìm toàn bộ các món tuyến trước có SortOrder hoặc Priority cao hơn nhóm hiện tại
+                var highPriorityItems = sequenceItems
+                    .Where(od => od.SortOrder < nextGroup.Key.SortOrder ||
+                                (od.SortOrder == nextGroup.Key.SortOrder && od.Priority < nextGroup.Key.Priority))
+                    .ToList();
 
-                if (precedingFiredGroup == null)
+                bool isAllowedToFire = false;
+
+                if (!highPriorityItems.Any())
                 {
-                    // Nếu không có nhóm nào đi trước đã fire, đây là nhóm đầu chuỗi cuốn chiếu.
-                    // Tùy theo vận hành: Nếu bạn muốn nhóm đầu tiên (Khai vị) tự chạy khi đặt đơn thì xử lý ở API đặt đơn.
-                    // Ở đây giữ nguyên logic của bạn: Phải đợi kích hoạt đầu tiên.
-                    return;
+                    // Trường hợp A: Không có món nào đi trước -> Đây là nhóm đầu chuỗi (Khai vị lượt 1)
+                    // Tự động xả xích cho phép xuống bếp luôn
+                    isAllowedToFire = true;
+                }
+                else
+                {
+                    // Trường hợp B: Có nhóm đi trước. Điều kiện để nhóm sau được tự động xuống bếp:
+                    // TẤT CẢ món tuyến trước đã được Fire VÀ có ÍT NHẤT 1 món tuyến trước đã dọn ra bàn (StatusProduct.Served)
+                    bool allPrecedingAreFired = highPriorityItems.All(od => od.IsFired);
+                    bool anyPrecedingIsServed = highPriorityItems.Any(od => od.Status == StatusProduct.Served);
+
+                    if (allPrecedingAreFired && anyPrecedingIsServed)
+                    {
+                        isAllowedToFire = true;
+                    }
                 }
 
-                // 5. KIỂM TRA ĐIỀU KIỆN PHỤC VỤ (Served): Nhóm sát sườn phải có ít nhất 1 món đã lên bàn
-                bool hasAnyServedInPrecedingGroup = precedingFiredGroup.Any(od => od.Status == StatusProduct.Served);
-
-                if (!hasAnyServedInPrecedingGroup)
+                // 6. KÍCH HOẠT XUỐNG BẾP
+                if (isAllowedToFire)
                 {
-                    // Nhóm đi trước chưa được phục vụ món nào -> Giữ phanh, chưa tự động Fire nhóm tiếp theo
-                    return;
-                }
-
-                // 6. TIẾN HÀNH TỰ ĐỘNG FIRE CÁC MÓN TRONG NHÓM HIỆN TẠI
-                bool isAnyFired = false;
-                var now = DateTime.UtcNow; // Khuyên dùng UtcNow để tránh lệch múi giờ hệ thống Server
-
-                foreach (var item in nextGroup)
-                {
-                    item.RawEntity.IsFired = true;
-                    item.RawEntity.FiredAt = now;
-                    item.RawEntity.Status = StatusProduct.Pending;
-                    isAnyFired = true;
-                }
-
-                if (isAnyFired)
-                {
-                    // Lưu thay đổi vào Database
-                    await _db.SaveChangesAsync();
-
-                    // Làm mới màn hình hiển thị của toàn bộ nhà bếp
-                    await BroadcastKitchenRefreshAsync();
-
-                    // TỐI ƯU MẠNG: Gom tất cả các tác vụ gửi SignalR chạy đồng thời thay vì await từng vòng lặp lẻ
-                    var notifyTasks = nextGroup.Select(item =>
-                        _hub.Clients.Group(OrderHub.AdminGroup).SendAsync("DishFired", new
-                        {
-                            orderDetailId = item.Id,
-                            productName = item.ProductName,
-                            isRemake = false,
-                            message = $"Fire tự động: {item.ProductName}"
-                        })
-                    );
-
-                    await Task.WhenAll(notifyTasks);
+                    await ExecuteFireGroupAsync(nextGroup.ToList(), "Cuốn chiếu tự động");
                 }
             }
             finally
             {
-                // Giải phóng lock để các request khác của đơn hàng này đi vào
-                myLock.Release();
+                myLock.Release(); // Giải phóng lock giải tỏa nghẽn mạch luồng dữ liệu
+            }
+        }
+
+        // Hàm Helper thực thi cập nhật trạng thái và phát tín hiệu SignalR
+        private async Task ExecuteFireGroupAsync(IEnumerable<dynamic> itemsToFire, string fireType)
+        {
+            var now = DateTime.Now; // Đồng bộ theo DateTime.Now giống như cấu hình khởi tạo CreateDate của bạn
+            bool isAnyFired = false;
+
+            foreach (var item in itemsToFire)
+            {
+                item.RawEntity.IsFired = true;
+                item.RawEntity.FiredAt = now;
+                item.RawEntity.UpdatedAt = now;
+
+                // Chuyển trạng thái từ Chờ (Pending) sang Bếp chuẩn bị nguyên liệu (PreparingIngredient)
+                item.RawEntity.Status = StatusProduct.PreparingIngredient;
+
+                isAnyFired = true;
+            }
+
+            if (isAnyFired)
+            {
+                // Lưu xuống Database
+                await _db.SaveChangesAsync();
+
+                // Kích hoạt hàm làm mới màn hình KDS tổng của nhà bếp (bạn tự định nghĩa hàm này)
+                await BroadcastKitchenRefreshAsync();
+
+                // Gửi SignalR real-time thông báo cho từng món nhảy xuống các máy trạm (Tablet phục vụ / Web Admin)
+                var notifyTasks = itemsToFire.Select(item =>
+                    _hub.Clients.Group(OrderHub.AdminGroup).SendAsync("DishFired", new
+                    {
+                        orderDetailId = item.Id,
+                        productName = item.ProductName,
+                        isRemake = (item.FireCount > 0),
+                        status = (int)StatusProduct.PreparingIngredient,
+                        message = $"[{fireType}]: Món {item.ProductName} đã được chuyển xuống bếp!"
+                    })
+                );
+
+                await Task.WhenAll(notifyTasks);
             }
         }
     }
