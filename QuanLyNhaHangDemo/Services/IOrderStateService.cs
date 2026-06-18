@@ -11,7 +11,7 @@ namespace QuanLyNhaHangDemo.Services
         Task<Dictionary<int, int>> GetAllTableReadyCountsAsync();
         Task<(bool Success, string Message)> FireOrderDetailAsync(int orderDetailId, bool isRemake);
         Task<(bool Success, string Message)> CheckoutTableAsync(int tableId);
-        Task TriggerNextSequenceAsync(int orderId);
+        Task TriggerNextSequenceAsync(int orderId, int? justServedItemId = null);
         Task NotifyNewOrderAsync(int orderId, bool isDraft = false);
     }
 }
