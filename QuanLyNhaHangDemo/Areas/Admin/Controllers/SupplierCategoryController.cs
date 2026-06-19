@@ -4,7 +4,6 @@ using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
 
 [Area("Admin")]
-[Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
 public class SupplierCategoryController : Controller
 {
     private readonly DataContext _context;

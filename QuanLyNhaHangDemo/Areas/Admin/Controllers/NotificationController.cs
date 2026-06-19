@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
@@ -7,7 +7,6 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Route("Admin/Notification")]
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
     public class NotificationController : Controller
     {
         private readonly DataContext _context;

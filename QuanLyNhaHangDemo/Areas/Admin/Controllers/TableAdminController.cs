@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin,cashier")]
     public class TableAdminController : Controller
     {
         private readonly DataContext _context;

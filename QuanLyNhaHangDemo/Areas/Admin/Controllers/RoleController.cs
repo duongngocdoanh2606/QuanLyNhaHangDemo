@@ -10,7 +10,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Route("Admin/Role")]
-    [Authorize(Roles = "admin")]
+    
     public class RoleController : Controller
     {
         private readonly DataContext _dataContext;

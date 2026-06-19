@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using QuanLyNhaHangDemo.Models;
@@ -165,5 +165,13 @@ namespace QuanLyNhaHangDemo.Controllers
                 "Account");
         }
 
+        // =====================================================
+        // GET: /Account/AccessDenied
+        // =====================================================
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }

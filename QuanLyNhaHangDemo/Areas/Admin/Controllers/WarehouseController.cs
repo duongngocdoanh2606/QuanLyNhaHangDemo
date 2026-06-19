@@ -8,7 +8,6 @@ using QuanLyNhaHangDemo.Repository;
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin,warehouse")]
     public class WarehouseController : Controller
     {
         private readonly DataContext _dataContext;
