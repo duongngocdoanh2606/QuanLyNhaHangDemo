@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using QuanLyNhaHangDemo.Models;
@@ -89,13 +89,22 @@ namespace QuanLyNhaHangDemo.Controllers
             // =====================================================
             var roles = await _userManager.GetRolesAsync(user);
 
+            // WAITER (DENIED ON WEB)
+            if (roles.Any(r =>
+                r.Equals("waiter", StringComparison.OrdinalIgnoreCase)))
+            {
+                await _signInManager.SignOutAsync(); // Logout immediately
+                ModelState.AddModelError("", "Tài khoản Waiter chỉ được đăng nhập trên ứng dụng di động.");
+                return View(loginVM);
+            }
+
             // ADMIN
             if (roles.Any(r =>
                 r.Equals("admin", StringComparison.OrdinalIgnoreCase)))
             {
                 return RedirectToAction(
                     "Index",
-                    "Category",
+                    "Dashboard",
                     new { area = "Admin" });
             }
 
@@ -105,7 +114,7 @@ namespace QuanLyNhaHangDemo.Controllers
             {
                 return RedirectToAction(
                     "Index",
-                    "Category",
+                    "Kitchen",
                     new { area = "Admin" });
             }
 
@@ -115,7 +124,7 @@ namespace QuanLyNhaHangDemo.Controllers
             {
                 return RedirectToAction(
                     "Index",
-                    "Category",
+                    "Warehouse",
                     new { area = "Admin" });
             }
 
@@ -125,17 +134,7 @@ namespace QuanLyNhaHangDemo.Controllers
             {
                 return RedirectToAction(
                     "Index",
-                    "Category",
-                    new { area = "Admin" });
-            }
-
-            // STAFF
-            if (roles.Any(r =>
-                r.Equals("staff", StringComparison.OrdinalIgnoreCase)))
-            {
-                return RedirectToAction(
-                    "Index",
-                    "Category",
+                    "TableAdmin",
                     new { area = "Admin" });
             }
 

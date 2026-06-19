@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,6 +11,7 @@ namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Route("Admin/User")]
+    [Authorize(Roles = "admin")]
     
     public class UserController : Controller
     {

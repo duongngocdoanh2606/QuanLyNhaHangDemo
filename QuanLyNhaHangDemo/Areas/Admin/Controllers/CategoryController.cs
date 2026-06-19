@@ -9,7 +9,7 @@ using QuanLyNhaHangDemo.Repository;
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
     public class CategoryController:Controller
     {
         private readonly DataContext _dataContext;

@@ -6,6 +6,7 @@ using QuanLyNhaHangDemo.Models.ViewModels;
 using QuanLyNhaHangDemo.Repository;
 
 [Area("Admin")]
+[Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
 public class SupplierController : Controller
 {
     private readonly DataContext _context;

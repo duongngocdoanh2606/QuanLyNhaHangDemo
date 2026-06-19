@@ -7,6 +7,7 @@ using QuanLyNhaHangDemo.Services;
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin,cashier")]
     public class OrderController : Controller
     {
         private readonly DataContext _dataContext;

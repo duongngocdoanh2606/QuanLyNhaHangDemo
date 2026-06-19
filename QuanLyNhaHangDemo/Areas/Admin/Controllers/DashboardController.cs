@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
     public class DashboardController : Controller
     {
         private readonly DataContext _dataContext;

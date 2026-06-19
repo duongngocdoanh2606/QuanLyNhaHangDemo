@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhaHangDemo.Models;
 using QuanLyNhaHangDemo.Repository;
@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace QuanLyNhaHangDemo.Controllers
 {
     [Area("Admin")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
     public class CouponController : Controller
     {
         private readonly DataContext _context;

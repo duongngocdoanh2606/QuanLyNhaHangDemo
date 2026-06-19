@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 namespace QuanLyNhaHangDemo.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin,kitchen")]
     public class KitchenController : Controller
     {
         private readonly DataContext _dataContext;
