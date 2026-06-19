@@ -31,17 +31,8 @@ public class AuthAPIController : ControllerBase
 
         if (result.Succeeded)
         {
-            // Lấy roles để phân quyền
+            // Ở đây bạn có thể lấy thêm Role nếu App Android cần phân quyền
             var roles = await _userManager.GetRolesAsync(user);
-
-            // Chặn Kitchen, Cashier, Warehouse đăng nhập vào app Android
-            if (roles.Any(r => r.Equals("kitchen", StringComparison.OrdinalIgnoreCase) || 
-                               r.Equals("cashier", StringComparison.OrdinalIgnoreCase) || 
-                               r.Equals("warehouse", StringComparison.OrdinalIgnoreCase)))
-            {
-                await _signInManager.SignOutAsync();
-                return Unauthorized(new { Success = false, Message = "Tài khoản của bạn không được phép đăng nhập trên ứng dụng di động." });
-            }
 
             return Ok(new
             {

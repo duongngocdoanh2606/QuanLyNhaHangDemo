@@ -89,22 +89,13 @@ namespace QuanLyNhaHangDemo.Controllers
             // =====================================================
             var roles = await _userManager.GetRolesAsync(user);
 
-            // WAITER (DENIED ON WEB)
-            if (roles.Any(r =>
-                r.Equals("waiter", StringComparison.OrdinalIgnoreCase)))
-            {
-                await _signInManager.SignOutAsync(); // Logout immediately
-                ModelState.AddModelError("", "Tài khoản Waiter chỉ được đăng nhập trên ứng dụng di động.");
-                return View(loginVM);
-            }
-
             // ADMIN
             if (roles.Any(r =>
                 r.Equals("admin", StringComparison.OrdinalIgnoreCase)))
             {
                 return RedirectToAction(
                     "Index",
-                    "Dashboard",
+                    "Category",
                     new { area = "Admin" });
             }
 
@@ -114,7 +105,7 @@ namespace QuanLyNhaHangDemo.Controllers
             {
                 return RedirectToAction(
                     "Index",
-                    "Kitchen",
+                    "Category",
                     new { area = "Admin" });
             }
 
@@ -124,7 +115,7 @@ namespace QuanLyNhaHangDemo.Controllers
             {
                 return RedirectToAction(
                     "Index",
-                    "Warehouse",
+                    "Category",
                     new { area = "Admin" });
             }
 
@@ -134,7 +125,17 @@ namespace QuanLyNhaHangDemo.Controllers
             {
                 return RedirectToAction(
                     "Index",
-                    "TableAdmin",
+                    "Category",
+                    new { area = "Admin" });
+            }
+
+            // STAFF
+            if (roles.Any(r =>
+                r.Equals("staff", StringComparison.OrdinalIgnoreCase)))
+            {
+                return RedirectToAction(
+                    "Index",
+                    "Category",
                     new { area = "Admin" });
             }
 
