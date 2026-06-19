@@ -165,13 +165,5 @@ namespace QuanLyNhaHangDemo.Controllers
                 "Account");
         }
 
-        // =====================================================
-        // GET: /Account/AccessDenied
-        // =====================================================
-        [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
     }
 }
